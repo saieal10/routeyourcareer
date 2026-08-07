@@ -16,12 +16,12 @@ export default function Footer() {
               </div>
             </div>
             <p className="mt-6 text-[14px] leading-relaxed max-w-md text-cream/60">
-              Route Your Career is your pathway — a young guidance & lead-generation platform born in Bengaluru, running across five South Indian offices, guiding families through nine countries.
+              Route Your Career is your pathway — a young guidance & lead-generation platform helping Indian students find their dream MBBS university across nine countries, with a special focus on Georgia and Uzbekistan.
             </p>
             <div className="mt-8 space-y-3 text-[13px]">
               <a href={`tel:${brand.phone}`} className="flex items-center gap-3 hover:text-coral"><Phone className="h-4 w-4 text-coral" /> {brand.phoneDisplay}</a>
               <a href={`mailto:${brand.email}`} className="flex items-center gap-3 hover:text-coral"><Mail className="h-4 w-4 text-coral" /> {brand.email}</a>
-              <div className="flex items-center gap-3"><MapPin className="h-4 w-4 text-coral" /> HQ · Indiranagar, Bengaluru — Karnataka</div>
+              <div className="flex items-center gap-3"><MapPin className="h-4 w-4 text-coral" /> Present across Karnataka · Maharashtra · Kerala · Tamil Nadu · Telangana</div>
             </div>
             <div className="mt-6 flex items-center gap-2">
               {[Facebook, Instagram, Youtube, Linkedin].map((Ic, i) => (
@@ -33,7 +33,7 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <div className="text-cream font-semibold text-[12px] mono uppercase tracking-widest">Explore</div>
             <ul className="mt-5 space-y-2.5 text-[13px]">
-              {['Georgia · Uzbekistan','All Countries','Journey','AI Stack','Offices','About','Comparison','FAQ'].map(l => (
+              {['Georgia · Uzbekistan','All Countries','Journey','AI Stack','States','About','Comparison','FAQ'].map(l => (
                 <li key={l}><a href="#" className="hover:text-coral">{l}</a></li>
               ))}
             </ul>

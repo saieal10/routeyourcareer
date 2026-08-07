@@ -11,7 +11,7 @@ export default function AboutUs() {
             <div className="text-[11px] mono uppercase tracking-widest text-coral">/ 05 — About Route Your Career</div>
             <h2 className="serif mt-3 text-5xl sm:text-6xl font-normal leading-[0.95] text-ink">A young team.<br/><em className="font-light">A decade of MBBS-abroad experience.</em></h2>
             <p className="mt-6 text-ink/70 text-[15px] leading-relaxed max-w-md">
-              Route Your Career is a <b>new startup</b> — but our core team has spent the last decade quietly guiding Indian students to MBBS abroad. We saw one gap: an honest, one-stop platform that <em>only</em> does guidance & lead generation — no commission-agent games, no seat pushing.
+              We help students secure MBBS admission in all 9 partner countries — mainly <b>Georgia</b> and <b>Uzbekistan</b>. Our small team has spent the last decade quietly guiding Indian students to MBBS abroad. We built RYC to be an honest, one-stop platform that <em>only</em> does guidance & lead generation — no commission-agent games, no seat pushing.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <a href={brand.applyLink} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-2 rounded-full bg-ink text-cream px-5 py-3 text-[13px] font-semibold hover:bg-forest">

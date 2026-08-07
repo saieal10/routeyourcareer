@@ -9,7 +9,7 @@ const nav = [
   { label: 'Calculator', href: '/#calculator' },
   { label: 'Journey', href: '/#journey' },
   { label: 'AI Stack', href: '/#ai-agents' },
-  { label: 'Offices', href: '/#offices' },
+  { label: 'States', href: '/#offices' },
   { label: 'FAQ', href: '/#faq' },
 ];
 

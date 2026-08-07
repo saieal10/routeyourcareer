@@ -160,7 +160,7 @@ export default function CountryGeorgia() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-7">
             <div className="text-[11px] mono uppercase tracking-widest text-coral flex items-center gap-2"><Calendar className="h-3.5 w-3.5"/> Timeline</div>
-            <h2 className="serif mt-3 text-4xl sm:text-5xl font-normal leading-[0.95] text-ink">From <em className="font-light">Bengaluru to Tbilisi</em> in ~8 weeks.</h2>
+            <h2 className="serif mt-3 text-4xl sm:text-5xl font-normal leading-[0.95] text-ink">From <em className="font-light">India to Tbilisi</em> in ~8 weeks.</h2>
             <div className="mt-8 relative pl-8">
               <div className="absolute left-3 top-2 bottom-2 w-px bg-ink/15"/>
               {d.timeline.map((t, i) => (

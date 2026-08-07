@@ -38,7 +38,7 @@ export default function Hero() {
           </h1>
 
           <p className="mt-8 text-ink/70 text-[16px] sm:text-[17px] max-w-xl leading-relaxed">
-            Route Your Career is a one-stop guidance & lead-generation platform for Indian students. Nine countries, priority focus on <b className="text-forest">Georgia</b> & <b className="text-forest">Uzbekistan</b>, five South-Indian offices — and <em>free consultation on request</em>.
+            Route Your Career helps Indian students secure MBBS admission across all 9 partner countries — with the strongest expertise and priority focus on <b className="text-forest">Georgia</b> and <b className="text-forest">Uzbekistan</b>. Free consultation on request.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">

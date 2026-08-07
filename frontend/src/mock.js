@@ -26,7 +26,7 @@ export const announcements = [
   'Route Your Career is your pathway — to a global MBBS',
   'Featured countries: Georgia 🇬🇪 and Uzbekistan 🇺🇿 — English-medium, NMC-recognised',
   'September 2026 intake is open — free consultation on request',
-  'Five partner offices · Karnataka · Maharashtra · Kerala · Tamil Nadu · Telangana',
+  'Present across five South-Indian states · Karnataka · Maharashtra · Kerala · Tamil Nadu · Telangana',
   'Call +91 93260 82141 or request a callback — Mon–Sat, 10am–7pm IST',
 ];
 
@@ -131,7 +131,7 @@ export const spotlightUzbekistan = {
 
 // 5 Indian states we serve
 export const offices = [
-  { city: 'Bengaluru', state: 'Karnataka', area: 'Indiranagar', hq: true, img: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80' },
+  { city: 'Bengaluru', state: 'Karnataka', area: '', img: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80' },
   { city: 'Mumbai', state: 'Maharashtra', area: 'Andheri West', img: 'https://images.unsplash.com/photo-1567095761054-7a02e69e5c43?w=800&q=80' },
   { city: 'Kochi', state: 'Kerala', area: 'Panampilly Nagar', img: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80' },
   { city: 'Chennai', state: 'Tamil Nadu', area: 'T. Nagar', img: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&q=80' },
@@ -155,7 +155,7 @@ export const faqs = [
   { q: 'Is Route Your Career an agent or a university?', a: 'Neither. We’re a guidance & lead-generation platform. We help you find your dream university, connect you with partner admissions offices, and support you through visa — free of cost for students.' },
   { q: 'Why do you focus on Georgia and Uzbekistan?', a: 'They offer the best balance of quality, cost, English-medium teaching, and NMC recognition for Indian students today. Our team has the deepest on-ground network in these two countries.' },
   { q: 'How is the consultation free?', a: 'Free consultation is provided on request. As a lead-generation platform, we’re paid by our partner universities for verified admissions — never by students.' },
-  { q: 'Which Indian cities do you operate from?', a: 'We have partner offices across five states: Karnataka (Bengaluru), Maharashtra (Mumbai), Kerala (Kochi), Tamil Nadu (Chennai), and Telangana (Hyderabad).' },
+  { q: 'Which Indian states do you serve?', a: 'We are present across five states: Karnataka, Maharashtra, Kerala, Tamil Nadu and Telangana. Students from other states are also welcome — we support them fully over WhatsApp, phone and video.' },
   { q: 'What if my NEET score is low?', a: 'Most countries we work with (including Georgia and Uzbekistan) only require a NEET qualifying score, not a competitive rank. Book a call — we’ll shortlist realistic options for you.' },
   { q: 'How do I get started?', a: 'Two ways: (1) Apply Online — fill our short form and we’ll get back within 24 hours. (2) Request a Callback — leave your number and preferred time, we call you.' },
 ];
