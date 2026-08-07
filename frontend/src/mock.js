@@ -101,7 +101,7 @@ export const spotlightGeorgia = {
     'Warm Mediterranean climate, safe cities',
     'Vibrant Indian community & vegetarian mess',
   ],
-  universities: ['Tbilisi State Medical University', 'Georgian National University SEU', 'Caucasus International University', 'David Tvildiani Medical University'],
+  universities: ['Alte University', 'Caucasus International University (CIU)', 'Caucasus University (CU)', 'University of Georgia'],
 };
 
 export const spotlightUzbekistan = {

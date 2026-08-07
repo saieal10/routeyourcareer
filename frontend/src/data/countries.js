@@ -40,10 +40,10 @@ export const georgiaData = {
     { m: 'Sep 2026', title: 'Fly to Georgia', body: 'Airport pickup, hostel check-in, orientation, first year begins.' },
   ],
   universities: [
-    { name: 'Tbilisi State Medical University', est: 1918, city: 'Tbilisi', fee: '₹24–28L', img: 'https://images.unsplash.com/photo-1562774053-701939374585?w=800&q=80', notes: 'The oldest and largest medical school in the Caucasus. NMC & WHO listed.' },
-    { name: 'Georgian National University SEU', est: 2001, city: 'Tbilisi', fee: '₹20–22L', img: 'https://images.unsplash.com/photo-1591106863172-9be62dda17c4?w=800&q=80', notes: 'Large Indian student community, English-medium MBBS, urban campus.' },
-    { name: 'Caucasus International University', est: 1995, city: 'Tbilisi', fee: '₹21–24L', img: 'https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?w=800&q=80', notes: 'Modern campus, strong clinical placements at partner hospitals.' },
-    { name: 'David Tvildiani Medical University', est: 1989, city: 'Tbilisi', fee: '₹23–26L', img: 'https://images.unsplash.com/photo-1568322445389-f64ac2515020?w=800&q=80', notes: 'US-style MD programme, ECFMG certified, tutorial-based teaching.' },
+    { name: 'Alte University', short: 'ALTE', est: 2005, city: 'Tbilisi', fee: '₹20–23L', img: 'https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?w=800&q=80', notes: 'MD programme delivered in English, tutorial-based small-group learning, strong clinical exposure across Tbilisi teaching hospitals.' },
+    { name: 'Caucasus International University', short: 'CIU', est: 1995, city: 'Tbilisi', fee: '₹21–24L', img: 'https://images.unsplash.com/photo-1562774053-701939374585?w=800&q=80', notes: 'One of the most popular English-medium MBBS programmes for Indian students. Modern city campus and hospital tie-ups.' },
+    { name: 'Caucasus University', short: 'CU', est: 2004, city: 'Tbilisi', fee: '₹22–26L', img: 'https://images.unsplash.com/photo-1591106863172-9be62dda17c4?w=800&q=80', notes: 'Private research-driven university with a modern medical school; blends European curriculum with clinical training.' },
+    { name: 'University of Georgia', short: 'UG', est: 2004, city: 'Tbilisi', fee: '₹23–27L', img: 'https://images.unsplash.com/photo-1568322445389-f64ac2515020?w=800&q=80', notes: 'Georgia’s largest private university with a well-regarded School of Health Sciences and a large international student community.' },
   ],
   feeBreakdown: [
     { head: 'Tuition (per year)', low: '₹3.5L', high: '₹4.6L' },
