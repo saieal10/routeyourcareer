@@ -33,7 +33,7 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <div className="text-cream font-semibold text-[12px] mono uppercase tracking-widest">Explore</div>
             <ul className="mt-5 space-y-2.5 text-[13px]">
-              {['Countries','Universities','Counsellors','AI Stack','Journey','Offices','Founder','Testimonials'].map(l => (
+              {['Georgia · Uzbekistan','All Countries','Journey','AI Stack','Offices','About','Comparison','FAQ'].map(l => (
                 <li key={l}><a href="#" className="hover:text-coral">{l}</a></li>
               ))}
             </ul>
@@ -50,8 +50,11 @@ export default function Footer() {
 
           <div className="lg:col-span-3">
             <div className="text-cream font-semibold text-[12px] mono uppercase tracking-widest">Ready to route your career?</div>
-            <a href="#book" className="mt-5 group inline-flex items-center gap-2 rounded-full bg-coral text-white px-5 py-3 text-[13px] font-bold hover:bg-[#d94a26]">
-              Book Free Counselling <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45"/>
+            <a href={brand.applyLink} target="_blank" rel="noreferrer" className="mt-5 group inline-flex items-center gap-2 rounded-full bg-coral text-white px-5 py-3 text-[13px] font-bold hover:bg-[#d94a26]">
+              Apply Online <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45"/>
+            </a>
+            <a href={brand.callbackLink} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-2 rounded-full border border-cream/20 text-cream px-5 py-3 text-[13px] font-semibold hover:bg-cream/5">
+              Request Callback
             </a>
             <div className="mt-6 text-[11px] mono uppercase tracking-widest text-cream/50">{brand.hours}</div>
           </div>

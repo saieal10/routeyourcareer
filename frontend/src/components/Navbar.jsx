@@ -3,12 +3,12 @@ import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { brand } from '../mock';
 
 const nav = [
-  { label: 'Countries', href: '#countries' },
-  { label: 'Universities', href: '#universities' },
+  { label: 'Georgia \u00b7 Uzbekistan', href: '#featured' },
+  { label: 'All Countries', href: '#countries' },
   { label: 'Journey', href: '#journey' },
   { label: 'AI Stack', href: '#ai-agents' },
   { label: 'Offices', href: '#offices' },
-  { label: 'Founder', href: '#founder' },
+  { label: 'FAQ', href: '#faq' },
 ];
 
 export default function Navbar() {
@@ -38,8 +38,8 @@ export default function Navbar() {
 
           <div className="hidden md:flex items-center gap-3">
             <a href={`tel:${brand.phone}`} className="text-[13px] font-medium text-ink/70 hover:text-ink hidden lg:inline">{brand.phoneDisplay}</a>
-            <a href="#book" className="group inline-flex items-center gap-1.5 rounded-full bg-ink text-cream px-4 py-2.5 text-[13px] font-semibold hover:bg-forest">
-              Book Free Call
+            <a href={brand.applyLink} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-1.5 rounded-full bg-ink text-cream px-4 py-2.5 text-[13px] font-semibold hover:bg-forest">
+              Apply Online
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:rotate-45" />
             </a>
           </div>
@@ -54,7 +54,7 @@ export default function Navbar() {
             {nav.map((n) => (
               <a key={n.label} href={n.href} onClick={() => setOpen(false)} className="block px-2 py-2 text-[14px] font-medium text-ink/80">{n.label}</a>
             ))}
-            <a href="#book" className="mt-2 block text-center rounded-full bg-ink text-cream px-4 py-2.5 text-[13px] font-semibold">Book Free Call</a>
+            <a href={brand.applyLink} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className="mt-2 block text-center rounded-full bg-ink text-cream px-4 py-2.5 text-[13px] font-semibold">Apply Online</a>
           </div>
         )}
       </div>

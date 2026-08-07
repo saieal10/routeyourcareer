@@ -4,16 +4,14 @@ import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import CountryMarquee from '../components/CountryMarquee';
 import WhyChoose from '../components/WhyChoose';
-import JourneyTimeline from '../components/JourneyTimeline';
+import FeaturedCountries from '../components/FeaturedCountries';
 import Countries from '../components/Countries';
-import Testimonials from '../components/Testimonials';
-import Founder from '../components/Founder';
-import Counsellors from '../components/Counsellors';
-import Universities from '../components/Universities';
-import VideoStories from '../components/VideoStories';
+import JourneyTimeline from '../components/JourneyTimeline';
+import AboutUs from '../components/AboutUs';
 import AiAgents from '../components/AiAgents';
-import Offices from '../components/Offices';
 import Comparison from '../components/Comparison';
+import Offices from '../components/Offices';
+import FAQ from '../components/FAQ';
 import CTABanner from '../components/CTABanner';
 import Newsletter from '../components/Newsletter';
 import Footer from '../components/Footer';
@@ -27,16 +25,14 @@ export default function Home() {
       <Hero />
       <CountryMarquee />
       <WhyChoose />
-      <JourneyTimeline />
+      <FeaturedCountries />
       <Countries />
-      <Testimonials />
-      <Founder />
-      <Universities />
-      <Counsellors />
+      <JourneyTimeline />
+      <AboutUs />
       <AiAgents />
       <Comparison />
-      <VideoStories />
       <Offices />
+      <FAQ />
       <CTABanner />
       <Newsletter />
       <Footer />

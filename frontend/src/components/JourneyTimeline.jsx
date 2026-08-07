@@ -22,7 +22,7 @@ export default function JourneyTimeline() {
             <h2 className="serif mt-3 text-5xl sm:text-6xl font-normal leading-[0.95]">From your kitchen table<br/><em className="font-light text-coral">to the operating table.</em></h2>
           </div>
           <p className="lg:col-span-5 text-cream/70 text-[15px] leading-relaxed">
-            Seven checkpoints. Six years of hand-holding. One counsellor who stays with you until you become a doctor — not just until you get admission.
+            Seven checkpoints from your first free consultation to the day you land on campus. One guidance team by your side, all the way.
           </p>
         </div>
 
