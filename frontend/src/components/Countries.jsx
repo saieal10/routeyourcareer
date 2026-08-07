@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { countries } from '../mock';
 import { ArrowUpRight } from 'lucide-react';
 
@@ -42,9 +43,15 @@ export default function Countries() {
                     <div className="text-[10px] mono uppercase tracking-widest text-cream/60">Language</div>
                     <div className="serif text-2xl">English</div>
                   </div>
-                  <a href="#" className="ml-auto inline-flex items-center gap-1 rounded-full bg-coral hover:bg-[#d94a26] text-white px-4 py-2 text-[13px] font-semibold">
-                    Explore {featured.name} <ArrowUpRight className="h-4 w-4" />
-                  </a>
+                  {featured.code === 'ge' ? (
+                    <Link to="/countries/georgia" className="ml-auto inline-flex items-center gap-1 rounded-full bg-coral hover:bg-[#d94a26] text-white px-4 py-2 text-[13px] font-semibold">
+                      Explore {featured.name} <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                  ) : (
+                    <a href="#" className="ml-auto inline-flex items-center gap-1 rounded-full bg-coral hover:bg-[#d94a26] text-white px-4 py-2 text-[13px] font-semibold">
+                      Explore {featured.name} <ArrowUpRight className="h-4 w-4" />
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

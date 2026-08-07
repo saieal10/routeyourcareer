@@ -5,6 +5,7 @@ import Hero from '../components/Hero';
 import CountryMarquee from '../components/CountryMarquee';
 import WhyChoose from '../components/WhyChoose';
 import FeaturedCountries from '../components/FeaturedCountries';
+import FeeCalculator from '../components/FeeCalculator';
 import Countries from '../components/Countries';
 import JourneyTimeline from '../components/JourneyTimeline';
 import AboutUs from '../components/AboutUs';
@@ -15,7 +16,7 @@ import FAQ from '../components/FAQ';
 import CTABanner from '../components/CTABanner';
 import Newsletter from '../components/Newsletter';
 import Footer from '../components/Footer';
-import WhatsAppFloat from '../components/WhatsAppFloat';
+import AiChatWidget from '../components/AiChatWidget';
 
 export default function Home() {
   return (
@@ -26,6 +27,7 @@ export default function Home() {
       <CountryMarquee />
       <WhyChoose />
       <FeaturedCountries />
+      <FeeCalculator />
       <Countries />
       <JourneyTimeline />
       <AboutUs />
@@ -36,7 +38,7 @@ export default function Home() {
       <CTABanner />
       <Newsletter />
       <Footer />
-      <WhatsAppFloat />
+      <AiChatWidget />
     </div>
   );
 }

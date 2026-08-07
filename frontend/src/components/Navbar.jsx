@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { brand } from '../mock';
 
 const nav = [
-  { label: 'Georgia \u00b7 Uzbekistan', href: '#featured' },
-  { label: 'All Countries', href: '#countries' },
-  { label: 'Journey', href: '#journey' },
-  { label: 'AI Stack', href: '#ai-agents' },
-  { label: 'Offices', href: '#offices' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Georgia', to: '/countries/georgia' },
+  { label: 'Uzbekistan', href: '/#featured' },
+  { label: 'Calculator', href: '/#calculator' },
+  { label: 'Journey', href: '/#journey' },
+  { label: 'AI Stack', href: '/#ai-agents' },
+  { label: 'Offices', href: '/#offices' },
+  { label: 'FAQ', href: '/#faq' },
 ];
 
 export default function Navbar() {
@@ -30,9 +32,11 @@ export default function Navbar() {
 
           <nav className="hidden lg:flex items-center gap-1">
             {nav.map((n) => (
-              <a key={n.label} href={n.href} className="px-3 py-2 text-[13px] font-medium text-ink/70 hover:text-ink link-uline">
-                {n.label}
-              </a>
+              n.to ? (
+                <Link key={n.label} to={n.to} className="px-3 py-2 text-[13px] font-medium text-ink/70 hover:text-ink link-uline">{n.label}</Link>
+              ) : (
+                <a key={n.label} href={n.href} className="px-3 py-2 text-[13px] font-medium text-ink/70 hover:text-ink link-uline">{n.label}</a>
+              )
             ))}
           </nav>
 
@@ -52,7 +56,11 @@ export default function Navbar() {
         {open && (
           <div className="lg:hidden pb-4 border-t border-ink/10 pt-2">
             {nav.map((n) => (
-              <a key={n.label} href={n.href} onClick={() => setOpen(false)} className="block px-2 py-2 text-[14px] font-medium text-ink/80">{n.label}</a>
+              n.to ? (
+                <Link key={n.label} to={n.to} onClick={() => setOpen(false)} className="block px-2 py-2 text-[14px] font-medium text-ink/80">{n.label}</Link>
+              ) : (
+                <a key={n.label} href={n.href} onClick={() => setOpen(false)} className="block px-2 py-2 text-[14px] font-medium text-ink/80">{n.label}</a>
+              )
             ))}
             <a href={brand.applyLink} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className="mt-2 block text-center rounded-full bg-ink text-cream px-4 py-2.5 text-[13px] font-semibold">Apply Online</a>
           </div>

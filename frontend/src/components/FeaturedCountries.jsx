@@ -1,8 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { spotlightGeorgia, spotlightUzbekistan, brand } from '../mock';
 import { ArrowUpRight, Check, Star } from 'lucide-react';
 
-function SpotlightCard({ data, side = 'left' }) {
+function SpotlightCard({ data, side = 'left', deepLink }) {
   const isLeft = side === 'left';
   return (
     <div className="grid lg:grid-cols-12 gap-8 items-center">
@@ -59,6 +60,11 @@ function SpotlightCard({ data, side = 'left' }) {
           <a href={brand.applyLink} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-2 rounded-full bg-ink text-cream px-5 py-3 text-[13px] font-semibold hover:bg-forest">
             Apply for {data.name} <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45"/>
           </a>
+          {deepLink && (
+            <Link to={deepLink} className="inline-flex items-center gap-2 rounded-full border border-ink/20 text-ink px-5 py-3 text-[13px] font-semibold hover:bg-ink hover:text-cream">
+              Explore MBBS in {data.name}
+            </Link>
+          )}
           <a href={brand.callbackLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-ink/20 text-ink px-5 py-3 text-[13px] font-semibold hover:bg-coral hover:text-white hover:border-coral">
             Request callback
           </a>
@@ -79,7 +85,7 @@ export default function FeaturedCountries() {
         </div>
 
         <div className="mt-16">
-          <SpotlightCard data={spotlightGeorgia} side="left" />
+          <SpotlightCard data={spotlightGeorgia} side="left" deepLink="/countries/georgia" />
         </div>
         <div className="mt-20">
           <SpotlightCard data={spotlightUzbekistan} side="right" />

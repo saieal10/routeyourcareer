@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
-import { ArrowUpRight } from 'lucide-react';
+import { Send, ArrowUpRight } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
+import { subscribeNewsletter } from '../lib/api';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
-  const submit = (e) => {
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
     e.preventDefault();
     if (!email) return;
-    toast({ title: 'Subscribed!', description: 'MBBS-abroad updates coming your way.' });
-    setEmail('');
+    try {
+      setLoading(true);
+      await subscribeNewsletter(email, 'newsletter-footer');
+      toast({ title: 'Subscribed!', description: 'MBBS-abroad updates coming your way.' });
+      setEmail('');
+    } catch (err) {
+      toast({ title: 'Could not subscribe', description: err?.response?.data?.detail || 'Please try again.' });
+    } finally {
+      setLoading(false);
+    }
   };
+
   return (
     <section className="py-20 bg-cream">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -20,8 +32,10 @@ export default function Newsletter() {
             <p className="mt-3 text-ink/60 text-[14px]">No spam. No agent handovers. Unsubscribe with one click.</p>
           </div>
           <form onSubmit={submit} className="w-full lg:w-auto flex items-center gap-2 rounded-full border border-ink/15 bg-cream/60 pl-5 pr-1.5 py-1.5 min-w-[320px]">
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="you@email.com" className="flex-1 bg-transparent py-3 text-[14px] focus:outline-none" />
-            <button type="submit" className="inline-flex items-center gap-1 rounded-full bg-ink hover:bg-forest text-cream px-4 py-2.5 text-[13px] font-semibold">Subscribe <ArrowUpRight className="h-4 w-4"/></button>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required placeholder="you@email.com" className="flex-1 bg-transparent py-3 text-[14px] focus:outline-none" />
+            <button type="submit" disabled={loading} className="inline-flex items-center gap-1 rounded-full bg-ink hover:bg-forest text-cream px-4 py-2.5 text-[13px] font-semibold disabled:opacity-60">
+              {loading ? 'Subscribing…' : 'Subscribe'} <ArrowUpRight className="h-4 w-4"/>
+            </button>
           </form>
         </div>
       </div>
