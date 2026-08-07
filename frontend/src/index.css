@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800;9..144,900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #0d1520;
+    background: #f6f2ea;
+}
+
+code, .mono {
+    font-family: 'JetBrains Mono', source-code-pro, Menlo, Monaco, Consolas, monospace;
+}
+
+@layer base {
+  :root {
+        --background: 39 41% 94%;
+        --foreground: 220 40% 8%;
+        --card: 0 0% 100%;
+        --card-foreground: 220 40% 8%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 220 40% 8%;
+        --primary: 156 50% 20%;
+        --primary-foreground: 39 41% 94%;
+        --secondary: 39 30% 90%;
+        --secondary-foreground: 220 40% 8%;
+        --muted: 39 30% 92%;
+        --muted-foreground: 220 12% 40%;
+        --accent: 12 78% 57%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 39 20% 82%;
+        --input: 39 20% 82%;
+        --ring: 156 50% 20%;
+        --radius: 0.75rem;
+    }
+  .dark {
+        --background: 220 40% 6%;
+        --foreground: 39 41% 94%;
+        --card: 220 30% 10%;
+        --card-foreground: 39 41% 94%;
+        --border: 220 20% 20%;
+        --input: 220 20% 20%;
+    }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
