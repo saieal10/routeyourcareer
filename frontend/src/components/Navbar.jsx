@@ -24,7 +24,7 @@ export default function Navbar() {
             </div>
             <div className="leading-tight">
               <div className="serif text-[19px] font-medium text-ink tracking-tight">Route Your Career</div>
-              <div className="text-[10px] mono uppercase tracking-[0.22em] text-ink/50">Doctor-led · MBBS Abroad</div>
+              <div className="text-[10px] mono uppercase tracking-[0.22em] text-ink/50">Is your pathway · MBBS Abroad</div>
             </div>
           </a>
 

@@ -12,11 +12,11 @@ export default function Footer() {
               <div className="h-10 w-10 rounded-full bg-cream text-ink grid place-items-center serif italic text-lg font-medium">r</div>
               <div>
                 <div className="serif text-[20px] font-medium text-cream">Route Your Career</div>
-                <div className="text-[10px] mono uppercase tracking-[0.22em] text-coral">Doctor-led · MBBS Abroad</div>
+                <div className="text-[10px] mono uppercase tracking-[0.22em] text-coral">Is your pathway · MBBS Abroad</div>
               </div>
             </div>
             <p className="mt-6 text-[14px] leading-relaxed max-w-md text-cream/60">
-              India’s doctor-led MBBS-abroad consultancy — born in Bengaluru, running across five South Indian offices, guiding families through nine countries.
+              Route Your Career is your pathway — a young guidance & lead-generation platform born in Bengaluru, running across five South Indian offices, guiding families through nine countries.
             </p>
             <div className="mt-8 space-y-3 text-[13px]">
               <a href={`tel:${brand.phone}`} className="flex items-center gap-3 hover:text-coral"><Phone className="h-4 w-4 text-coral" /> {brand.phoneDisplay}</a>

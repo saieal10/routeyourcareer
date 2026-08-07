@@ -4,8 +4,8 @@
 export const brand = {
   name: 'Route Your Career',
   short: 'RYC',
-  tagline: 'Your one-stop route to a global MBBS',
-  slogan: 'New startup. Old experience. Zero commission agents.',
+  tagline: 'Route Your Career is your pathway',
+  slogan: 'Your pathway to a global MBBS \u2014 new startup, old experience.',
   whatsapp: '+919326082141',
   whatsappDisplay: '+91 93260 82141',
   phone: '+919326082141',
@@ -23,7 +23,7 @@ export const brand = {
 };
 
 export const announcements = [
-  'Route Your Career — India’s one-stop route to a global MBBS',
+  'Route Your Career is your pathway — to a global MBBS',
   'Featured countries: Georgia 🇬🇪 and Uzbekistan 🇺🇿 — English-medium, NMC-recognised',
   'September 2026 intake is open — free consultation on request',
   'Five partner offices · Karnataka · Maharashtra · Kerala · Tamil Nadu · Telangana',
