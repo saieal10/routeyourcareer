@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { adminLeads, adminStats, adminNewsletter, logout, me } from '../lib/api';
 import { Copy, RefreshCw, LogOut, Users, MessageCircle, Phone, Mail, Filter, Send, Sparkles } from 'lucide-react';
@@ -39,7 +39,7 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -52,9 +52,9 @@ export default function AdminDashboard() {
     } catch (e) {
       if (e?.response?.status === 401 || e?.response?.status === 403) nav('/admin/login', { replace: true });
     } finally { setLoading(false); }
-  };
+  }, [tab, user, nav]);
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [tab, user]);
+  useEffect(() => { load(); }, [load]);
 
   const filtered = useMemo(() => {
     if (!q.trim()) return leads;
