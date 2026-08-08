@@ -12,10 +12,11 @@ function newSessionId() {
 }
 
 const STARTERS = [
-  'Tell me about MBBS in Georgia',
-  'What are Uzbekistan fees?',
-  'I got 320 in NEET — what are my options?',
-  'Where are your offices?',
+  'MBBS in Georgia — how much and how long?',
+  'Is UG in Italy really tuition-free?',
+  'I have 78% in 12th — what management options do I have?',
+  'MBA in Singapore vs UK — which is better ROI?',
+  'What can I do with a low NEET score?',
 ];
 
 export default function AiChatWidget() {
@@ -78,8 +79,8 @@ export default function AiChatWidget() {
               <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-ink"></span>
             </div>
             <div className="flex-1">
-              <div className="font-bold text-[14px]">RYC AI Assistant</div>
-              <div className="text-[10px] mono uppercase tracking-widest text-coral">Online · powered by Claude</div>
+              <div className="font-bold text-[14px]">RYC Guidance Bot</div>
+              <div className="text-[10px] mono uppercase tracking-widest text-coral">MBBS + Management · all courses</div>
             </div>
             <button onClick={() => setOpen(false)} className="text-cream/80 hover:text-cream"><X className="h-4 w-4"/></button>
           </div>
@@ -140,7 +141,7 @@ export default function AiChatWidget() {
           <MessageCircle className="h-5 w-5" /> WhatsApp us
         </a>
         <button onClick={() => setOpen(!open)} className="inline-flex items-center gap-2 rounded-full bg-ink hover:bg-forest text-cream px-4 py-3 text-[13px] font-semibold shadow-xl">
-          {open ? <><X className="h-4 w-4"/> Close chat</> : <><Bot className="h-4 w-4"/> Chat with RYC AI</>}
+          {open ? <><X className="h-4 w-4"/> Close guidance</> : <><Bot className="h-4 w-4"/> Guidance Bot · all courses</>}
         </button>
       </div>
     </>

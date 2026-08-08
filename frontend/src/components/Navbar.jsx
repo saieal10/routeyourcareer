@@ -4,11 +4,12 @@ import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { brand } from '../mock';
 
 const nav = [
+  { label: 'MBBS', href: '/#featured' },
+  { label: 'Management', href: '/#management' },
+  { label: 'Italy', href: '/#italy' },
   { label: 'Georgia', to: '/countries/georgia' },
-  { label: 'Uzbekistan', href: '/#featured' },
   { label: 'Calculator', href: '/#calculator' },
-  { label: 'Journey', href: '/#journey' },
-  { label: 'AI Stack', href: '/#ai-agents' },
+  { label: 'Blog', href: '/#blog' },
   { label: 'States', href: '/#offices' },
   { label: 'FAQ', href: '/#faq' },
 ];
@@ -19,16 +20,16 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 bg-cream/85 backdrop-blur-md border-b border-ink/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between py-4">
-          <a href="#top" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <div className="relative">
               <div className="h-10 w-10 rounded-full bg-ink text-cream grid place-items-center serif italic text-lg font-medium">r</div>
               <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-coral ring-2 ring-cream" />
             </div>
             <div className="leading-tight">
               <div className="serif text-[19px] font-medium text-ink tracking-tight">Route Your Career</div>
-              <div className="text-[10px] mono uppercase tracking-[0.22em] text-ink/50">Is your pathway · MBBS Abroad</div>
+              <div className="text-[10px] mono uppercase tracking-[0.22em] text-ink/50">Your pathway · MBBS + Management</div>
             </div>
-          </a>
+          </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
             {nav.map((n) => (

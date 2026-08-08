@@ -1,38 +1,68 @@
 import React, { useState } from 'react';
-import { countries, brand } from '../mock';
+import { countries, managementCountries, brand } from '../mock';
 import { Calculator, ArrowUpRight, IndianRupee, Clock, GraduationCap, Sparkles } from 'lucide-react';
 import { submitLead } from '../lib/api';
 import { toast } from '../hooks/use-toast';
 
 const BASE = {
-  ge: { name: 'Georgia', low: 20, high: 28, living: 5, years: 6 },
-  uz: { name: 'Uzbekistan', low: 16, high: 20, living: 3, years: 6 },
-  ie: { name: 'Ireland', low: 35, high: 45, living: 12, years: 5 },
-  eg: { name: 'Egypt', low: 18, high: 24, living: 3, years: 6 },
-  md: { name: 'Moldova', low: 15, high: 19, living: 4, years: 6 },
-  ru: { name: 'Russia', low: 17, high: 25, living: 4, years: 6 },
-  kz: { name: 'Kazakhstan', low: 18, high: 22, living: 4, years: 5 },
-  kg: { name: 'Kyrgyzstan', low: 15, high: 19, living: 3, years: 5 },
-  np: { name: 'Nepal', low: 35, high: 45, living: 5, years: 5.5 },
+  // MBBS
+  ge: { name: 'Georgia', track: 'mbbs', low: 20, high: 28, living: 5, years: 6 },
+  uz: { name: 'Uzbekistan', track: 'mbbs', low: 16, high: 20, living: 3, years: 6 },
+  ie: { name: 'Ireland', track: 'mbbs', low: 35, high: 45, living: 12, years: 5 },
+  eg: { name: 'Egypt', track: 'mbbs', low: 18, high: 24, living: 3, years: 6 },
+  md: { name: 'Moldova', track: 'mbbs', low: 15, high: 19, living: 4, years: 6 },
+  ru: { name: 'Russia', track: 'mbbs', low: 17, high: 25, living: 4, years: 6 },
+  kz: { name: 'Kazakhstan', track: 'mbbs', low: 18, high: 22, living: 4, years: 5 },
+  kg: { name: 'Kyrgyzstan', track: 'mbbs', low: 15, high: 19, living: 3, years: 5 },
+  np: { name: 'Nepal', track: 'mbbs', low: 35, high: 45, living: 5, years: 5.5 },
+  // Management
+  it: { name: 'Italy', track: 'management', low: 0, high: 2, living: 7, years: 2, note: 'Zero-tuition public unis' },
+  de: { name: 'Germany', track: 'management', low: 0, high: 10, living: 9, years: 2 },
+  sg: { name: 'Singapore', track: 'management', low: 20, high: 50, living: 12, years: 1 },
+  us: { name: 'USA', track: 'management', low: 30, high: 55, living: 15, years: 2 },
+  gb: { name: 'UK', track: 'management', low: 20, high: 40, living: 14, years: 1 },
+  au: { name: 'Australia', track: 'management', low: 22, high: 40, living: 13, years: 2 },
+  es: { name: 'Spain', track: 'management', low: 15, high: 30, living: 10, years: 1 },
+  ae: { name: 'UAE', track: 'management', low: 12, high: 30, living: 12, years: 2 },
 };
 
 function eligibilityFor(code, score) {
   const s = Number(score) || 0;
+  const b = BASE[code];
+  const isMgmt = b?.track === 'management';
+  if (isMgmt) {
+    if (s >= 85) return { tag: 'Top-tier', color: 'bg-emerald-100 text-emerald-800', note: `Strong profile for ${b.name}. Aim for QS-ranked and top private universities.` };
+    if (s >= 70) return { tag: 'Strong fit', color: 'bg-teal-100 text-teal-800', note: `Very good shortlist across ${b.name} — public and private universities are open.` };
+    if (s >= 55) return { tag: 'Qualifying', color: 'bg-amber-100 text-amber-900', note: `Solid fit for ${b.name}. We'll match you to admission-friendly programmes.` };
+    if (s > 0) return { tag: 'Foundation-first', color: 'bg-rose-100 text-rose-800', note: 'Consider a foundation / pathway programme before direct UG / PG.' };
+    return { tag: '—', color: 'bg-slate-100 text-slate-700', note: 'Enter your 12th % or UG GPA (out of 100) to see personalised eligibility.' };
+  }
   if (s >= 500) return { tag: 'Top-tier', color: 'bg-emerald-100 text-emerald-800', note: 'Eligible everywhere — you can aim for premium picks like Ireland, top Georgia unis.' };
-  if (s >= 300) return { tag: 'Strong fit', color: 'bg-teal-100 text-teal-800', note: `Excellent shortlist across ${BASE[code].name} — multiple partner universities open.` };
-  if (s >= 137) return { tag: 'Qualifying', color: 'bg-amber-100 text-amber-900', note: `NEET-qualified. ${BASE[code].name} accepts qualifying scores at most partner universities.` };
-  if (s > 0) return { tag: 'Retake advised', color: 'bg-rose-100 text-rose-800', note: 'A qualifying NEET score (137+) is mandatory. We can guide you on a re-attempt strategy.' };
+  if (s >= 300) return { tag: 'Strong fit', color: 'bg-teal-100 text-teal-800', note: `Excellent shortlist across ${b.name} — multiple partner universities open.` };
+  if (s >= 137) return { tag: 'Qualifying', color: 'bg-amber-100 text-amber-900', note: `NEET-qualified. ${b.name} accepts qualifying scores at most partner universities.` };
+  if (s > 0) return { tag: 'Retake advised', color: 'bg-rose-100 text-rose-800', note: 'A qualifying NEET score (137+) is mandatory — or consider a pivot to Management.' };
   return { tag: '—', color: 'bg-slate-100 text-slate-700', note: 'Enter your NEET score to see personalised eligibility.' };
 }
 
+const ALL_OPTIONS = [
+  ...([{ code: 'ge' },{ code: 'uz' },{ code: 'ie' },{ code: 'eg' },{ code: 'md' },{ code: 'ru' },{ code: 'kz' },{ code: 'kg' },{ code: 'np' }]),
+  ...([{ code: 'it' },{ code: 'de' },{ code: 'sg' },{ code: 'us' },{ code: 'gb' },{ code: 'au' },{ code: 'es' },{ code: 'ae' }]),
+];
+
 export default function FeeCalculator() {
   const [code, setCode] = useState('ge');
+  const [track, setTrack] = useState('mbbs');
   const [score, setScore] = useState(400);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [sending, setSending] = useState(false);
 
   const c = BASE[code];
+  const isMgmt = c.track === 'management';
+  const scoreLabel = isMgmt ? 'Your 12th % / UG GPA' : 'Your NEET score';
+  const scoreMax = isMgmt ? 100 : 720;
+  const scoreDefault = isMgmt ? 75 : 400;
+  const currentTrackList = track === 'mbbs' ? countries : managementCountries;
   const tuitionLow = c.low, tuitionHigh = c.high;
   const livingTotal = c.living * c.years;
   const totalLow = tuitionLow + livingTotal;
@@ -80,9 +110,17 @@ export default function FeeCalculator() {
           {/* Controls */}
           <div className="lg:col-span-5 rounded-3xl bg-white border border-ink/10 p-6 lg:p-8">
             <div>
+              <label className="text-[10px] mono uppercase tracking-widest text-ink/60">Track</label>
+              <div className="mt-2 inline-flex rounded-full bg-cream/60 border border-ink/10 p-1">
+                {[{k:'mbbs', l:'MBBS'}, {k:'management', l:'Management'}].map(t => (
+                  <button key={t.k} onClick={() => { setTrack(t.k); const first = (t.k==='mbbs'?countries:managementCountries)[0]; setCode(first.code); setScore(t.k==='management' ? 75 : 400); }} className={`px-4 py-1.5 rounded-full text-[12px] font-semibold ${track===t.k ? 'bg-ink text-cream' : 'text-ink/60 hover:text-ink'}`}>{t.l}</button>
+                ))}
+              </div>
+            </div>
+            <div className="mt-4">
               <label className="text-[10px] mono uppercase tracking-widest text-ink/60">Preferred country</label>
               <div className="mt-3 grid grid-cols-3 gap-2">
-                {countries.map((cc) => (
+                {currentTrackList.map((cc) => (
                   <button key={cc.code} onClick={() => setCode(cc.code)} className={`group text-left rounded-2xl border p-3 transition-all ${code===cc.code ? 'bg-ink text-cream border-ink' : 'bg-cream/60 border-ink/10 hover:border-ink/30'}`}>
                     <img src={cc.flag} alt="" className="h-4 w-6 rounded-sm ring-1 ring-black/10" />
                     <div className={`mt-2 font-semibold text-[13px] ${code===cc.code ? 'text-cream' : 'text-ink'}`}>{cc.name}</div>
@@ -94,11 +132,15 @@ export default function FeeCalculator() {
 
             <div className="mt-6">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] mono uppercase tracking-widest text-ink/60">Your NEET score</label>
+                <label className="text-[10px] mono uppercase tracking-widest text-ink/60">{scoreLabel}</label>
                 <span className="serif text-[22px] font-medium text-ink">{score}</span>
               </div>
-              <input type="range" min="0" max="720" step="1" value={score} onChange={(e) => setScore(Number(e.target.value))} className="w-full mt-2 accent-[#e85d3a]" />
-              <div className="flex justify-between text-[10px] mono uppercase tracking-widest text-ink/40 mt-1"><span>0</span><span>137 qualifying</span><span>720</span></div>
+              <input type="range" min="0" max={scoreMax} step="1" value={score} onChange={(e) => setScore(Number(e.target.value))} className="w-full mt-2 accent-[#e85d3a]" />
+              <div className="flex justify-between text-[10px] mono uppercase tracking-widest text-ink/40 mt-1">
+                <span>0</span>
+                <span>{isMgmt ? '55 min. eligible' : '137 qualifying'}</span>
+                <span>{scoreMax}</span>
+              </div>
             </div>
 
             <form onSubmit={sendMe} className="mt-6 pt-6 border-t border-ink/10">

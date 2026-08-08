@@ -3,14 +3,16 @@ import AnnouncementBar from '../components/AnnouncementBar';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import CountryMarquee from '../components/CountryMarquee';
+import Programs from '../components/Programs';
 import WhyChoose from '../components/WhyChoose';
 import FeaturedCountries from '../components/FeaturedCountries';
+import ManagementCountries from '../components/ManagementCountries';
+import ItalySpotlight from '../components/ItalySpotlight';
 import FeeCalculator from '../components/FeeCalculator';
 import Countries from '../components/Countries';
-import JourneyTimeline from '../components/JourneyTimeline';
 import AboutUs from '../components/AboutUs';
-import AiAgents from '../components/AiAgents';
 import Comparison from '../components/Comparison';
+import Blogs from '../components/Blogs';
 import Offices from '../components/Offices';
 import FAQ from '../components/FAQ';
 import CTABanner from '../components/CTABanner';
@@ -25,14 +27,16 @@ export default function Home() {
       <Navbar />
       <Hero />
       <CountryMarquee />
+      <Programs />
       <WhyChoose />
       <FeaturedCountries />
+      <ManagementCountries />
+      <ItalySpotlight />
       <FeeCalculator />
       <Countries />
-      <JourneyTimeline />
       <AboutUs />
-      <AiAgents />
       <Comparison />
+      <Blogs />
       <Offices />
       <FAQ />
       <CTABanner />

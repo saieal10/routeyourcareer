@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { ArrowUpRight, PhoneCall } from 'lucide-react';
 import { brand } from '../mock';
 
-const rotatingCountries = ['Georgia', 'Uzbekistan', 'Ireland', 'Russia', 'Egypt', 'Moldova'];
+const rotating = ['Georgia', 'Uzbekistan', 'Italy', 'Germany', 'Singapore', 'Australia', 'USA', 'UK'];
 
 export default function Hero() {
   const [wordIdx, setWordIdx] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setWordIdx((i) => (i + 1) % rotatingCountries.length), 1900);
+    const t = setInterval(() => setWordIdx((i) => (i + 1) % rotating.length), 1800);
     return () => clearInterval(t);
   }, []);
   return (
@@ -19,18 +19,18 @@ export default function Hero() {
         <div className="lg:col-span-7 fade-up">
           <div className="flex items-center gap-3 text-[11px] mono uppercase tracking-widest text-ink/70">
             <span className="h-2 w-2 rounded-full bg-coral animate-pulse"></span>
-            New startup / old experience
+            Two tracks / MBBS + Management
             <span className="h-px w-6 bg-ink/20"></span>
             Sep 2026 intake open
           </div>
 
           <h1 className="mt-6 serif text-[52px] sm:text-[74px] lg:text-[86px] font-normal leading-[0.95] text-ink">
-            Find your <em className="font-light">dream</em><br/>
-            MBBS university
+            Your <em className="font-light">pathway</em> to<br/>
+            a global career
             <span className="block mt-2">
               in <span className="relative inline-block text-coral">
                 <span className="ticker-viewport italic font-medium">
-                  <span key={wordIdx} className="block leading-[1.1] fade-up">{rotatingCountries[wordIdx]}</span>
+                  <span key={wordIdx} className="block leading-[1.1] fade-up">{rotating[wordIdx]}</span>
                 </span>
                 <svg className="absolute -bottom-2 left-0 w-full" height="14" viewBox="0 0 200 14" fill="none"><path d="M2 8 Q 50 -2 100 8 T 198 8" stroke="#e85d3a" strokeWidth="3" strokeLinecap="round" fill="none"/></svg>
               </span>.
@@ -38,7 +38,7 @@ export default function Hero() {
           </h1>
 
           <p className="mt-8 text-ink/70 text-[16px] sm:text-[17px] max-w-xl leading-relaxed">
-            Route Your Career helps Indian students secure MBBS admission across all 9 partner countries — with the strongest expertise and priority focus on <b className="text-forest">Georgia</b> and <b className="text-forest">Uzbekistan</b>. Free consultation on request.
+            Route Your Career is a future-planning platform for Indian students. Two full tracks — <b className="text-forest">MBBS abroad</b> (Georgia, Uzbekistan + 7 more) and <b className="text-forest">Management abroad</b> (USA, UK, Australia, Germany, Italy, Spain, UAE, Singapore). Italy: tuition-free UG + PG. Free consultation on request.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -55,7 +55,7 @@ export default function Hero() {
           </div>
 
           <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3">
-            {[{k:'9', v:'Countries covered'}, {k:'2', v:'Priority: Georgia / Uzbekistan'}, {k:'5', v:'Indian states we serve'}, {k:'₹15–45L', v:'Total MBBS fee range'}].map((s) => (
+            {[{k:'17', v:'Countries across MBBS + Mgmt'}, {k:'₹0', v:'Italy public UG + PG tuition'}, {k:'5', v:'Indian states we serve'}, {k:'2', v:'Priority MBBS: GE / UZ'}].map((s) => (
               <div key={s.v} className="flex items-baseline gap-2">
                 <span className="serif text-[24px] font-medium text-ink">{s.k}</span>
                 <span className="uppercase mono tracking-widest text-[10px] text-ink/60">{s.v}</span>
@@ -66,31 +66,27 @@ export default function Hero() {
 
         <div className="lg:col-span-5">
           <div className="grid grid-cols-6 gap-3">
-            <a href={brand.applyLink} target="_blank" rel="noreferrer" className="col-span-3 group rot-hover">
+            <a href="#featured" className="col-span-3 group rot-hover">
               <div className="relative rounded-3xl overflow-hidden aspect-[4/5] bg-forest">
-                <img src="https://images.unsplash.com/photo-1603350576276-24747f7bbf40?crop=entropy&cs=srgb&fm=jpg&w=900&q=85" alt="Georgia" className="absolute inset-0 w-full h-full object-cover opacity-90" />
+                <img src="https://images.unsplash.com/photo-1603350576276-24747f7bbf40?crop=entropy&cs=srgb&fm=jpg&w=900&q=85" alt="MBBS" className="absolute inset-0 w-full h-full object-cover opacity-90" />
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/20 to-transparent" />
-                <div className="absolute top-4 left-4 inline-flex items-center gap-2 rounded-full bg-coral text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1">
-                  <img src="https://flagcdn.com/w20/ge.png" alt="" className="h-3 w-4 rounded-sm"/> Priority
-                </div>
+                <div className="absolute top-4 left-4 inline-flex items-center gap-2 rounded-full bg-coral text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1">MBBS Track</div>
                 <div className="absolute bottom-4 left-4 right-4 text-cream">
-                  <div className="text-[10px] mono uppercase tracking-widest text-coral">MBBS in</div>
-                  <div className="serif text-4xl font-light leading-none mt-1">Georgia</div>
-                  <div className="mt-2 text-[12px] text-cream/80">₹20–28L · English-medium</div>
+                  <div className="text-[10px] mono uppercase tracking-widest text-coral">Priority</div>
+                  <div className="serif text-3xl font-light leading-none mt-1">Georgia + Uzbekistan</div>
+                  <div className="mt-2 text-[12px] text-cream/80">₹15–28L · English-medium</div>
                 </div>
               </div>
             </a>
-            <a href={brand.applyLink} target="_blank" rel="noreferrer" className="col-span-3 group rot-hover">
+            <a href="#italy" className="col-span-3 group rot-hover">
               <div className="relative rounded-3xl overflow-hidden aspect-[4/5] bg-ink">
-                <img src="https://images.unsplash.com/photo-1664602078796-68ee76b3fc59?crop=entropy&cs=srgb&fm=jpg&w=900&q=85" alt="Uzbekistan" className="absolute inset-0 w-full h-full object-cover opacity-90" />
+                <img src="https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=900&q=80" alt="Italy" className="absolute inset-0 w-full h-full object-cover opacity-90" />
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/20 to-transparent" />
-                <div className="absolute top-4 left-4 inline-flex items-center gap-2 rounded-full bg-coral text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1">
-                  <img src="https://flagcdn.com/w20/uz.png" alt="" className="h-3 w-4 rounded-sm"/> Priority
-                </div>
+                <div className="absolute top-4 left-4 inline-flex items-center gap-2 rounded-full bg-coral text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1">Zero-fee</div>
                 <div className="absolute bottom-4 left-4 right-4 text-cream">
-                  <div className="text-[10px] mono uppercase tracking-widest text-coral">MBBS in</div>
-                  <div className="serif text-4xl font-light leading-none mt-1">Uzbekistan</div>
-                  <div className="mt-2 text-[12px] text-cream/80">₹16–20L · English-medium</div>
+                  <div className="text-[10px] mono uppercase tracking-widest text-coral">Management</div>
+                  <div className="serif text-3xl font-light leading-none mt-1">UG + PG in Italy</div>
+                  <div className="mt-2 text-[12px] text-cream/80">Tuition free · English-medium</div>
                 </div>
               </div>
             </a>
