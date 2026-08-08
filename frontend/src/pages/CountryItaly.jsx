@@ -1,0 +1,236 @@
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { italyData } from '../data/italy';
+import { brand } from '../mock';
+import { ArrowUpRight, Check, ArrowLeft, MapPin, GraduationCap, Calendar, FileText, IndianRupee, PhoneCall, Sparkles, Building2 } from 'lucide-react';
+import Navbar from '../components/Navbar';
+import AnnouncementBar from '../components/AnnouncementBar';
+import Footer from '../components/Footer';
+import AiChatWidget from '../components/AiChatWidget';
+
+export default function CountryItaly() {
+  const d = italyData;
+  const nav = useNavigate();
+  return (
+    <div className="min-h-screen bg-cream text-ink">
+      <AnnouncementBar />
+      <Navbar />
+
+      {/* HERO */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={d.hero} alt={d.name} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-ink/30" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-24 text-cream">
+          <button onClick={() => nav(-1)} className="inline-flex items-center gap-1 text-[12px] mono uppercase tracking-widest text-cream/70 hover:text-cream"><ArrowLeft className="h-3.5 w-3.5"/> Back</button>
+          <div className="mt-6 flex items-center gap-2">
+            <img src={d.flag} alt="" className="h-6 w-9 rounded-sm ring-1 ring-white/20"/>
+            <div className="text-[11px] mono uppercase tracking-widest text-coral">UG + PG in {d.name} · Zero-tuition star</div>
+          </div>
+          <h1 className="mt-4 serif text-5xl sm:text-7xl lg:text-8xl font-normal leading-[0.9] max-w-4xl">{d.tagline}</h1>
+          <p className="mt-6 text-cream/85 text-[16px] max-w-2xl leading-relaxed">{d.intro}</p>
+          <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 max-w-4xl">
+            {d.quickFacts.map(x => (
+              <div key={x.k} className="rounded-2xl bg-white/5 border border-cream/15 backdrop-blur px-3 py-3">
+                <div className="text-[10px] mono uppercase tracking-widest text-cream/50">{x.k}</div>
+                <div className="mt-1 serif text-[18px] font-medium">{x.v}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a href={brand.applyLink} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-2 rounded-full bg-coral hover:bg-[#d94a26] text-white px-6 py-3.5 text-[14px] font-bold">
+              Apply for Italy <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45"/>
+            </a>
+            <a href={brand.callbackLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-cream/30 text-cream px-6 py-3.5 text-[14px] font-semibold hover:bg-cream/10">
+              <PhoneCall className="h-4 w-4"/> Request Italy callback
+            </a>
+            <Link to="/#calculator" className="inline-flex items-center gap-2 rounded-full bg-cream text-ink px-6 py-3.5 text-[14px] font-semibold hover:bg-white">Use fee calculator</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* GALLERY */}
+      <section className="py-14 bg-cream">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-3 gap-3">
+          {d.gallery.map((g, i) => (
+            <img key={i} src={g} alt="" className={`rounded-3xl object-cover ${i === 1 ? 'aspect-[3/4]' : 'aspect-[4/3]'}`} />
+          ))}
+        </div>
+      </section>
+
+      {/* LIVING COST PER CITY */}
+      <section className="py-24 bg-sand grain-bg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-12 gap-8 items-end">
+            <div className="lg:col-span-7">
+              <div className="text-[11px] mono uppercase tracking-widest text-coral flex items-center gap-2"><IndianRupee className="h-3.5 w-3.5"/> Living cost by city</div>
+              <h2 className="serif mt-3 text-4xl sm:text-5xl font-normal leading-[0.95] text-ink">Zero tuition. <em className="font-light">Only living to plan.</em></h2>
+            </div>
+            <p className="lg:col-span-5 text-ink/70 text-[15px] leading-relaxed">Yearly living budget in the top student cities. Housing, food, transport and misc — real ranges we quote to parents.</p>
+          </div>
+          <div className="mt-10 rounded-3xl border border-ink/10 bg-white overflow-hidden">
+            <div className="grid grid-cols-6 px-6 py-4 bg-ink text-cream text-[10px] mono uppercase tracking-widest">
+              <div>City</div><div className="text-right">Housing</div><div className="text-right">Food</div><div className="text-right">Transport</div><div className="text-right">Misc</div><div className="text-right text-coral">Total / yr</div>
+            </div>
+            <div className="divide-y divide-ink/10">
+              {d.fees.livingByCity.map(r => (
+                <div key={r.city} className="grid grid-cols-6 px-6 py-4 items-center hover:bg-cream/40">
+                  <div className="serif text-[20px] font-medium text-ink">{r.city}</div>
+                  <div className="text-right text-[13px] text-ink/80">{r.housing}</div>
+                  <div className="text-right text-[13px] text-ink/80">{r.food}</div>
+                  <div className="text-right text-[13px] text-ink/80">{r.transport}</div>
+                  <div className="text-right text-[13px] text-ink/80">{r.misc}</div>
+                  <div className="text-right serif text-[18px] font-medium text-coral">{r.total}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ELIGIBILITY */}
+      <section className="py-24 bg-cream">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-5">
+            <div className="text-[11px] mono uppercase tracking-widest text-coral">Eligibility</div>
+            <h2 className="serif mt-3 text-4xl sm:text-5xl font-normal leading-[0.95] text-ink">Who can apply.</h2>
+            <p className="mt-5 text-ink/70 text-[15px] leading-relaxed max-w-md">Italy welcomes both fresh Class-XII students (UG) and graduates (PG). Here’s what our counsellors check first.</p>
+          </div>
+          <div className="lg:col-span-7">
+            <div className="divide-y divide-ink/10 border-y border-ink/10">
+              {d.eligibility.map((e, i) => (
+                <div key={e.k} className="py-5 flex items-start gap-4">
+                  <div className="edit-num text-3xl w-12 shrink-0">{String(i+1).padStart(2,'0')}</div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-ink text-[16px]">{e.k}</div>
+                    <p className="text-[14px] text-ink/70 mt-1 leading-relaxed">{e.v}</p>
+                  </div>
+                  <Check className="h-5 w-5 text-forest shrink-0 mt-1"/>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SCHOLARSHIPS */}
+      <section className="py-24 bg-ink text-cream">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="max-w-3xl">
+            <div className="text-[11px] mono uppercase tracking-widest text-coral flex items-center gap-2"><Sparkles className="h-3.5 w-3.5"/> Scholarships</div>
+            <h2 className="serif mt-3 text-4xl sm:text-5xl font-normal leading-[0.95]">Free tuition,<br/><em className="font-light text-coral">and often free living too.</em></h2>
+            <p className="mt-5 text-cream/70 text-[15px] leading-relaxed">Four scholarship paths our counsellors help every Italy applicant apply to. Most Indian middle-class families qualify for at least one.</p>
+          </div>
+          <div className="mt-10 grid sm:grid-cols-2 gap-5">
+            {d.scholarships.map(s => (
+              <div key={s.name} className="rounded-3xl border border-cream/15 bg-white/5 backdrop-blur p-6">
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] mono uppercase tracking-widest text-coral border border-coral/40 rounded-full px-2 py-0.5">{s.tag}</div>
+                </div>
+                <h3 className="mt-4 serif text-[24px] font-medium">{s.name}</h3>
+                <p className="mt-2 text-[14px] text-cream/80 leading-relaxed">{s.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* UNIVERSITIES */}
+      <section className="py-24 bg-cream">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-wrap justify-between items-end gap-4">
+            <div className="max-w-2xl">
+              <div className="text-[11px] mono uppercase tracking-widest text-coral flex items-center gap-2"><Building2 className="h-3.5 w-3.5"/> Partner universities</div>
+              <h2 className="serif mt-3 text-4xl sm:text-5xl font-normal leading-[0.95] text-ink">Six campuses<br/><em className="font-light">we short-list from.</em></h2>
+            </div>
+            <a href={brand.callbackLink} target="_blank" rel="noreferrer" className="text-ink font-semibold text-[14px] link-uline">Which one is right for me? →</a>
+          </div>
+          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {d.universities.map((u, i) => (
+              <div key={u.name} className="group relative rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift">
+                <div className="aspect-[16/10] overflow-hidden">
+                  <img src={u.img} alt={u.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-[11px] mono uppercase tracking-widest text-ink/60">
+                      <MapPin className="h-3.5 w-3.5 text-coral"/> {u.city} · Est. {u.est}
+                    </div>
+                    <div className="text-[10px] mono uppercase tracking-widest text-ink/40">{String(i+1).padStart(2,'0')} / 06</div>
+                  </div>
+                  <h3 className="mt-3 serif text-[22px] font-medium text-ink leading-tight">{u.name}</h3>
+                  <p className="mt-2 text-[13px] text-ink/70 leading-relaxed">{u.notes}</p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] mono uppercase tracking-widest text-ink/40">Fees</div>
+                      <div className="serif text-[18px] font-medium text-ink">{u.fee}</div>
+                    </div>
+                    <a href={brand.applyLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full bg-ink text-cream px-4 py-2 text-[12px] font-semibold hover:bg-forest">Apply <ArrowUpRight className="h-3.5 w-3.5"/></a>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* VISA STEPS + DOCS */}
+      <section className="py-24 bg-sand grain-bg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-7">
+            <div className="text-[11px] mono uppercase tracking-widest text-coral flex items-center gap-2"><Calendar className="h-3.5 w-3.5"/> Visa & timeline</div>
+            <h2 className="serif mt-3 text-4xl sm:text-5xl font-normal leading-[0.95] text-ink">From <em className="font-light">Universitaly</em> to <em className="font-light">Milano</em> — 5 steps.</h2>
+            <div className="mt-8 relative pl-8">
+              <div className="absolute left-3 top-2 bottom-2 w-px bg-ink/15"/>
+              {d.visaSteps.map(t => (
+                <div key={t.title} className="relative pb-8 last:pb-0">
+                  <div className="absolute -left-8 top-1.5 h-4 w-4 rounded-full bg-coral text-coral"><span className="pulse-ring"/></div>
+                  <div className="text-[10px] mono uppercase tracking-widest text-coral">{t.m}</div>
+                  <div className="serif text-[22px] font-medium text-ink mt-1">{t.title}</div>
+                  <p className="text-[14px] text-ink/70 mt-1 leading-relaxed max-w-xl">{t.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="lg:col-span-5">
+            <div className="rounded-3xl bg-ink text-cream p-6 lg:p-8 sticky top-28">
+              <div className="text-[11px] mono uppercase tracking-widest text-coral flex items-center gap-2"><FileText className="h-3.5 w-3.5"/> Document checklist</div>
+              <h3 className="serif mt-2 text-[26px] font-medium">What to keep ready.</h3>
+              <ul className="mt-5 space-y-2">
+                {d.documents.map((doc) => (
+                  <li key={doc} className="flex items-start gap-2 text-[13px] text-cream/80"><Check className="h-4 w-4 text-coral shrink-0 mt-0.5"/> {doc}</li>
+                ))}
+              </ul>
+              <a href={brand.applyLink} target="_blank" rel="noreferrer" className="mt-6 group inline-flex items-center gap-2 rounded-full bg-coral hover:bg-[#d94a26] text-white px-5 py-3 text-[13px] font-bold w-full justify-center">
+                Apply Online <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45"/>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-20 bg-cream">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="text-[11px] mono uppercase tracking-widest text-coral text-center">Frequently asked</div>
+          <h2 className="serif mt-3 text-4xl sm:text-5xl font-normal leading-[0.95] text-ink text-center">Italy — <em className="font-light">the questions</em>.</h2>
+          <div className="mt-10 space-y-3">
+            {d.faqs.map((f, i) => (
+              <details key={f.q} open={i===0} className="group rounded-2xl border border-ink/10 bg-white p-5">
+                <summary className="cursor-pointer list-none flex items-start gap-4">
+                  <span className="edit-num text-xl w-8 shrink-0">{String(i+1).padStart(2,'0')}</span>
+                  <span className="flex-1 serif text-[20px] font-medium text-ink">{f.q}</span>
+                </summary>
+                <p className="mt-3 pl-12 text-[14px] text-ink/70 leading-relaxed">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+      <AiChatWidget />
+    </div>
+  );
+}

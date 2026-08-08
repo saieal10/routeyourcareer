@@ -48,9 +48,9 @@ export default function Countries() {
                       Explore {featured.name} <ArrowUpRight className="h-4 w-4" />
                     </Link>
                   ) : (
-                    <a href="#" className="ml-auto inline-flex items-center gap-1 rounded-full bg-coral hover:bg-[#d94a26] text-white px-4 py-2 text-[13px] font-semibold">
+                    <Link to={`/country/${featured.code}`} className="ml-auto inline-flex items-center gap-1 rounded-full bg-coral hover:bg-[#d94a26] text-white px-4 py-2 text-[13px] font-semibold">
                       Explore {featured.name} <ArrowUpRight className="h-4 w-4" />
-                    </a>
+                    </Link>
                   )}
                 </div>
               </div>
@@ -60,7 +60,7 @@ export default function Countries() {
           <div className="lg:col-span-5">
             <div className="grid grid-cols-2 gap-3">
               {countries.map((c, i) => (
-                <button key={c.code} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} className={`group text-left rounded-2xl border p-4 transition-all ${active===i ? 'bg-ink text-cream border-ink' : 'bg-white/70 border-ink/10 hover:border-ink/30'}`}>
+                <button key={c.code} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onClick={() => { if (c.code === 'ge') { window.location.href = '/countries/georgia'; } else { window.location.href = `/country/${c.code}`; } }} className={`group text-left rounded-2xl border p-4 transition-all ${active===i ? 'bg-ink text-cream border-ink' : 'bg-white/70 border-ink/10 hover:border-ink/30'}`}>
                   <div className="flex items-center justify-between">
                     <img src={c.flag} alt="" className="h-4 w-6 rounded-sm ring-1 ring-black/10" />
                     <span className={`text-[10px] mono uppercase tracking-widest ${active===i ? 'text-coral' : 'text-ink/40'}`}>{String(i+1).padStart(2,'0')}</span>

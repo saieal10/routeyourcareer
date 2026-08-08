@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { blogs, brand } from '../mock';
 import { Clock, ArrowUpRight, BookOpen } from 'lucide-react';
 
@@ -26,7 +27,7 @@ export default function Blogs() {
 
         <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((b, i) => (
-            <a key={b.slug} href={brand.callbackLink} target="_blank" rel="noreferrer" className="group rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift block">
+            <Link key={b.slug} to={`/blog/${b.slug}`} className="group rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift block">
               <div className="aspect-[16/10] overflow-hidden">
                 <img src={b.img} alt={b.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
               </div>
@@ -39,7 +40,7 @@ export default function Blogs() {
                 <p className="mt-2 text-[13px] text-ink/70 leading-relaxed">{b.excerpt}</p>
                 <div className="mt-4 inline-flex items-center gap-1 text-ink group-hover:text-coral font-semibold text-[13px]">Read the story <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45"/></div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

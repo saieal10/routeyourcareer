@@ -55,7 +55,7 @@ export default function Hero() {
           </div>
 
           <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3">
-            {[{k:'17', v:'Countries across MBBS + Mgmt'}, {k:'₹0', v:'Italy public UG + PG tuition'}, {k:'5', v:'Indian states we serve'}, {k:'2', v:'Priority MBBS: GE / UZ'}].map((s) => (
+            {[{k:'17', v:'Countries across MBBS + Mgmt'}, {k:'₹0', v:'Italy public UG + PG tuition'}, {k:'5', v:'Indian states we serve'}].map((s) => (
               <div key={s.v} className="flex items-baseline gap-2">
                 <span className="serif text-[24px] font-medium text-ink">{s.k}</span>
                 <span className="uppercase mono tracking-widest text-[10px] text-ink/60">{s.v}</span>

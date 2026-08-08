@@ -6,12 +6,12 @@ import { brand } from '../mock';
 const nav = [
   { label: 'MBBS', href: '/#featured' },
   { label: 'Management', href: '/#management' },
-  { label: 'Italy', href: '/#italy' },
+  { label: 'Italy', to: '/countries/italy' },
   { label: 'Georgia', to: '/countries/georgia' },
+  { label: 'Quiz', to: '/quiz' },
   { label: 'Calculator', href: '/#calculator' },
   { label: 'Blog', href: '/#blog' },
   { label: 'States', href: '/#offices' },
-  { label: 'FAQ', href: '/#faq' },
 ];
 
 export default function Navbar() {

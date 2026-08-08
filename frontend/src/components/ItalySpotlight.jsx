@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { italySpotlight, brand } from '../mock';
 import { ArrowUpRight, Check, Sparkles, GraduationCap, Building2 } from 'lucide-react';
 
@@ -39,11 +40,14 @@ export default function ItalySpotlight() {
           </ul>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href={brand.applyLink} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-2 rounded-full bg-coral hover:bg-[#d94a26] text-white px-6 py-3.5 text-[14px] font-bold">
-              Apply for Italy <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45"/>
+            <Link to="/countries/italy" className="group inline-flex items-center gap-2 rounded-full bg-coral hover:bg-[#d94a26] text-white px-6 py-3.5 text-[14px] font-bold">
+              Explore Italy in detail <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45"/>
+            </Link>
+            <a href={brand.applyLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-cream/30 text-cream px-6 py-3.5 text-[14px] font-semibold hover:bg-cream/10">
+              Apply for Italy
             </a>
             <a href={brand.callbackLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-cream/30 text-cream px-6 py-3.5 text-[14px] font-semibold hover:bg-cream/10">
-              Request Italy callback
+              Request callback
             </a>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { managementCountries, brand } from '../mock';
 import { ArrowUpRight, Star } from 'lucide-react';
 
@@ -17,7 +18,7 @@ export default function ManagementCountries() {
 
         <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {managementCountries.map((c, i) => (
-            <a key={c.code} href={c.code === 'it' ? '#italy' : '#'} className="group relative rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift block">
+            <Link key={c.code} to={c.code === 'it' ? '/countries/italy' : `/country/${c.code}`} className="group relative rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift block">
               <div className="relative aspect-[16/10] overflow-hidden">
                 <img src={c.img} alt={c.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/20 to-transparent"/>
@@ -44,7 +45,7 @@ export default function ManagementCountries() {
                   ))}
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>
