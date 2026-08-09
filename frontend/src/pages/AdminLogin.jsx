@@ -13,7 +13,10 @@ export default function AdminLogin() {
     if (e) setErr(e);
   }, [location.search]);
 
-  const startLogin = () => {
+ const startLogin = () => {
+  window.location.href =
+    "https://routeyourcareer.onrender.com/api/auth/google";
+};
     const redirectUrl = window.location.origin + '/admin/callback';
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
