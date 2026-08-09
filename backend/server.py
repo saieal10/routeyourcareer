@@ -11,7 +11,6 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import httpx
 
-from emergentintegrations.llm.chat import LlmChat, UserMessage
 from notifier import notify_new_lead
 
 ROOT_DIR = Path(__file__).parent
@@ -21,15 +20,25 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
-ADMIN_EMAILS = [e.strip().lower() for e in os.environ.get('ADMIN_EMAILS', 'inforouteyourcareer@gmail.com').split(',') if e.strip()]
-EMERGENT_AUTH_SESSION_URL = 'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data'
+ADMIN_EMAILS = [
+    e.strip().lower()
+    for e in os.environ.get(
+        'ADMIN_EMAILS',
+        'inforouteyourcareer@gmail.com'
+    ).split(',')
+    if e.strip()
+]
+
+EMERGENT_AUTH_SESSION_URL = (
+    'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data'
+)
 
 app = FastAPI(title="Route Your Career API")
 api_router = APIRouter(prefix="/api")
 
 
 # -------------------- Models --------------------
+
 class LeadCreate(BaseModel):
     name: str
     phone: str
@@ -38,12 +47,16 @@ class LeadCreate(BaseModel):
     neet_score: Optional[str] = None
     message: Optional[str] = None
     source: Optional[str] = Field(default="website")
-    type: Optional[Literal["apply", "callback", "quick", "newsletter", "chat_lead"]] = "quick"
+    type: Optional[
+        Literal["apply", "callback", "quick", "newsletter", "chat_lead"]
+    ] = "quick"
 
 
 class Lead(LeadCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
 
 class NewsletterCreate(BaseModel):
@@ -53,7 +66,9 @@ class NewsletterCreate(BaseModel):
 
 class Newsletter(NewsletterCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
 
 class ChatIn(BaseModel):
@@ -87,168 +102,6 @@ class User(BaseModel):
     is_admin: bool = False
 
 
-# -------------------- Helpers --------------------
-def _clean_mongo(doc):
-    if not doc:
-        return doc
-    doc.pop('_id', None)
-    return doc
-
-
-RYC_SYSTEM_PROMPT = """You are the RYC Guidance Bot for Route Your Career — an India-based one-stop future-planning platform that helps students find their dream university abroad across TWO tracks: MBBS Abroad and Management Abroad (UG + PG).
-
-CORE FACTS (never contradict):
-- Route Your Career is a new startup with a core team of a decade of experience.
-- We are NOT an agent or a university. We are a free guidance & lead-generation platform for Indian students.
-- Free consultation is provided on request. Universities pay us on verified admission, students never pay us.
-- Present across 5 Indian states: Karnataka, Maharashtra, Kerala, Tamil Nadu, Telangana. Fully support students in other states over WhatsApp/video.
-- Office hours: Mon–Sat, 10am–7pm IST.
-- WhatsApp / Phone: +91 93260 82141. Email: inforouteyourcareer@gmail.com.
-- Apply Online: https://forms.gle/8Yuz9wmpKuSM1Vee9
-- Request Callback: https://forms.gle/i9Xm6RAWXvLyLKG48
-
-TRACK 1 — MBBS ABROAD (9 countries):
-- Priority destinations: Georgia (₹20–28L) and Uzbekistan (₹16–20L). English-medium, NMC-recognised.
-- Other countries: Ireland (₹35–45L, premium), Egypt (₹18–24L), Moldova (₹15–19L), Russia (₹17–25L), Kazakhstan (₹18–22L), Kyrgyzstan (₹15–19L), Nepal (₹35–45L).
-- Georgia partner universities (only recommend these): Alte University, Caucasus International University (CIU), Caucasus University (CU), University of Georgia.
-
-TRACK 2 — MANAGEMENT / GENERAL ABROAD (8 countries):
-- Italy: our star — public universities are TUITION-FREE for UG and PG (only €150–€800/yr admin fee). Living ₹6–8L/yr.
-- Germany: near-zero tuition at public universities, ₹0–10L. Bachelors, MSc, MBA.
-- Singapore: NUS/NTU/SMU, 1-year MBA options, ₹20–50L.
-- USA: Ivies + top MBA, ₹30–55L/yr.
-- UK: 1-year MSc/MBA, Russell Group, ₹20–40L/yr.
-- Australia: Group of Eight, 2–4 yr work visa, ₹22–40L/yr.
-- Spain: IE/ESADE/IESE for MBA, ₹15–30L/yr.
-- UAE: Dubai/Abu Dhabi branch campuses, ₹12–30L/yr.
-- Programme types: BBA, BSc, MSc, MIM, MBA.
-
-STYLE:
-- Warm, friendly, concise. Short sentences. Never over-promise.
-- Ask the student's goal, 12th/UG score OR NEET score, budget, and preferred country to give personalised suggestions.
-- Encourage students to Apply Online or Request a Callback for a real counsellor conversation.
-- Reply in the student's language (English / Hindi / Hinglish / Kannada / Tamil / Telugu / Malayalam).
-
-GUARDRAILS:
-- Never invent university names outside our known partner list.
-- Never quote fees outside the ranges above.
-- Never promise admission — say "our counsellor will confirm eligibility".
-- If asked about anything outside MBBS-abroad or Management-abroad guidance, politely redirect.
-"""
-
-
-# -------------------- Auth --------------------
-async def get_current_user(request: Request) -> User:
-    """Read session_token from cookie or Authorization header, validate, return user."""
-    token = request.cookies.get('session_token')
-    if not token:
-        auth = request.headers.get('authorization') or ''
-        if auth.lower().startswith('bearer '):
-            token = auth.split(' ', 1)[1].strip()
-    if not token:
-        raise HTTPException(status_code=401, detail='Not authenticated')
-
-    sess = await db.user_sessions.find_one({'session_token': token}, {'_id': 0})
-    if not sess:
-        raise HTTPException(status_code=401, detail='Invalid session')
-
-    expires_at = sess.get('expires_at')
-    if isinstance(expires_at, str):
-        expires_at = datetime.fromisoformat(expires_at)
-    if expires_at and expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if expires_at and expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=401, detail='Session expired')
-
-    user_doc = await db.users.find_one({'user_id': sess['user_id']}, {'_id': 0})
-    if not user_doc:
-        raise HTTPException(status_code=401, detail='User not found')
-    user_doc['is_admin'] = user_doc.get('email', '').lower() in ADMIN_EMAILS
-    return User(**user_doc)
-
-
-async def require_admin(user: User = Depends(get_current_user)) -> User:
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail='Not authorised')
-    return user
-
-
-# -------------------- Public routes --------------------
-@api_router.get("/")
-async def root():
-    return {"message": "Route Your Career API is live", "version": "1.1"}
-
-
-@api_router.post("/leads", response_model=Lead)
-async def create_lead(payload: LeadCreate, background: BackgroundTasks):
-    lead = Lead(**payload.model_dump())
-    doc = lead.model_dump()
-    await db.leads.insert_one(doc)
-    # notify team (fire and forget)
-    background.add_task(notify_new_lead, {**doc, 'created_at': doc['created_at'].isoformat()})
-    return lead
-
-
-@api_router.post("/newsletter", response_model=Newsletter)
-async def newsletter_signup(payload: NewsletterCreate, background: BackgroundTasks):
-    existing = await db.newsletter.find_one({"email": payload.email})
-    if existing:
-        return Newsletter(**_clean_mongo(existing))
-    sub = Newsletter(**payload.model_dump())
-    await db.newsletter.insert_one(sub.model_dump())
-    lead = Lead(
-        name="Newsletter subscriber",
-        phone="-",
-        email=payload.email,
-        source=payload.source or "footer",
-        type="newsletter",
-    )
-    lead_doc = lead.model_dump()
-    await db.leads.insert_one(lead_doc)
-    background.add_task(notify_new_lead, {**lead_doc, 'created_at': lead_doc['created_at'].isoformat()})
-    return sub
-
-
-@api_router.post("/chat", response_model=ChatOut)
-async def chat(payload: ChatIn):
-    if not EMERGENT_LLM_KEY:
-        raise HTTPException(status_code=500, detail="LLM key not configured")
-
-    history_docs = await db.chat_messages.find({"session_id": payload.session_id}).sort("created_at", 1).to_list(200)
-
-    chat_client = LlmChat(
-        api_key=EMERGENT_LLM_KEY,
-        session_id=payload.session_id,
-        system_message=RYC_SYSTEM_PROMPT,
-    ).with_model("anthropic", "claude-sonnet-4-6")
-
-    context_prefix = ""
-    if history_docs:
-        recent = history_docs[-8:]
-        lines = []
-        for m in recent:
-            role = "Student" if m.get("role") == "user" else "You (RYC AI)"
-            lines.append(f"{role}: {m.get('content','')}")
-        context_prefix = "Recent conversation so far:\n" + "\n".join(lines) + "\n\nNew student message: "
-
-    user_text = context_prefix + payload.message
-
-    try:
-        response = await chat_client.send_message(UserMessage(text=user_text))
-    except Exception as e:
-        logging.exception("LLM error")
-        raise HTTPException(status_code=500, detail=f"LLM error: {str(e)[:200]}")
-
-    reply = str(response) if response is not None else ""
-
-    now = datetime.now(timezone.utc)
-    await db.chat_messages.insert_many([
-        {"session_id": payload.session_id, "role": "user", "content": payload.message, "created_at": now},
-        {"session_id": payload.session_id, "role": "assistant", "content": reply, "created_at": now},
-    ])
-    return ChatOut(session_id=payload.session_id, reply=reply)
-
-
 class ChatLeadIn(BaseModel):
     session_id: str
     name: str
@@ -257,8 +110,177 @@ class ChatLeadIn(BaseModel):
     neet_score: Optional[str] = None
 
 
+# -------------------- Helpers --------------------
+
+def _clean_mongo(doc):
+    if not doc:
+        return doc
+    doc.pop('_id', None)
+    return doc
+
+
+# -------------------- Authentication --------------------
+
+async def get_current_user(request: Request) -> User:
+    token = request.cookies.get('session_token')
+
+    if not token:
+        auth = request.headers.get('authorization') or ''
+
+        if auth.lower().startswith('bearer '):
+            token = auth.split(' ', 1)[1].strip()
+
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail='Not authenticated'
+        )
+
+    sess = await db.user_sessions.find_one(
+        {'session_token': token},
+        {'_id': 0}
+    )
+
+    if not sess:
+        raise HTTPException(
+            status_code=401,
+            detail='Invalid session'
+        )
+
+    expires_at = sess.get('expires_at')
+
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+
+    if expires_at and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if expires_at and expires_at < datetime.now(timezone.utc):
+        raise HTTPException(
+            status_code=401,
+            detail='Session expired'
+        )
+
+    user_doc = await db.users.find_one(
+        {'user_id': sess['user_id']},
+        {'_id': 0}
+    )
+
+    if not user_doc:
+        raise HTTPException(
+            status_code=401,
+            detail='User not found'
+        )
+
+    user_doc['is_admin'] = (
+        user_doc.get('email', '').lower() in ADMIN_EMAILS
+    )
+
+    return User(**user_doc)
+
+
+async def require_admin(
+    user: User = Depends(get_current_user)
+) -> User:
+
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail='Not authorised'
+        )
+
+    return user
+
+
+# -------------------- Public routes --------------------
+
+@api_router.get("/")
+async def root():
+    return {
+        "message": "Route Your Career API is live",
+        "version": "1.2"
+    }
+
+
+@api_router.post("/leads", response_model=Lead)
+async def create_lead(
+    payload: LeadCreate,
+    background: BackgroundTasks
+):
+    lead = Lead(**payload.model_dump())
+    doc = lead.model_dump()
+
+    await db.leads.insert_one(doc)
+
+    background.add_task(
+        notify_new_lead,
+        {
+            **doc,
+            'created_at': doc['created_at'].isoformat()
+        }
+    )
+
+    return lead
+
+
+@api_router.post("/newsletter", response_model=Newsletter)
+async def newsletter_signup(
+    payload: NewsletterCreate,
+    background: BackgroundTasks
+):
+    existing = await db.newsletter.find_one({
+        "email": payload.email
+    })
+
+    if existing:
+        return Newsletter(**_clean_mongo(existing))
+
+    sub = Newsletter(**payload.model_dump())
+
+    await db.newsletter.insert_one(
+        sub.model_dump()
+    )
+
+    lead = Lead(
+        name="Newsletter subscriber",
+        phone="-",
+        email=payload.email,
+        source=payload.source or "footer",
+        type="newsletter",
+    )
+
+    lead_doc = lead.model_dump()
+
+    await db.leads.insert_one(lead_doc)
+
+    background.add_task(
+        notify_new_lead,
+        {
+            **lead_doc,
+            'created_at': lead_doc['created_at'].isoformat()
+        }
+    )
+
+    return sub
+
+
+# -------------------- AI Chat --------------------
+# Emergent AI has been disabled.
+# This keeps the rest of the backend independent and deployable.
+
+@api_router.post("/chat", response_model=ChatOut)
+async def chat(payload: ChatIn):
+    raise HTTPException(
+        status_code=503,
+        detail="AI chat is temporarily unavailable"
+    )
+
+
 @api_router.post("/chat/lead", response_model=Lead)
-async def chat_capture_lead(payload: ChatLeadIn, background: BackgroundTasks):
+async def chat_capture_lead(
+    payload: ChatLeadIn,
+    background: BackgroundTasks
+):
     lead = Lead(
         name=payload.name,
         phone=payload.phone,
@@ -267,51 +289,114 @@ async def chat_capture_lead(payload: ChatLeadIn, background: BackgroundTasks):
         source=f"chat:{payload.session_id}",
         type="chat_lead",
     )
+
     doc = lead.model_dump()
+
     await db.leads.insert_one(doc)
+
     await db.chat_sessions.update_one(
-        {"session_id": payload.session_id},
-        {"$set": {"session_id": payload.session_id, "lead_id": lead.id, "qualified_at": datetime.now(timezone.utc)}},
+        {
+            "session_id": payload.session_id
+        },
+        {
+            "$set": {
+                "session_id": payload.session_id,
+                "lead_id": lead.id,
+                "qualified_at": datetime.now(timezone.utc)
+            }
+        },
         upsert=True,
     )
-    background.add_task(notify_new_lead, {**doc, 'created_at': doc['created_at'].isoformat()})
+
+    background.add_task(
+        notify_new_lead,
+        {
+            **doc,
+            'created_at': doc['created_at'].isoformat()
+        }
+    )
+
     return lead
 
 
 # -------------------- Auth routes --------------------
+# TEMPORARILY still uses Emergent Google auth.
+# We will replace this after Render backend is live.
+
 @api_router.post("/auth/session")
-async def auth_exchange(request: Request, response: Response):
-    """Frontend posts here after Google OAuth callback (fragment `session_id`).
-    We exchange with Emergent Auth for user + session_token."""
+async def auth_exchange(
+    request: Request,
+    response: Response
+):
     session_id = request.headers.get('X-Session-ID')
+
     if not session_id:
-        raise HTTPException(status_code=400, detail='Missing X-Session-ID header')
+        raise HTTPException(
+            status_code=400,
+            detail='Missing X-Session-ID header'
+        )
 
     try:
         async with httpx.AsyncClient(timeout=20) as c:
-            r = await c.get(EMERGENT_AUTH_SESSION_URL, headers={'X-Session-ID': session_id})
+            r = await c.get(
+                EMERGENT_AUTH_SESSION_URL,
+                headers={
+                    'X-Session-ID': session_id
+                }
+            )
+
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f'Auth provider error: {e}')
+        raise HTTPException(
+            status_code=502,
+            detail=f'Auth provider error: {e}'
+        )
 
     if r.status_code >= 300:
-        raise HTTPException(status_code=401, detail='Session exchange failed')
+        raise HTTPException(
+            status_code=401,
+            detail='Session exchange failed'
+        )
+
     data = r.json()
 
-    email = (data.get('email') or '').lower()
-    if email not in ADMIN_EMAILS:
-        raise HTTPException(status_code=403, detail=f'Email {email} is not on the admin allowlist.')
+    email = (
+        data.get('email') or ''
+    ).lower()
 
-    # upsert user
-    user_doc = await db.users.find_one({'email': email}, {'_id': 0})
+    if email not in ADMIN_EMAILS:
+        raise HTTPException(
+            status_code=403,
+            detail=f'Email {email} is not on the admin allowlist.'
+        )
+
+    user_doc = await db.users.find_one(
+        {'email': email},
+        {'_id': 0}
+    )
+
     if user_doc:
         user_id = user_doc['user_id']
-        await db.users.update_one({'user_id': user_id}, {'$set': {
-            'name': data.get('name') or user_doc.get('name'),
-            'picture': data.get('picture') or user_doc.get('picture'),
-            'updated_at': datetime.now(timezone.utc),
-        }})
+
+        await db.users.update_one(
+            {'user_id': user_id},
+            {
+                '$set': {
+                    'name': (
+                        data.get('name')
+                        or user_doc.get('name')
+                    ),
+                    'picture': (
+                        data.get('picture')
+                        or user_doc.get('picture')
+                    ),
+                    'updated_at': datetime.now(timezone.utc),
+                }
+            }
+        )
+
     else:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
+
         await db.users.insert_one({
             'user_id': user_id,
             'email': email,
@@ -320,8 +405,16 @@ async def auth_exchange(request: Request, response: Response):
             'created_at': datetime.now(timezone.utc),
         })
 
-    session_token = data.get('session_token') or uuid.uuid4().hex
-    expires = datetime.now(timezone.utc) + timedelta(days=7)
+    session_token = (
+        data.get('session_token')
+        or uuid.uuid4().hex
+    )
+
+    expires = (
+        datetime.now(timezone.utc)
+        + timedelta(days=7)
+    )
+
     await db.user_sessions.insert_one({
         'user_id': user_id,
         'session_token': session_token,
@@ -330,66 +423,175 @@ async def auth_exchange(request: Request, response: Response):
     })
 
     response.set_cookie(
-        key='session_token', value=session_token,
-        httponly=True, secure=True, samesite='none',
-        path='/', max_age=7 * 24 * 3600,
+        key='session_token',
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite='none',
+        path='/',
+        max_age=7 * 24 * 3600,
     )
 
-    is_admin = email in ADMIN_EMAILS
-    return {'user_id': user_id, 'email': email, 'name': data.get('name'), 'picture': data.get('picture'), 'is_admin': is_admin, 'session_token': session_token}
+    return {
+        'user_id': user_id,
+        'email': email,
+        'name': data.get('name'),
+        'picture': data.get('picture'),
+        'is_admin': email in ADMIN_EMAILS,
+        'session_token': session_token
+    }
 
 
 @api_router.get("/auth/me", response_model=User)
-async def auth_me(user: User = Depends(get_current_user)):
+async def auth_me(
+    user: User = Depends(get_current_user)
+):
     return user
 
 
 @api_router.post("/auth/logout")
-async def auth_logout(request: Request, response: Response):
-    token = request.cookies.get('session_token')
+async def auth_logout(
+    request: Request,
+    response: Response
+):
+    token = request.cookies.get(
+        'session_token'
+    )
+
     if token:
-        await db.user_sessions.delete_one({'session_token': token})
-    response.delete_cookie(key='session_token', path='/')
-    return {'ok': True}
+        await db.user_sessions.delete_one({
+            'session_token': token
+        })
+
+    response.delete_cookie(
+        key='session_token',
+        path='/'
+    )
+
+    return {
+        'ok': True
+    }
 
 
 # -------------------- Admin routes --------------------
-@api_router.get("/admin/leads", response_model=List[LeadListItem])
-async def admin_list_leads(limit: int = 500, type: Optional[str] = None, user: User = Depends(require_admin)):
+
+@api_router.get(
+    "/admin/leads",
+    response_model=List[LeadListItem]
+)
+async def admin_list_leads(
+    limit: int = 500,
+    type: Optional[str] = None,
+    user: User = Depends(require_admin)
+):
     q = {}
+
     if type:
         q["type"] = type
-    docs = await db.leads.find(q).sort("created_at", -1).to_list(limit)
-    return [LeadListItem(**_clean_mongo(d)) for d in docs]
+
+    docs = (
+        await db.leads
+        .find(q)
+        .sort("created_at", -1)
+        .to_list(limit)
+    )
+
+    return [
+        LeadListItem(
+            **_clean_mongo(d)
+        )
+        for d in docs
+    ]
 
 
 @api_router.get("/admin/stats")
-async def admin_stats(user: User = Depends(require_admin)):
+async def admin_stats(
+    user: User = Depends(require_admin)
+):
     total = await db.leads.count_documents({})
+
     by_type = {}
-    for t in ["apply", "callback", "quick", "chat_lead", "newsletter"]:
-        by_type[t] = await db.leads.count_documents({"type": t})
-    subs = await db.newsletter.count_documents({})
-    since = datetime.now(timezone.utc) - timedelta(days=7)
-    last7 = await db.leads.count_documents({"created_at": {"$gte": since}})
-    return {"total_leads": total, "by_type": by_type, "newsletter_subscribers": subs, "last_7_days": last7}
+
+    for t in [
+        "apply",
+        "callback",
+        "quick",
+        "chat_lead",
+        "newsletter"
+    ]:
+        by_type[t] = (
+            await db.leads.count_documents({
+                "type": t
+            })
+        )
+
+    subs = (
+        await db.newsletter.count_documents({})
+    )
+
+    since = (
+        datetime.now(timezone.utc)
+        - timedelta(days=7)
+    )
+
+    last7 = (
+        await db.leads.count_documents({
+            "created_at": {
+                "$gte": since
+            }
+        })
+    )
+
+    return {
+        "total_leads": total,
+        "by_type": by_type,
+        "newsletter_subscribers": subs,
+        "last_7_days": last7
+    }
 
 
-@api_router.get("/admin/newsletter", response_model=List[Newsletter])
-async def admin_newsletter(limit: int = 500, user: User = Depends(require_admin)):
-    docs = await db.newsletter.find().sort("created_at", -1).to_list(limit)
-    return [Newsletter(**_clean_mongo(d)) for d in docs]
+@api_router.get(
+    "/admin/newsletter",
+    response_model=List[Newsletter]
+)
+async def admin_newsletter(
+    limit: int = 500,
+    user: User = Depends(require_admin)
+):
+    docs = (
+        await db.newsletter
+        .find()
+        .sort("created_at", -1)
+        .to_list(limit)
+    )
+
+    return [
+        Newsletter(
+            **_clean_mongo(d)
+        )
+        for d in docs
+    ]
 
 
-# Legacy public leads stats (kept for backward compat, no PII)
+# Legacy public stats
 @api_router.get("/leads/stats")
 async def lead_stats_public():
-    total = await db.leads.count_documents({})
-    subs = await db.newsletter.count_documents({})
-    return {"total_leads": total, "newsletter_subscribers": subs}
+    total = (
+        await db.leads.count_documents({})
+    )
+
+    subs = (
+        await db.newsletter.count_documents({})
+    )
+
+    return {
+        "total_leads": total,
+        "newsletter_subscribers": subs
+    }
 
 
-# Include router
+# -------------------- Application setup --------------------
+
 app.include_router(api_router)
 
 app.add_middleware(
@@ -400,7 +602,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format=(
+        '%(asctime)s - %(name)s - '
+        '%(levelname)s - %(message)s'
+    )
+)
+
 logger = logging.getLogger(__name__)
 
 
