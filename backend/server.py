@@ -1,61 +1,148 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response, BackgroundTasks
+from fastapi import (
+    FastAPI,
+    APIRouter,
+    HTTPException,
+    Depends,
+    Request,
+    Response,
+    BackgroundTasks,
+)
+from fastapi.responses import RedirectResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+
 import os
 import logging
+import uuid
+import httpx
+
 from pathlib import Path
+from urllib.parse import urlencode
+from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Literal
-import uuid
-from datetime import datetime, timezone, timedelta
-import httpx
 
 from notifier import notify_new_lead
 
+
+# =========================================================
+# CONFIGURATION
+# =========================================================
+
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+load_dotenv(ROOT_DIR / ".env")
 
-mongo_url = os.environ['MONGO_URL']
+
+# -------------------- MongoDB --------------------
+
+mongo_url = os.environ["MONGO_URL"]
+
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
 
-ADMIN_EMAILS = [
-    e.strip().lower()
-    for e in os.environ.get(
-        'ADMIN_EMAILS',
-        'inforouteyourcareer@gmail.com'
-    ).split(',')
-    if e.strip()
+db = client[
+    os.environ["DB_NAME"]
 ]
 
-EMERGENT_AUTH_SESSION_URL = (
-    'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data'
+
+# -------------------- Admin Emails --------------------
+
+ADMIN_EMAILS = [
+    email.strip().lower()
+    for email in os.environ.get(
+        "ADMIN_EMAILS",
+        "inforouteyourcareer@gmail.com",
+    ).split(",")
+    if email.strip()
+]
+
+
+# -------------------- Google OAuth --------------------
+
+GOOGLE_CLIENT_ID = os.environ.get(
+    "GOOGLE_CLIENT_ID"
 )
 
-app = FastAPI(title="Route Your Career API")
-api_router = APIRouter(prefix="/api")
+GOOGLE_CLIENT_SECRET = os.environ.get(
+    "GOOGLE_CLIENT_SECRET"
+)
+
+GOOGLE_REDIRECT_URI = (
+    "https://routeyourcareer.onrender.com"
+    "/api/auth/google/callback"
+)
+
+GOOGLE_AUTH_URL = (
+    "https://accounts.google.com/o/oauth2/v2/auth"
+)
+
+GOOGLE_TOKEN_URL = (
+    "https://oauth2.googleapis.com/token"
+)
+
+GOOGLE_USERINFO_URL = (
+    "https://openidconnect.googleapis.com/v1/userinfo"
+)
 
 
-# -------------------- Models --------------------
+# -------------------- Frontend --------------------
+
+FRONTEND_URL = (
+    "https://routeyourcareer.netlify.app"
+)
+
+
+# =========================================================
+# FASTAPI APP
+# =========================================================
+
+app = FastAPI(
+    title="Route Your Career API"
+)
+
+api_router = APIRouter(
+    prefix="/api"
+)
+
+
+# =========================================================
+# MODELS
+# =========================================================
 
 class LeadCreate(BaseModel):
     name: str
     phone: str
+
     email: Optional[str] = None
     country: Optional[str] = None
     neet_score: Optional[str] = None
     message: Optional[str] = None
-    source: Optional[str] = Field(default="website")
+
+    source: Optional[str] = Field(
+        default="website"
+    )
+
     type: Optional[
-        Literal["apply", "callback", "quick", "newsletter", "chat_lead"]
+        Literal[
+            "apply",
+            "callback",
+            "quick",
+            "newsletter",
+            "chat_lead",
+        ]
     ] = "quick"
 
 
 class Lead(LeadCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    id: str = Field(
+        default_factory=lambda: str(
+            uuid.uuid4()
+        )
+    )
+
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda:
+        datetime.now(timezone.utc)
     )
 
 
@@ -65,9 +152,15 @@ class NewsletterCreate(BaseModel):
 
 
 class Newsletter(NewsletterCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    id: str = Field(
+        default_factory=lambda: str(
+            uuid.uuid4()
+        )
+    )
+
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda:
+        datetime.now(timezone.utc)
     )
 
 
@@ -85,12 +178,14 @@ class LeadListItem(BaseModel):
     id: str
     name: str
     phone: str
+
     email: Optional[str] = None
     country: Optional[str] = None
     neet_score: Optional[str] = None
     message: Optional[str] = None
     source: Optional[str] = None
     type: Optional[str] = None
+
     created_at: datetime
 
 
@@ -98,6 +193,7 @@ class User(BaseModel):
     user_id: str
     email: str
     name: str
+
     picture: Optional[str] = None
     is_admin: bool = False
 
@@ -106,136 +202,249 @@ class ChatLeadIn(BaseModel):
     session_id: str
     name: str
     phone: str
+
     country: Optional[str] = None
     neet_score: Optional[str] = None
 
 
-# -------------------- Helpers --------------------
+# =========================================================
+# HELPERS
+# =========================================================
 
 def _clean_mongo(doc):
+
     if not doc:
         return doc
-    doc.pop('_id', None)
+
+    doc.pop(
+        "_id",
+        None
+    )
+
     return doc
 
 
-# -------------------- Authentication --------------------
+# =========================================================
+# AUTHENTICATION HELPERS
+# =========================================================
 
-async def get_current_user(request: Request) -> User:
-    token = request.cookies.get('session_token')
+async def get_current_user(
+    request: Request
+) -> User:
+
+    token = request.cookies.get(
+        "session_token"
+    )
 
     if not token:
-        auth = request.headers.get('authorization') or ''
 
-        if auth.lower().startswith('bearer '):
-            token = auth.split(' ', 1)[1].strip()
+        auth = (
+            request.headers.get(
+                "authorization"
+            )
+            or ""
+        )
+
+        if auth.lower().startswith(
+            "bearer "
+        ):
+
+            token = auth.split(
+                " ",
+                1
+            )[1].strip()
 
     if not token:
+
         raise HTTPException(
             status_code=401,
-            detail='Not authenticated'
+            detail="Not authenticated",
         )
 
     sess = await db.user_sessions.find_one(
-        {'session_token': token},
-        {'_id': 0}
+        {
+            "session_token": token
+        },
+        {
+            "_id": 0
+        },
     )
 
     if not sess:
+
         raise HTTPException(
             status_code=401,
-            detail='Invalid session'
+            detail="Invalid session",
         )
 
-    expires_at = sess.get('expires_at')
+    expires_at = sess.get(
+        "expires_at"
+    )
 
-    if isinstance(expires_at, str):
-        expires_at = datetime.fromisoformat(expires_at)
+    if isinstance(
+        expires_at,
+        str
+    ):
 
-    if expires_at and expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
+        expires_at = (
+            datetime.fromisoformat(
+                expires_at
+            )
+        )
 
-    if expires_at and expires_at < datetime.now(timezone.utc):
+    if (
+        expires_at
+        and expires_at.tzinfo is None
+    ):
+
+        expires_at = (
+            expires_at.replace(
+                tzinfo=timezone.utc
+            )
+        )
+
+    if (
+        expires_at
+        and expires_at
+        < datetime.now(timezone.utc)
+    ):
+
+        await db.user_sessions.delete_one(
+            {
+                "session_token": token
+            }
+        )
+
         raise HTTPException(
             status_code=401,
-            detail='Session expired'
+            detail="Session expired",
         )
 
     user_doc = await db.users.find_one(
-        {'user_id': sess['user_id']},
-        {'_id': 0}
+        {
+            "user_id": sess["user_id"]
+        },
+        {
+            "_id": 0
+        },
     )
 
     if not user_doc:
+
         raise HTTPException(
             status_code=401,
-            detail='User not found'
+            detail="User not found",
         )
 
-    user_doc['is_admin'] = (
-        user_doc.get('email', '').lower() in ADMIN_EMAILS
+    user_doc["is_admin"] = (
+        user_doc.get(
+            "email",
+            ""
+        ).lower()
+        in ADMIN_EMAILS
     )
 
-    return User(**user_doc)
+    return User(
+        **user_doc
+    )
 
 
 async def require_admin(
-    user: User = Depends(get_current_user)
+    user: User = Depends(
+        get_current_user
+    )
 ) -> User:
 
     if not user.is_admin:
+
         raise HTTPException(
             status_code=403,
-            detail='Not authorised'
+            detail="Not authorised",
         )
 
     return user
 
 
-# -------------------- Public routes --------------------
+# =========================================================
+# ROOT
+# =========================================================
 
 @api_router.get("/")
 async def root():
+
     return {
-        "message": "Route Your Career API is live",
-        "version": "1.2"
+        "message":
+        "Route Your Career API is live",
+        "version": "2.0",
+        "google_auth": True,
     }
 
 
-@api_router.post("/leads", response_model=Lead)
+# =========================================================
+# LEADS
+# =========================================================
+
+@api_router.post(
+    "/leads",
+    response_model=Lead
+)
 async def create_lead(
     payload: LeadCreate,
-    background: BackgroundTasks
+    background: BackgroundTasks,
 ):
-    lead = Lead(**payload.model_dump())
+
+    lead = Lead(
+        **payload.model_dump()
+    )
+
     doc = lead.model_dump()
 
-    await db.leads.insert_one(doc)
+    await db.leads.insert_one(
+        doc
+    )
 
     background.add_task(
         notify_new_lead,
         {
             **doc,
-            'created_at': doc['created_at'].isoformat()
-        }
+            "created_at":
+            doc["created_at"].isoformat(),
+        },
     )
 
     return lead
 
 
-@api_router.post("/newsletter", response_model=Newsletter)
+# =========================================================
+# NEWSLETTER
+# =========================================================
+
+@api_router.post(
+    "/newsletter",
+    response_model=Newsletter
+)
 async def newsletter_signup(
     payload: NewsletterCreate,
-    background: BackgroundTasks
+    background: BackgroundTasks,
 ):
-    existing = await db.newsletter.find_one({
-        "email": payload.email
-    })
+
+    existing = (
+        await db.newsletter.find_one(
+            {
+                "email": payload.email
+            }
+        )
+    )
 
     if existing:
-        return Newsletter(**_clean_mongo(existing))
 
-    sub = Newsletter(**payload.model_dump())
+        return Newsletter(
+            **_clean_mongo(existing)
+        )
+
+    sub = Newsletter(
+        **payload.model_dump()
+    )
 
     await db.newsletter.insert_one(
         sub.model_dump()
@@ -245,66 +454,112 @@ async def newsletter_signup(
         name="Newsletter subscriber",
         phone="-",
         email=payload.email,
-        source=payload.source or "footer",
+        source=(
+            payload.source
+            or "footer"
+        ),
         type="newsletter",
     )
 
     lead_doc = lead.model_dump()
 
-    await db.leads.insert_one(lead_doc)
+    await db.leads.insert_one(
+        lead_doc
+    )
 
     background.add_task(
         notify_new_lead,
         {
             **lead_doc,
-            'created_at': lead_doc['created_at'].isoformat()
-        }
+            "created_at":
+            lead_doc[
+                "created_at"
+            ].isoformat(),
+        },
     )
 
     return sub
 
 
-# -------------------- AI Chat --------------------
-# Emergent AI has been disabled.
-# This keeps the rest of the backend independent and deployable.
+# =========================================================
+# AI CHAT
+# =========================================================
+#
+# Emergent AI removed.
+# Everything else continues working.
+#
 
-@api_router.post("/chat", response_model=ChatOut)
-async def chat(payload: ChatIn):
+@api_router.post(
+    "/chat",
+    response_model=ChatOut
+)
+async def chat(
+    payload: ChatIn
+):
+
     raise HTTPException(
         status_code=503,
-        detail="AI chat is temporarily unavailable"
+        detail=(
+            "AI chat is temporarily "
+            "unavailable"
+        ),
     )
 
 
-@api_router.post("/chat/lead", response_model=Lead)
+# =========================================================
+# CHAT LEAD
+# =========================================================
+
+@api_router.post(
+    "/chat/lead",
+    response_model=Lead
+)
 async def chat_capture_lead(
     payload: ChatLeadIn,
-    background: BackgroundTasks
+    background: BackgroundTasks,
 ):
+
     lead = Lead(
         name=payload.name,
         phone=payload.phone,
         country=payload.country,
         neet_score=payload.neet_score,
-        source=f"chat:{payload.session_id}",
+        source=(
+            f"chat:"
+            f"{payload.session_id}"
+        ),
         type="chat_lead",
     )
 
     doc = lead.model_dump()
 
-    await db.leads.insert_one(doc)
+    await db.leads.insert_one(
+        doc
+    )
 
     await db.chat_sessions.update_one(
+
         {
-            "session_id": payload.session_id
+            "session_id":
+            payload.session_id
         },
+
         {
             "$set": {
-                "session_id": payload.session_id,
-                "lead_id": lead.id,
-                "qualified_at": datetime.now(timezone.utc)
+
+                "session_id":
+                payload.session_id,
+
+                "lead_id":
+                lead.id,
+
+                "qualified_at":
+                datetime.now(
+                    timezone.utc
+                ),
             }
         },
+
         upsert=True,
     )
 
@@ -312,307 +567,819 @@ async def chat_capture_lead(
         notify_new_lead,
         {
             **doc,
-            'created_at': doc['created_at'].isoformat()
-        }
+            "created_at":
+            doc[
+                "created_at"
+            ].isoformat(),
+        },
     )
 
     return lead
 
 
-# -------------------- Auth routes --------------------
-# TEMPORARILY still uses Emergent Google auth.
-# We will replace this after Render backend is live.
+# =========================================================
+# GOOGLE LOGIN
+# =========================================================
 
-@api_router.post("/auth/session")
-async def auth_exchange(
-    request: Request,
-    response: Response
-):
-    session_id = request.headers.get('X-Session-ID')
+@api_router.get(
+    "/auth/google"
+)
+async def google_login():
 
-    if not session_id:
+    if not GOOGLE_CLIENT_ID:
+
         raise HTTPException(
-            status_code=400,
-            detail='Missing X-Session-ID header'
+            status_code=500,
+            detail=(
+                "GOOGLE_CLIENT_ID "
+                "is not configured"
+            ),
+        )
+
+    if not GOOGLE_CLIENT_SECRET:
+
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "GOOGLE_CLIENT_SECRET "
+                "is not configured"
+            ),
+        )
+
+    params = {
+
+        "client_id":
+        GOOGLE_CLIENT_ID,
+
+        "redirect_uri":
+        GOOGLE_REDIRECT_URI,
+
+        "response_type":
+        "code",
+
+        "scope":
+        "openid email profile",
+
+        "access_type":
+        "online",
+
+        "prompt":
+        "select_account",
+    }
+
+    google_url = (
+        GOOGLE_AUTH_URL
+        + "?"
+        + urlencode(params)
+    )
+
+    return RedirectResponse(
+        url=google_url,
+        status_code=302,
+    )
+
+
+# =========================================================
+# GOOGLE CALLBACK
+# =========================================================
+
+@api_router.get(
+    "/auth/google/callback"
+)
+async def google_callback(
+    code: Optional[str] = None,
+    error: Optional[str] = None,
+):
+
+    if error:
+
+        return RedirectResponse(
+            url=(
+                FRONTEND_URL
+                + "/admin/login"
+                + "?e=Google%20sign-in%20cancelled"
+            ),
+            status_code=302,
+        )
+
+    if not code:
+
+        return RedirectResponse(
+            url=(
+                FRONTEND_URL
+                + "/admin/login"
+                + "?e=Missing%20Google%20code"
+            ),
+            status_code=302,
         )
 
     try:
-        async with httpx.AsyncClient(timeout=20) as c:
-            r = await c.get(
-                EMERGENT_AUTH_SESSION_URL,
-                headers={
-                    'X-Session-ID': session_id
-                }
+
+        async with httpx.AsyncClient(
+            timeout=20
+        ) as http_client:
+
+            token_response = (
+                await http_client.post(
+
+                    GOOGLE_TOKEN_URL,
+
+                    data={
+
+                        "code":
+                        code,
+
+                        "client_id":
+                        GOOGLE_CLIENT_ID,
+
+                        "client_secret":
+                        GOOGLE_CLIENT_SECRET,
+
+                        "redirect_uri":
+                        GOOGLE_REDIRECT_URI,
+
+                        "grant_type":
+                        "authorization_code",
+                    },
+                )
             )
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=502,
-            detail=f'Auth provider error: {e}'
+            if (
+                token_response.status_code
+                >= 300
+            ):
+
+                logging.error(
+                    "Google token error: %s",
+                    token_response.text,
+                )
+
+                return RedirectResponse(
+                    url=(
+                        FRONTEND_URL
+                        + "/admin/login"
+                        + "?e=Google%20token%20failed"
+                    ),
+                    status_code=302,
+                )
+
+            token_data = (
+                token_response.json()
+            )
+
+            access_token = (
+                token_data.get(
+                    "access_token"
+                )
+            )
+
+            if not access_token:
+
+                return RedirectResponse(
+                    url=(
+                        FRONTEND_URL
+                        + "/admin/login"
+                        + "?e=No%20Google%20access%20token"
+                    ),
+                    status_code=302,
+                )
+
+            user_response = (
+                await http_client.get(
+
+                    GOOGLE_USERINFO_URL,
+
+                    headers={
+                        "Authorization":
+                        f"Bearer {access_token}"
+                    },
+                )
+            )
+
+            if (
+                user_response.status_code
+                >= 300
+            ):
+
+                return RedirectResponse(
+                    url=(
+                        FRONTEND_URL
+                        + "/admin/login"
+                        + "?e=Could%20not%20read%20Google%20account"
+                    ),
+                    status_code=302,
+                )
+
+            data = (
+                user_response.json()
+            )
+
+    except Exception:
+
+        logging.exception(
+            "Google OAuth error"
         )
 
-    if r.status_code >= 300:
-        raise HTTPException(
-            status_code=401,
-            detail='Session exchange failed'
+        return RedirectResponse(
+            url=(
+                FRONTEND_URL
+                + "/admin/login"
+                + "?e=Google%20authentication%20failed"
+            ),
+            status_code=302,
         )
 
-    data = r.json()
+
+    # --------------------
+    # Validate Google user
+    # --------------------
 
     email = (
-        data.get('email') or ''
-    ).lower()
-
-    if email not in ADMIN_EMAILS:
-        raise HTTPException(
-            status_code=403,
-            detail=f'Email {email} is not on the admin allowlist.'
+        data.get(
+            "email"
         )
+        or ""
+    ).strip().lower()
 
-    user_doc = await db.users.find_one(
-        {'email': email},
-        {'_id': 0}
+
+    email_verified = (
+        data.get(
+            "email_verified"
+        )
     )
 
+
+    if not email:
+
+        return RedirectResponse(
+            url=(
+                FRONTEND_URL
+                + "/admin/login"
+                + "?e=Google%20email%20missing"
+            ),
+            status_code=302,
+        )
+
+
+    if email_verified is False:
+
+        return RedirectResponse(
+            url=(
+                FRONTEND_URL
+                + "/admin/login"
+                + "?e=Google%20email%20not%20verified"
+            ),
+            status_code=302,
+        )
+
+
+    # --------------------
+    # Admin whitelist
+    # --------------------
+
+    if email not in ADMIN_EMAILS:
+
+        return RedirectResponse(
+            url=(
+                FRONTEND_URL
+                + "/admin/login"
+                + "?e=Account%20not%20authorised"
+            ),
+            status_code=302,
+        )
+
+
+    # --------------------
+    # Create/update user
+    # --------------------
+
+    user_doc = (
+        await db.users.find_one(
+            {
+                "email": email
+            },
+            {
+                "_id": 0
+            },
+        )
+    )
+
+
     if user_doc:
-        user_id = user_doc['user_id']
+
+        user_id = (
+            user_doc[
+                "user_id"
+            ]
+        )
 
         await db.users.update_one(
-            {'user_id': user_id},
+
             {
-                '$set': {
-                    'name': (
-                        data.get('name')
-                        or user_doc.get('name')
+                "user_id":
+                user_id
+            },
+
+            {
+                "$set": {
+
+                    "name":
+                    (
+                        data.get(
+                            "name"
+                        )
+                        or email
                     ),
-                    'picture': (
-                        data.get('picture')
-                        or user_doc.get('picture')
+
+                    "picture":
+                    data.get(
+                        "picture"
                     ),
-                    'updated_at': datetime.now(timezone.utc),
+
+                    "updated_at":
+                    datetime.now(
+                        timezone.utc
+                    ),
                 }
-            }
+            },
         )
 
     else:
-        user_id = f"user_{uuid.uuid4().hex[:12]}"
+
+        user_id = (
+            "user_"
+            + uuid.uuid4().hex[:12]
+        )
 
         await db.users.insert_one({
-            'user_id': user_id,
-            'email': email,
-            'name': data.get('name') or email,
-            'picture': data.get('picture'),
-            'created_at': datetime.now(timezone.utc),
+
+            "user_id":
+            user_id,
+
+            "email":
+            email,
+
+            "name":
+            (
+                data.get(
+                    "name"
+                )
+                or email
+            ),
+
+            "picture":
+            data.get(
+                "picture"
+            ),
+
+            "created_at":
+            datetime.now(
+                timezone.utc
+            ),
         })
 
+
+    # --------------------
+    # Create session
+    # --------------------
+
     session_token = (
-        data.get('session_token')
-        or uuid.uuid4().hex
+        uuid.uuid4().hex
     )
 
     expires = (
-        datetime.now(timezone.utc)
-        + timedelta(days=7)
+        datetime.now(
+            timezone.utc
+        )
+        + timedelta(
+            days=7
+        )
     )
+
 
     await db.user_sessions.insert_one({
-        'user_id': user_id,
-        'session_token': session_token,
-        'expires_at': expires,
-        'created_at': datetime.now(timezone.utc),
+
+        "user_id":
+        user_id,
+
+        "session_token":
+        session_token,
+
+        "expires_at":
+        expires,
+
+        "created_at":
+        datetime.now(
+            timezone.utc
+        ),
     })
 
-    response.set_cookie(
-        key='session_token',
-        value=session_token,
-        httponly=True,
-        secure=True,
-        samesite='none',
-        path='/',
-        max_age=7 * 24 * 3600,
+
+    # --------------------
+    # Redirect to Admin
+    # --------------------
+
+    redirect = RedirectResponse(
+
+        url=(
+            FRONTEND_URL
+            + "/admin"
+        ),
+
+        status_code=302,
     )
 
-    return {
-        'user_id': user_id,
-        'email': email,
-        'name': data.get('name'),
-        'picture': data.get('picture'),
-        'is_admin': email in ADMIN_EMAILS,
-        'session_token': session_token
-    }
+
+    redirect.set_cookie(
+
+        key="session_token",
+
+        value=session_token,
+
+        httponly=True,
+
+        secure=True,
+
+        samesite="none",
+
+        path="/",
+
+        max_age=(
+            7
+            * 24
+            * 60
+            * 60
+        ),
+    )
 
 
-@api_router.get("/auth/me", response_model=User)
+    return redirect
+
+
+# =========================================================
+# AUTH ME
+# =========================================================
+
+@api_router.get(
+    "/auth/me",
+    response_model=User
+)
 async def auth_me(
-    user: User = Depends(get_current_user)
+    user: User = Depends(
+        get_current_user
+    )
 ):
+
     return user
 
 
-@api_router.post("/auth/logout")
+# =========================================================
+# LOGOUT
+# =========================================================
+
+@api_router.post(
+    "/auth/logout"
+)
 async def auth_logout(
     request: Request,
-    response: Response
 ):
-    token = request.cookies.get(
-        'session_token'
+
+    token = (
+        request.cookies.get(
+            "session_token"
+        )
     )
 
     if token:
-        await db.user_sessions.delete_one({
-            'session_token': token
-        })
 
-    response.delete_cookie(
-        key='session_token',
-        path='/'
+        await db.user_sessions.delete_one(
+            {
+                "session_token":
+                token
+            }
+        )
+
+    redirect = RedirectResponse(
+        url=(
+            FRONTEND_URL
+            + "/admin/login"
+        ),
+        status_code=302,
     )
 
-    return {
-        'ok': True
-    }
+    redirect.delete_cookie(
+        key="session_token",
+        path="/",
+        secure=True,
+        samesite="none",
+    )
+
+    return redirect
 
 
-# -------------------- Admin routes --------------------
+# =========================================================
+# ADMIN LEADS
+# =========================================================
 
 @api_router.get(
     "/admin/leads",
-    response_model=List[LeadListItem]
+    response_model=List[
+        LeadListItem
+    ]
 )
 async def admin_list_leads(
+
     limit: int = 500,
-    type: Optional[str] = None,
-    user: User = Depends(require_admin)
+
+    type: Optional[
+        str
+    ] = None,
+
+    user: User = Depends(
+        require_admin
+    ),
 ):
-    q = {}
+
+    query = {}
 
     if type:
-        q["type"] = type
+
+        query[
+            "type"
+        ] = type
+
 
     docs = (
+
         await db.leads
-        .find(q)
-        .sort("created_at", -1)
-        .to_list(limit)
+
+        .find(
+            query
+        )
+
+        .sort(
+            "created_at",
+            -1
+        )
+
+        .to_list(
+            limit
+        )
     )
 
+
     return [
+
         LeadListItem(
-            **_clean_mongo(d)
+            **_clean_mongo(
+                doc
+            )
         )
-        for d in docs
+
+        for doc in docs
     ]
 
 
-@api_router.get("/admin/stats")
+# =========================================================
+# ADMIN STATS
+# =========================================================
+
+@api_router.get(
+    "/admin/stats"
+)
 async def admin_stats(
-    user: User = Depends(require_admin)
+
+    user: User = Depends(
+        require_admin
+    )
 ):
-    total = await db.leads.count_documents({})
+
+    total = (
+        await db.leads.count_documents(
+            {}
+        )
+    )
+
 
     by_type = {}
 
-    for t in [
+
+    for lead_type in [
+
         "apply",
+
         "callback",
+
         "quick",
+
         "chat_lead",
-        "newsletter"
+
+        "newsletter",
+
     ]:
-        by_type[t] = (
-            await db.leads.count_documents({
-                "type": t
-            })
+
+        by_type[
+            lead_type
+        ] = (
+
+            await db.leads.count_documents(
+                {
+                    "type":
+                    lead_type
+                }
+            )
         )
 
+
     subs = (
-        await db.newsletter.count_documents({})
+
+        await db.newsletter.count_documents(
+            {}
+        )
     )
+
 
     since = (
-        datetime.now(timezone.utc)
-        - timedelta(days=7)
+
+        datetime.now(
+            timezone.utc
+        )
+
+        - timedelta(
+            days=7
+        )
     )
+
 
     last7 = (
-        await db.leads.count_documents({
-            "created_at": {
-                "$gte": since
+
+        await db.leads.count_documents(
+
+            {
+                "created_at":
+                {
+                    "$gte":
+                    since
+                }
             }
-        })
+        )
     )
 
+
     return {
-        "total_leads": total,
-        "by_type": by_type,
-        "newsletter_subscribers": subs,
-        "last_7_days": last7
+
+        "total_leads":
+        total,
+
+        "by_type":
+        by_type,
+
+        "newsletter_subscribers":
+        subs,
+
+        "last_7_days":
+        last7,
     }
 
+
+# =========================================================
+# ADMIN NEWSLETTER
+# =========================================================
 
 @api_router.get(
     "/admin/newsletter",
-    response_model=List[Newsletter]
+    response_model=List[
+        Newsletter
+    ]
 )
 async def admin_newsletter(
+
     limit: int = 500,
-    user: User = Depends(require_admin)
+
+    user: User = Depends(
+        require_admin
+    ),
 ):
+
     docs = (
+
         await db.newsletter
+
         .find()
-        .sort("created_at", -1)
-        .to_list(limit)
+
+        .sort(
+            "created_at",
+            -1
+        )
+
+        .to_list(
+            limit
+        )
     )
 
+
     return [
+
         Newsletter(
-            **_clean_mongo(d)
+            **_clean_mongo(
+                doc
+            )
         )
-        for d in docs
+
+        for doc in docs
     ]
 
 
-# Legacy public stats
-@api_router.get("/leads/stats")
+# =========================================================
+# LEGACY PUBLIC STATS
+# =========================================================
+
+@api_router.get(
+    "/leads/stats"
+)
 async def lead_stats_public():
+
     total = (
-        await db.leads.count_documents({})
+
+        await db.leads.count_documents(
+            {}
+        )
     )
 
-    subs = (
-        await db.newsletter.count_documents({})
+    subscribers = (
+
+        await db.newsletter.count_documents(
+            {}
+        )
     )
 
     return {
-        "total_leads": total,
-        "newsletter_subscribers": subs
+
+        "total_leads":
+        total,
+
+        "newsletter_subscribers":
+        subscribers,
     }
 
 
-# -------------------- Application setup --------------------
+# =========================================================
+# ROUTER
+# =========================================================
 
-app.include_router(api_router)
+app.include_router(
+    api_router
+)
+
+
+# =========================================================
+# CORS
+# =========================================================
 
 app.add_middleware(
+
     CORSMiddleware,
+
+    allow_origins=[
+        "https://routeyourcareer.netlify.app"
+    ],
+
     allow_credentials=True,
-    allow_origins=["*"],
+
     allow_methods=["*"],
+
     allow_headers=["*"],
 )
 
+
+# =========================================================
+# LOGGING
+# =========================================================
+
 logging.basicConfig(
+
     level=logging.INFO,
+
     format=(
-        '%(asctime)s - %(name)s - '
-        '%(levelname)s - %(message)s'
-    )
+        "%(asctime)s - "
+        "%(name)s - "
+        "%(levelname)s - "
+        "%(message)s"
+    ),
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(
+    __name__
+)
 
 
-@app.on_event("shutdown")
+# =========================================================
+# SHUTDOWN
+# =========================================================
+
+@app.on_event(
+    "shutdown"
+)
 async def shutdown_db_client():
+
     client.close()
