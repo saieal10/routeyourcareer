@@ -39,8 +39,8 @@ function eligibilityFor(code, score) {
   }
   if (s >= 500) return { tag: 'Top-tier', color: 'bg-emerald-100 text-emerald-800', note: 'Eligible everywhere — you can aim for premium picks like Ireland, top Georgia unis.' };
   if (s >= 300) return { tag: 'Strong fit', color: 'bg-teal-100 text-teal-800', note: `Excellent shortlist across ${b.name} — multiple partner universities open.` };
-  if (s >= 137) return { tag: 'Qualifying', color: 'bg-amber-100 text-amber-900', note: `NEET-qualified. ${b.name} accepts qualifying scores at most partner universities.` };
-  if (s > 0) return { tag: 'Retake advised', color: 'bg-rose-100 text-rose-800', note: 'A qualifying NEET score (137+) is mandatory — or consider a pivot to Management.' };
+  if (s >= 213) return { tag: 'Qualifying', color: 'bg-amber-100 text-amber-900', note: `NEET-qualified. ${b.name} accepts qualifying scores at most partner universities.` };
+  if (s > 0) return { tag: 'Retake advised', color: 'bg-rose-100 text-rose-800', note: 'A qualifying NEET score (213+) is mandatory — or consider a pivot to Management.' };
   return { tag: '—', color: 'bg-slate-100 text-slate-700', note: 'Enter your NEET score to see personalised eligibility.' };
 }
 
