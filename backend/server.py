@@ -4,7 +4,6 @@ from fastapi import (
     HTTPException,
     Depends,
     Request,
-    Response,
     BackgroundTasks,
 )
 from fastapi.responses import RedirectResponse
@@ -16,12 +15,14 @@ import os
 import logging
 import uuid
 import httpx
+import re
 
 from pathlib import Path
 from urllib.parse import urlencode
 from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Literal
+
 
 from notifier import notify_new_lead
 
@@ -31,14 +32,19 @@ from notifier import notify_new_lead
 # =========================================================
 
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / ".env")
+
+load_dotenv(
+    ROOT_DIR / ".env"
+)
 
 
 # -------------------- MongoDB --------------------
 
 mongo_url = os.environ["MONGO_URL"]
 
-client = AsyncIOMotorClient(mongo_url)
+client = AsyncIOMotorClient(
+    mongo_url
+)
 
 db = client[
     os.environ["DB_NAME"]
@@ -108,6 +114,7 @@ api_router = APIRouter(
 # =========================================================
 # MODELS
 # =========================================================
+
 
 class LeadCreate(BaseModel):
     name: str
@@ -208,8 +215,146 @@ class ChatLeadIn(BaseModel):
 
 
 # =========================================================
+# BLOG MODELS
+# =========================================================
+
+
+class BlogBodyBlock(BaseModel):
+    type: Literal[
+        "heading",
+        "paragraph",
+        "list",
+        "image",
+    ]
+
+    text: Optional[str] = None
+
+    items: Optional[
+        List[str]
+    ] = None
+
+    image_url: Optional[str] = None
+
+    image_alt: Optional[str] = None
+
+
+class BlogCreate(BaseModel):
+
+    title: str
+
+    slug: Optional[str] = None
+
+    category: str
+
+    author: str = "RYC Editorial"
+
+    read_time: int = 5
+
+    hero_image: Optional[str] = None
+
+    excerpt: str
+
+    body: List[
+        BlogBodyBlock
+    ] = []
+
+    cta: Optional[str] = "mbbs"
+
+    seo_title: Optional[str] = None
+
+    meta_description: Optional[str] = None
+
+    keywords: List[str] = []
+
+    status: Literal[
+        "draft",
+        "published",
+    ] = "draft"
+
+
+class BlogUpdate(BaseModel):
+
+    title: Optional[str] = None
+
+    slug: Optional[str] = None
+
+    category: Optional[str] = None
+
+    author: Optional[str] = None
+
+    read_time: Optional[int] = None
+
+    hero_image: Optional[str] = None
+
+    excerpt: Optional[str] = None
+
+    body: Optional[
+        List[BlogBodyBlock]
+    ] = None
+
+    cta: Optional[str] = None
+
+    seo_title: Optional[str] = None
+
+    meta_description: Optional[str] = None
+
+    keywords: Optional[
+        List[str]
+    ] = None
+
+    status: Optional[
+        Literal[
+            "draft",
+            "published",
+        ]
+    ] = None
+
+
+class Blog(BaseModel):
+
+    id: str
+
+    title: str
+
+    slug: str
+
+    category: str
+
+    author: str
+
+    read_time: int
+
+    hero_image: Optional[str] = None
+
+    excerpt: str
+
+    body: List[
+        BlogBodyBlock
+    ]
+
+    cta: Optional[str] = None
+
+    seo_title: Optional[str] = None
+
+    meta_description: Optional[str] = None
+
+    keywords: List[str] = []
+
+    status: str
+
+    created_at: datetime
+
+    updated_at: datetime
+
+    published_at: Optional[
+        datetime
+    ] = None
+
+
+# =========================================================
 # HELPERS
 # =========================================================
+
 
 def _clean_mongo(doc):
 
@@ -224,9 +369,32 @@ def _clean_mongo(doc):
     return doc
 
 
+def make_slug(
+    text: str
+) -> str:
+
+    text = (
+        text.strip()
+        .lower()
+    )
+
+    text = re.sub(
+        r"[^a-z0-9]+",
+        "-",
+        text
+    )
+
+    text = text.strip(
+        "-"
+    )
+
+    return text
+
+
 # =========================================================
 # AUTHENTICATION HELPERS
 # =========================================================
+
 
 async def get_current_user(
     request: Request
@@ -263,7 +431,8 @@ async def get_current_user(
 
     sess = await db.user_sessions.find_one(
         {
-            "session_token": token
+            "session_token":
+            token
         },
         {
             "_id": 0
@@ -311,7 +480,8 @@ async def get_current_user(
 
         await db.user_sessions.delete_one(
             {
-                "session_token": token
+                "session_token":
+                token
             }
         )
 
@@ -320,13 +490,16 @@ async def get_current_user(
             detail="Session expired",
         )
 
-    user_doc = await db.users.find_one(
-        {
-            "user_id": sess["user_id"]
-        },
-        {
-            "_id": 0
-        },
+    user_doc = (
+        await db.users.find_one(
+            {
+                "user_id":
+                sess["user_id"]
+            },
+            {
+                "_id": 0
+            },
+        )
     )
 
     if not user_doc:
@@ -336,7 +509,9 @@ async def get_current_user(
             detail="User not found",
         )
 
-    user_doc["is_admin"] = (
+    user_doc[
+        "is_admin"
+    ] = (
         user_doc.get(
             "email",
             ""
@@ -369,20 +544,29 @@ async def require_admin(
 # ROOT
 # =========================================================
 
+
 @api_router.get("/")
 async def root():
 
     return {
         "message":
         "Route Your Career API is live",
-        "version": "2.0",
-        "google_auth": True,
+
+        "version":
+        "3.0",
+
+        "google_auth":
+        True,
+
+        "blog_system":
+        True,
     }
 
 
 # =========================================================
 # LEADS
 # =========================================================
+
 
 @api_router.post(
     "/leads",
@@ -408,7 +592,9 @@ async def create_lead(
         {
             **doc,
             "created_at":
-            doc["created_at"].isoformat(),
+            doc[
+                "created_at"
+            ].isoformat(),
         },
     )
 
@@ -418,6 +604,7 @@ async def create_lead(
 # =========================================================
 # NEWSLETTER
 # =========================================================
+
 
 @api_router.post(
     "/newsletter",
@@ -431,7 +618,8 @@ async def newsletter_signup(
     existing = (
         await db.newsletter.find_one(
             {
-                "email": payload.email
+                "email":
+                payload.email
             }
         )
     )
@@ -439,7 +627,9 @@ async def newsletter_signup(
     if existing:
 
         return Newsletter(
-            **_clean_mongo(existing)
+            **_clean_mongo(
+                existing
+            )
         )
 
     sub = Newsletter(
@@ -461,7 +651,9 @@ async def newsletter_signup(
         type="newsletter",
     )
 
-    lead_doc = lead.model_dump()
+    lead_doc = (
+        lead.model_dump()
+    )
 
     await db.leads.insert_one(
         lead_doc
@@ -484,10 +676,7 @@ async def newsletter_signup(
 # =========================================================
 # AI CHAT
 # =========================================================
-#
-# Emergent AI removed.
-# Everything else continues working.
-#
+
 
 @api_router.post(
     "/chat",
@@ -510,6 +699,7 @@ async def chat(
 # CHAT LEAD
 # =========================================================
 
+
 @api_router.post(
     "/chat/lead",
     response_model=Lead
@@ -521,17 +711,24 @@ async def chat_capture_lead(
 
     lead = Lead(
         name=payload.name,
+
         phone=payload.phone,
+
         country=payload.country,
+
         neet_score=payload.neet_score,
+
         source=(
             f"chat:"
             f"{payload.session_id}"
         ),
+
         type="chat_lead",
     )
 
-    doc = lead.model_dump()
+    doc = (
+        lead.model_dump()
+    )
 
     await db.leads.insert_one(
         doc
@@ -578,8 +775,83 @@ async def chat_capture_lead(
 
 
 # =========================================================
+# PUBLIC BLOG ROUTES
+# =========================================================
+
+
+@api_router.get(
+    "/blogs",
+    response_model=List[Blog]
+)
+async def public_blogs():
+
+    docs = (
+        await db.blogs
+        .find(
+            {
+                "status":
+                "published"
+            },
+            {
+                "_id": 0
+            }
+        )
+        .sort(
+            "published_at",
+            -1
+        )
+        .to_list(
+            500
+        )
+    )
+
+    return [
+        Blog(
+            **doc
+        )
+        for doc in docs
+    ]
+
+
+@api_router.get(
+    "/blogs/{slug}",
+    response_model=Blog
+)
+async def public_blog(
+    slug: str
+):
+
+    doc = (
+        await db.blogs.find_one(
+            {
+                "slug":
+                slug,
+
+                "status":
+                "published",
+            },
+            {
+                "_id": 0
+            },
+        )
+    )
+
+    if not doc:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Blog not found",
+        )
+
+    return Blog(
+        **doc
+    )
+
+
+# =========================================================
 # GOOGLE LOGIN
 # =========================================================
+
 
 @api_router.get(
     "/auth/google"
@@ -642,6 +914,7 @@ async def google_login():
 # =========================================================
 # GOOGLE CALLBACK
 # =========================================================
+
 
 @api_router.get(
     "/auth/google/callback"
@@ -790,10 +1063,6 @@ async def google_callback(
         )
 
 
-    # --------------------
-    # Validate Google user
-    # --------------------
-
     email = (
         data.get(
             "email"
@@ -833,10 +1102,6 @@ async def google_callback(
         )
 
 
-    # --------------------
-    # Admin whitelist
-    # --------------------
-
     if email not in ADMIN_EMAILS:
 
         return RedirectResponse(
@@ -849,14 +1114,11 @@ async def google_callback(
         )
 
 
-    # --------------------
-    # Create/update user
-    # --------------------
-
     user_doc = (
         await db.users.find_one(
             {
-                "email": email
+                "email":
+                email
             },
             {
                 "_id": 0
@@ -939,10 +1201,6 @@ async def google_callback(
         })
 
 
-    # --------------------
-    # Create session
-    # --------------------
-
     session_token = (
         uuid.uuid4().hex
     )
@@ -974,10 +1232,6 @@ async def google_callback(
         ),
     })
 
-
-    # --------------------
-    # Redirect to Admin
-    # --------------------
 
     redirect = RedirectResponse(
 
@@ -1020,6 +1274,7 @@ async def google_callback(
 # AUTH ME
 # =========================================================
 
+
 @api_router.get(
     "/auth/me",
     response_model=User
@@ -1036,6 +1291,7 @@ async def auth_me(
 # =========================================================
 # LOGOUT
 # =========================================================
+
 
 @api_router.post(
     "/auth/logout"
@@ -1080,6 +1336,7 @@ async def auth_logout(
 # =========================================================
 # ADMIN LEADS
 # =========================================================
+
 
 @api_router.get(
     "/admin/leads",
@@ -1143,6 +1400,7 @@ async def admin_list_leads(
 # =========================================================
 # ADMIN STATS
 # =========================================================
+
 
 @api_router.get(
     "/admin/stats"
@@ -1246,6 +1504,7 @@ async def admin_stats(
 # ADMIN NEWSLETTER
 # =========================================================
 
+
 @api_router.get(
     "/admin/newsletter",
     response_model=List[
@@ -1291,8 +1550,428 @@ async def admin_newsletter(
 
 
 # =========================================================
+# ADMIN BLOGS
+# =========================================================
+
+
+@api_router.get(
+    "/admin/blogs",
+    response_model=List[Blog]
+)
+async def admin_get_blogs(
+    user: User = Depends(
+        require_admin
+    )
+):
+
+    docs = (
+        await db.blogs
+        .find(
+            {},
+            {
+                "_id": 0
+            }
+        )
+        .sort(
+            "updated_at",
+            -1
+        )
+        .to_list(
+            500
+        )
+    )
+
+    return [
+        Blog(
+            **doc
+        )
+        for doc in docs
+    ]
+
+
+@api_router.post(
+    "/admin/blogs",
+    response_model=Blog
+)
+async def admin_create_blog(
+    payload: BlogCreate,
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    now = (
+        datetime.now(
+            timezone.utc
+        )
+    )
+
+    slug = (
+        payload.slug
+        or make_slug(
+            payload.title
+        )
+    )
+
+    slug = make_slug(
+        slug
+    )
+
+    if not slug:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid blog slug",
+        )
+
+
+    existing = (
+        await db.blogs.find_one(
+            {
+                "slug":
+                slug
+            }
+        )
+    )
+
+    if existing:
+
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "A blog with this "
+                "slug already exists"
+            ),
+        )
+
+
+    blog_id = str(
+        uuid.uuid4()
+    )
+
+
+    published_at = None
+
+    if (
+        payload.status
+        == "published"
+    ):
+
+        published_at = now
+
+
+    doc = {
+
+        "id":
+        blog_id,
+
+        "title":
+        payload.title,
+
+        "slug":
+        slug,
+
+        "category":
+        payload.category,
+
+        "author":
+        payload.author,
+
+        "read_time":
+        payload.read_time,
+
+        "hero_image":
+        payload.hero_image,
+
+        "excerpt":
+        payload.excerpt,
+
+        "body":
+        [
+            block.model_dump()
+            for block
+            in payload.body
+        ],
+
+        "cta":
+        payload.cta,
+
+        "seo_title":
+        (
+            payload.seo_title
+            or payload.title
+        ),
+
+        "meta_description":
+        (
+            payload.meta_description
+            or payload.excerpt
+        ),
+
+        "keywords":
+        payload.keywords,
+
+        "status":
+        payload.status,
+
+        "created_at":
+        now,
+
+        "updated_at":
+        now,
+
+        "published_at":
+        published_at,
+    }
+
+
+    await db.blogs.insert_one(
+        doc
+    )
+
+
+    return Blog(
+        **_clean_mongo(
+            doc
+        )
+    )
+
+
+@api_router.put(
+    "/admin/blogs/{blog_id}",
+    response_model=Blog
+)
+async def admin_update_blog(
+    blog_id: str,
+    payload: BlogUpdate,
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    existing = (
+        await db.blogs.find_one(
+            {
+                "id":
+                blog_id
+            },
+            {
+                "_id": 0
+            },
+        )
+    )
+
+    if not existing:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Blog not found",
+        )
+
+
+    updates = (
+        payload.model_dump(
+            exclude_none=True
+        )
+    )
+
+
+    if "body" in updates:
+
+        updates[
+            "body"
+        ] = [
+            (
+                item.model_dump()
+                if hasattr(
+                    item,
+                    "model_dump"
+                )
+                else item
+            )
+
+            for item
+            in updates[
+                "body"
+            ]
+        ]
+
+
+    if "slug" in updates:
+
+        new_slug = make_slug(
+            updates[
+                "slug"
+            ]
+        )
+
+        duplicate = (
+            await db.blogs.find_one(
+                {
+                    "slug":
+                    new_slug,
+
+                    "id":
+                    {
+                        "$ne":
+                        blog_id
+                    },
+                }
+            )
+        )
+
+        if duplicate:
+
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "A blog with this "
+                    "slug already exists"
+                ),
+            )
+
+        updates[
+            "slug"
+        ] = new_slug
+
+
+    if (
+        "title" in updates
+        and "slug"
+        not in updates
+        and not existing.get(
+            "slug"
+        )
+    ):
+
+        updates[
+            "slug"
+        ] = make_slug(
+            updates[
+                "title"
+            ]
+        )
+
+
+    old_status = (
+        existing.get(
+            "status"
+        )
+    )
+
+    new_status = (
+        updates.get(
+            "status",
+            old_status
+        )
+    )
+
+
+    if (
+        new_status
+        == "published"
+        and old_status
+        != "published"
+    ):
+
+        updates[
+            "published_at"
+        ] = (
+            datetime.now(
+                timezone.utc
+            )
+        )
+
+
+    if (
+        new_status
+        == "draft"
+    ):
+
+        updates[
+            "published_at"
+        ] = None
+
+
+    updates[
+        "updated_at"
+    ] = (
+        datetime.now(
+            timezone.utc
+        )
+    )
+
+
+    await db.blogs.update_one(
+
+        {
+            "id":
+            blog_id
+        },
+
+        {
+            "$set":
+            updates
+        },
+    )
+
+
+    updated = (
+        await db.blogs.find_one(
+            {
+                "id":
+                blog_id
+            },
+            {
+                "_id": 0
+            },
+        )
+    )
+
+
+    return Blog(
+        **updated
+    )
+
+
+@api_router.delete(
+    "/admin/blogs/{blog_id}"
+)
+async def admin_delete_blog(
+    blog_id: str,
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    result = (
+        await db.blogs.delete_one(
+            {
+                "id":
+                blog_id
+            }
+        )
+    )
+
+    if (
+        result.deleted_count
+        == 0
+    ):
+
+        raise HTTPException(
+            status_code=404,
+            detail="Blog not found",
+        )
+
+    return {
+        "ok": True
+    }
+
+
+# =========================================================
 # LEGACY PUBLIC STATS
 # =========================================================
+
 
 @api_router.get(
     "/leads/stats"
@@ -1327,6 +2006,7 @@ async def lead_stats_public():
 # ROUTER
 # =========================================================
 
+
 app.include_router(
     api_router
 )
@@ -1335,6 +2015,7 @@ app.include_router(
 # =========================================================
 # CORS
 # =========================================================
+
 
 app.add_middleware(
 
@@ -1346,15 +2027,20 @@ app.add_middleware(
 
     allow_credentials=True,
 
-    allow_methods=["*"],
+    allow_methods=[
+        "*"
+    ],
 
-    allow_headers=["*"],
+    allow_headers=[
+        "*"
+    ],
 )
 
 
 # =========================================================
 # LOGGING
 # =========================================================
+
 
 logging.basicConfig(
 
@@ -1376,6 +2062,7 @@ logger = logging.getLogger(
 # =========================================================
 # SHUTDOWN
 # =========================================================
+
 
 @app.on_event(
     "shutdown"
