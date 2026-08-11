@@ -1,6 +1,6 @@
 import React from 'react';
 import { brand } from '../mock';
-import { Phone, Mail, Facebook, Instagram, Youtube, Linkedin, MapPin, ArrowUpRight } from 'lucide-react';
+import { Phone, Mail, Facebook, Instagram, Youtube, MapPin, ArrowUpRight } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -22,12 +22,39 @@ export default function Footer() {
               <a href={`tel:${brand.phone}`} className="flex items-center gap-3 hover:text-coral"><Phone className="h-4 w-4 text-coral" /> {brand.phoneDisplay}</a>
               <a href={`mailto:${brand.email}`} className="flex items-center gap-3 hover:text-coral"><Mail className="h-4 w-4 text-coral" /> {brand.email}</a>
               <div className="flex items-center gap-3"><MapPin className="h-4 w-4 text-coral" /> Present across Karnataka · Maharashtra · Kerala · Tamil Nadu · Telangana</div>
-            </div>
-            <div className="mt-6 flex items-center gap-2">
-              {[Facebook, Instagram, Youtube, Linkedin].map((Ic, i) => (
-                <a key={i} href="#" className="h-10 w-10 rounded-full border border-cream/15 grid place-items-center hover:bg-coral hover:border-coral hover:text-white"><Ic className="h-4 w-4" /></a>
-              ))}
-            </div>
+<div className="mt-6 flex items-center gap-2">
+
+  <a
+    href="https://www.facebook.com/share/1HFXZJteo1/"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Facebook"
+    className="h-10 w-10 rounded-full border border-cream/15 grid place-items-center hover:bg-coral hover:border-coral hover:text-white"
+  >
+    <Facebook className="h-4 w-4" />
+  </a>
+
+  <a
+    href="https://www.instagram.com/route_your_career"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Instagram"
+    className="h-10 w-10 rounded-full border border-cream/15 grid place-items-center hover:bg-coral hover:border-coral hover:text-white"
+  >
+    <Instagram className="h-4 w-4" />
+  </a>
+
+  <a
+    href="https://www.youtube.com/@route_your_career"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="YouTube"
+    className="h-10 w-10 rounded-full border border-cream/15 grid place-items-center hover:bg-coral hover:border-coral hover:text-white"
+  >
+    <Youtube className="h-4 w-4" />
+  </a>
+
+</div>
           </div>
 
           <div className="lg:col-span-2">
