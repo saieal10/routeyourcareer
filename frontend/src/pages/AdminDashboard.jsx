@@ -44,7 +44,11 @@ import {
   GraduationCap,
   Search,
   Star,
-  MapPin
+  MapPin,
+  BriefcaseBusiness,
+  Stethoscope,
+  BadgeCheck,
+  WalletCards
 } from 'lucide-react';
 
 
@@ -80,45 +84,89 @@ const EMPTY_BLOG = {
 
 
 const EMPTY_UNIVERSITY = {
+
+  // Main classification
+  stream: 'MBBS',
+
+  // Basic
   name: '',
   slug: '',
   country: 'Georgia',
   city: '',
 
+  // Course
   course: 'MBBS',
+  course_level: '',
   duration: '',
   medium: 'English',
   intake: '',
+  application_deadline: '',
 
+  // Fees
   currency: 'USD',
-
   tuition_fee_year: '',
   hostel_fee_year: '',
   food_fee_year: '',
   first_year_total: '',
   total_course_cost: '',
+  application_fee: '',
+  scholarship_info: '',
 
-  neet_requirement: '',
+  // General eligibility
   eligibility: '',
 
-  overview: '',
-  recognition: '',
+  // MBBS
+  neet_requirement: '',
+  pcb_requirement: '',
   internship: '',
+  recognition: '',
+  nmc_notes: '',
+  fmge_next_notes: '',
+
+  // Management
+  academic_requirement: '',
+  english_requirement: '',
+  ielts_requirement: '',
+  toefl_requirement: '',
+  gmat_gre_requirement: '',
+  work_experience: '',
+  specializationsText: '',
+  internship_opportunities: '',
+  placement_info: '',
+  post_study_opportunities: '',
+
+  // Institution
+  overview: '',
+  accreditation: '',
+  ranking: '',
+  established_year: '',
+  campus: '',
+
+  // Student life
   hostel: '',
   indian_food: '',
   student_life: '',
+  climate: '',
+  airport_distance: '',
 
+  // Lists
   prosText: '',
   consText: '',
   documentsText: '',
   admissionText: '',
   faqsText: '',
 
+  // Links
   website: '',
   apply_link: '',
 
+  // Display
   featured: false,
+  popular: false,
+  budget_option: false,
+  recommended: false,
 
+  // SEO
   seo_title: '',
   meta_description: '',
   keywordsText: '',
@@ -131,16 +179,13 @@ function fmt(dt) {
   if (!dt) return '—';
 
   try {
-    const d = new Date(dt);
-
-    return d.toLocaleString('en-IN', {
+    return new Date(dt).toLocaleString('en-IN', {
       day: '2-digit',
       month: 'short',
       year: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
     });
-
   } catch {
     return String(dt || '');
   }
@@ -159,7 +204,7 @@ function slugify(text) {
 function linesToArray(text) {
   return String(text || '')
     .split('\n')
-    .map((item) => item.trim())
+    .map(x => x.trim())
     .filter(Boolean);
 }
 
@@ -173,10 +218,10 @@ function optionalNumber(value) {
     return null;
   }
 
-  const number = Number(value);
+  const n = Number(value);
 
-  return Number.isFinite(number)
-    ? number
+  return Number.isFinite(n)
+    ? n
     : null;
 }
 
@@ -184,13 +229,12 @@ function optionalNumber(value) {
 function faqTextToArray(text) {
   return String(text || '')
     .split('\n')
-    .map((line) => line.trim())
+    .map(x => x.trim())
     .filter(Boolean)
-    .map((line) => {
-      const separator =
-        line.indexOf('|');
+    .map(line => {
+      const pos = line.indexOf('|');
 
-      if (separator === -1) {
+      if (pos === -1) {
         return {
           question: line,
           answer: ''
@@ -199,17 +243,13 @@ function faqTextToArray(text) {
 
       return {
         question:
-          line
-            .slice(0, separator)
-            .trim(),
+          line.slice(0, pos).trim(),
 
         answer:
-          line
-            .slice(separator + 1)
-            .trim()
+          line.slice(pos + 1).trim()
       };
     })
-    .filter((item) => item.question);
+    .filter(x => x.question);
 }
 
 
@@ -220,7 +260,7 @@ function faqArrayToText(faqs) {
 
   return faqs
     .map(
-      (faq) =>
+      faq =>
         `${faq.question || ''} | ${faq.answer || ''}`
     )
     .join('\n');
@@ -231,11 +271,11 @@ async function adminFetch(
   path,
   options = {}
 ) {
+
   const response = await fetch(
     `${BACKEND_URL}${path}`,
     {
       credentials: 'include',
-
       ...options,
 
       headers: {
@@ -246,17 +286,16 @@ async function adminFetch(
   );
 
   if (!response.ok) {
+
     let detail =
       `Request failed (${response.status})`;
 
     try {
-      const data =
-        await response.json();
+      const data = await response.json();
 
       detail =
         data?.detail ||
         detail;
-
     } catch {
       // ignore
     }
@@ -270,9 +309,7 @@ async function adminFetch(
     throw error;
   }
 
-  if (
-    response.status === 204
-  ) {
+  if (response.status === 204) {
     return null;
   }
 
@@ -281,16 +318,10 @@ async function adminFetch(
 
 
 function blankBlock(type) {
+
   if (type === 'heading') {
     return {
       type: 'heading',
-      text: ''
-    };
-  }
-
-  if (type === 'paragraph') {
-    return {
-      type: 'paragraph',
       text: ''
     };
   }
@@ -310,6 +341,7 @@ function blankBlock(type) {
 
 
 export default function AdminDashboard() {
+
   const location =
     useLocation();
 
@@ -333,9 +365,7 @@ export default function AdminDashboard() {
     );
 
   const [section, setSection] =
-    useState(
-      'dashboard'
-    );
+    useState('dashboard');
 
 
   // =====================================================
@@ -445,14 +475,7 @@ export default function AdminDashboard() {
   const [
     universityForm,
     setUniversityForm
-  ] = useState(
-    EMPTY_UNIVERSITY
-  );
-
-  const [
-    universityError,
-    setUniversityError
-  ] = useState('');
+  ] = useState(EMPTY_UNIVERSITY);
 
   const [
     savingUniversity,
@@ -460,9 +483,19 @@ export default function AdminDashboard() {
   ] = useState(false);
 
   const [
+    universityError,
+    setUniversityError
+  ] = useState('');
+
+  const [
     universitySlugTouched,
     setUniversitySlugTouched
   ] = useState(false);
+
+  const [
+    universityStreamFilter,
+    setUniversityStreamFilter
+  ] = useState('All');
 
   const [
     universityCountryFilter,
@@ -480,14 +513,18 @@ export default function AdminDashboard() {
   // =====================================================
 
   useEffect(() => {
+
     if (user) return;
 
     (async () => {
+
       try {
+
         const u =
           await me();
 
         if (!u?.is_admin) {
+
           nav(
             '/admin/login?e=Not%20authorised',
             {
@@ -501,6 +538,7 @@ export default function AdminDashboard() {
         setUser(u);
 
       } catch {
+
         nav(
           '/admin/login',
           {
@@ -509,8 +547,10 @@ export default function AdminDashboard() {
         );
 
       } finally {
+
         setChecking(false);
       }
+
     })();
 
     // eslint-disable-next-line
@@ -524,21 +564,19 @@ export default function AdminDashboard() {
   const loadLeads =
     useCallback(
       async () => {
+
         if (!user) return;
 
         setLoadingLeads(true);
 
         try {
-          const [
-            ls,
-            st
-          ] =
+
+          const [ls, st] =
             await Promise.all([
               adminLeads(
                 leadTab ||
                 undefined
               ),
-
               adminStats()
             ]);
 
@@ -551,28 +589,17 @@ export default function AdminDashboard() {
           setStats(st);
 
         } catch (e) {
-          if (
-            e?.response?.status === 401 ||
-            e?.response?.status === 403
-          ) {
-            nav(
-              '/admin/login',
-              {
-                replace: true
-              }
-            );
-          }
+
+          console.error(e);
 
         } finally {
-          setLoadingLeads(
-            false
-          );
+
+          setLoadingLeads(false);
         }
       },
       [
         leadTab,
-        user,
-        nav
+        user
       ]
     );
 
@@ -583,19 +610,19 @@ export default function AdminDashboard() {
 
 
   // =====================================================
-  // LOAD NEWSLETTER
+  // NEWSLETTER
   // =====================================================
 
   const loadNewsletter =
     useCallback(
       async () => {
+
         if (!user) return;
 
-        setLoadingNewsletter(
-          true
-        );
+        setLoadingNewsletter(true);
 
         try {
+
           const data =
             await adminNewsletter();
 
@@ -606,44 +633,32 @@ export default function AdminDashboard() {
           );
 
         } catch (e) {
-          if (
-            e?.response?.status === 401 ||
-            e?.response?.status === 403
-          ) {
-            nav(
-              '/admin/login',
-              {
-                replace: true
-              }
-            );
-          }
+
+          console.error(e);
 
         } finally {
-          setLoadingNewsletter(
-            false
-          );
+
+          setLoadingNewsletter(false);
         }
       },
-      [
-        user,
-        nav
-      ]
+      [user]
     );
 
 
   // =====================================================
-  // LOAD BLOGS
+  // BLOGS
   // =====================================================
 
   const loadBlogs =
     useCallback(
       async () => {
+
         if (!user) return;
 
         setLoadingBlogs(true);
-        setBlogError('');
 
         try {
+
           const data =
             await adminFetch(
               '/api/admin/blogs'
@@ -656,48 +671,28 @@ export default function AdminDashboard() {
           );
 
         } catch (e) {
-          console.error(
-            'Admin blogs error:',
-            e
-          );
 
           setBlogError(
-            e.message ||
-            'Could not load blogs.'
+            e.message
           );
-
-          if (
-            e.status === 401 ||
-            e.status === 403
-          ) {
-            nav(
-              '/admin/login',
-              {
-                replace: true
-              }
-            );
-          }
 
         } finally {
-          setLoadingBlogs(
-            false
-          );
+
+          setLoadingBlogs(false);
         }
       },
-      [
-        user,
-        nav
-      ]
+      [user]
     );
 
 
   // =====================================================
-  // LOAD UNIVERSITIES
+  // UNIVERSITIES
   // =====================================================
 
   const loadUniversities =
     useCallback(
       async () => {
+
         if (!user) return;
 
         setLoadingUniversities(
@@ -707,6 +702,7 @@ export default function AdminDashboard() {
         setUniversityError('');
 
         try {
+
           const data =
             await adminFetch(
               '/api/admin/universities'
@@ -719,42 +715,25 @@ export default function AdminDashboard() {
           );
 
         } catch (e) {
-          console.error(
-            'University load error:',
-            e
-          );
 
           setUniversityError(
             e.message ||
             'Could not load universities.'
           );
 
-          if (
-            e.status === 401 ||
-            e.status === 403
-          ) {
-            nav(
-              '/admin/login',
-              {
-                replace: true
-              }
-            );
-          }
-
         } finally {
+
           setLoadingUniversities(
             false
           );
         }
       },
-      [
-        user,
-        nav
-      ]
+      [user]
     );
 
 
   useEffect(() => {
+
     if (!user) return;
 
     loadNewsletter();
@@ -770,11 +749,170 @@ export default function AdminDashboard() {
 
 
   // =====================================================
-  // LEAD SEARCH
+  // COUNTS
+  // =====================================================
+
+  const publishedBlogCount =
+    blogs.filter(
+      x =>
+        x.status ===
+        'published'
+    ).length;
+
+
+  const draftBlogCount =
+    blogs.filter(
+      x =>
+        x.status ===
+        'draft'
+    ).length;
+
+
+  const publishedUniversityCount =
+    universities.filter(
+      x =>
+        x.status ===
+        'published'
+    ).length;
+
+
+  const draftUniversityCount =
+    universities.filter(
+      x =>
+        x.status ===
+        'draft'
+    ).length;
+
+
+  const mbbsCount =
+    universities.filter(
+      x =>
+        x.stream ===
+        'MBBS'
+    ).length;
+
+
+  const managementCount =
+    universities.filter(
+      x =>
+        x.stream ===
+        'Management'
+    ).length;
+
+
+  // =====================================================
+  // UNIVERSITY FILTERS
+  // =====================================================
+
+  const universityCountries =
+    useMemo(() => {
+
+      const countries = [
+        ...new Set(
+          universities
+            .filter(item =>
+              universityStreamFilter === 'All' ||
+              item.stream === universityStreamFilter
+            )
+            .map(item =>
+              item.country
+            )
+            .filter(Boolean)
+        )
+      ].sort();
+
+      return [
+        'All',
+        ...countries
+      ];
+
+    }, [
+      universities,
+      universityStreamFilter
+    ]);
+
+
+  const filteredUniversities =
+    useMemo(() => {
+
+      let result =
+        [...universities];
+
+
+      if (
+        universityStreamFilter !==
+        'All'
+      ) {
+
+        result =
+          result.filter(
+            x =>
+              x.stream ===
+              universityStreamFilter
+          );
+      }
+
+
+      if (
+        universityCountryFilter !==
+        'All'
+      ) {
+
+        result =
+          result.filter(
+            x =>
+              x.country ===
+              universityCountryFilter
+          );
+      }
+
+
+      if (
+        universitySearch.trim()
+      ) {
+
+        const search =
+          universitySearch
+            .toLowerCase()
+            .trim();
+
+        result =
+          result.filter(
+            x =>
+              [
+                x.name,
+                x.country,
+                x.city,
+                x.course,
+                x.stream
+              ].some(
+                value =>
+                  String(
+                    value || ''
+                  )
+                    .toLowerCase()
+                    .includes(search)
+              )
+          );
+      }
+
+      return result;
+
+    }, [
+      universities,
+      universityStreamFilter,
+      universityCountryFilter,
+      universitySearch
+    ]);
+
+
+  // =====================================================
+  // LEAD FILTER
   // =====================================================
 
   const filteredLeads =
     useMemo(() => {
+
       if (!q.trim()) {
         return leads;
       }
@@ -783,7 +921,7 @@ export default function AdminDashboard() {
         q.toLowerCase();
 
       return leads.filter(
-        (lead) =>
+        lead =>
           [
             lead.name,
             lead.phone,
@@ -793,7 +931,7 @@ export default function AdminDashboard() {
             lead.source,
             lead.message
           ].some(
-            (value) =>
+            value =>
               String(
                 value || ''
               )
@@ -809,324 +947,88 @@ export default function AdminDashboard() {
 
 
   // =====================================================
-  // BLOG COUNTS
-  // =====================================================
-
-  const publishedBlogCount =
-    blogs.filter(
-      (blog) =>
-        blog.status ===
-        'published'
-    ).length;
-
-  const draftBlogCount =
-    blogs.filter(
-      (blog) =>
-        blog.status ===
-        'draft'
-    ).length;
-
-
-  // =====================================================
-  // UNIVERSITY COUNTS
-  // =====================================================
-
-  const publishedUniversityCount =
-    universities.filter(
-      (item) =>
-        item.status ===
-        'published'
-    ).length;
-
-  const draftUniversityCount =
-    universities.filter(
-      (item) =>
-        item.status ===
-        'draft'
-    ).length;
-
-  const featuredUniversityCount =
-    universities.filter(
-      (item) =>
-        item.featured
-    ).length;
-
-
-  // =====================================================
-  // UNIVERSITY COUNTRIES
-  // =====================================================
-
-  const universityCountries =
-    useMemo(() => {
-      const countries = [
-        ...new Set(
-          universities
-            .map(
-              (item) =>
-                item.country
-            )
-            .filter(Boolean)
-        )
-      ].sort();
-
-      return [
-        'All',
-        ...countries
-      ];
-
-    }, [universities]);
-
-
-  const filteredUniversities =
-    useMemo(() => {
-      let list =
-        [...universities];
-
-      if (
-        universityCountryFilter !==
-        'All'
-      ) {
-        list =
-          list.filter(
-            (item) =>
-              item.country ===
-              universityCountryFilter
-          );
-      }
-
-      if (
-        universitySearch.trim()
-      ) {
-        const search =
-          universitySearch
-            .trim()
-            .toLowerCase();
-
-        list =
-          list.filter(
-            (item) =>
-              [
-                item.name,
-                item.country,
-                item.city,
-                item.course
-              ].some(
-                (value) =>
-                  String(
-                    value || ''
-                  )
-                    .toLowerCase()
-                    .includes(
-                      search
-                    )
-              )
-          );
-      }
-
-      return list;
-
-    }, [
-      universities,
-      universityCountryFilter,
-      universitySearch
-    ]);
-
-
-  // =====================================================
-  // CSV
-  // =====================================================
-
-  const copyAll = () => {
-    const csv = [
-      'id,name,phone,email,country,neet,type,source,message,created_at',
-
-      ...filteredLeads.map(
-        (lead) =>
-          [
-            lead.id,
-            lead.name,
-            lead.phone,
-            lead.email,
-            lead.country,
-            lead.neet_score,
-            lead.type,
-            lead.source,
-            (
-              lead.message ||
-              ''
-            ).replace(
-              /,/g,
-              ';'
-            ),
-            lead.created_at
-          ]
-            .map(
-              (x) =>
-                `"${String(
-                  x ?? ''
-                ).replace(
-                  /"/g,
-                  '""'
-                )}"`
-            )
-            .join(',')
-      )
-
-    ].join('\n');
-
-    navigator.clipboard.writeText(
-      csv
-    );
-  };
-
-
-  const copyNewsletter = () => {
-    const text =
-      newsletter
-        .map(
-          (item) =>
-            item.email
-        )
-        .filter(Boolean)
-        .join('\n');
-
-    navigator.clipboard.writeText(
-      text
-    );
-  };
-
-
-  // =====================================================
   // LOGOUT
   // =====================================================
 
-  const signOut = async () => {
-    try {
-      await logout();
+  const signOut =
+    async () => {
 
-    } finally {
-      nav(
-        '/admin/login',
-        {
-          replace: true
-        }
+      try {
+        await logout();
+      } finally {
+        nav(
+          '/admin/login',
+          {
+            replace: true
+          }
+        );
+      }
+    };
+
+
+  // =====================================================
+  // COPY
+  // =====================================================
+
+  const copyNewsletter =
+    () => {
+
+      navigator.clipboard.writeText(
+        newsletter
+          .map(x => x.email)
+          .filter(Boolean)
+          .join('\n')
       );
-    }
-  };
+    };
+
+
+  const copyAll =
+    () => {
+
+      const csv = [
+
+        'name,phone,email,country,neet,type,source',
+
+        ...filteredLeads.map(
+          lead =>
+            [
+              lead.name,
+              lead.phone,
+              lead.email,
+              lead.country,
+              lead.neet_score,
+              lead.type,
+              lead.source
+            ]
+              .map(
+                x =>
+                  `"${String(
+                    x || ''
+                  ).replace(
+                    /"/g,
+                    '""'
+                  )}"`
+              )
+              .join(',')
+        )
+
+      ].join('\n');
+
+      navigator.clipboard.writeText(
+        csv
+      );
+    };
 
 
   // =====================================================
   // BLOG EDITOR
   // =====================================================
 
-  const openNewBlog = () => {
-    setEditingBlogId(null);
-
-    setBlogForm({
-      ...EMPTY_BLOG,
-
-      body: [
-        blankBlock(
-          'paragraph'
-        )
-      ]
-    });
-
-    setSlugTouched(false);
-    setBlogError('');
-    setBlogEditorOpen(true);
-  };
-
-
-  const openEditBlog = (blog) => {
-    setEditingBlogId(
-      blog.id
-    );
-
-    setSlugTouched(true);
-
-    setBlogForm({
-      title:
-        blog.title || '',
-
-      slug:
-        blog.slug || '',
-
-      category:
-        blog.category ||
-        'MBBS',
-
-      author:
-        blog.author ||
-        'RYC Editorial',
-
-      read_time:
-        blog.read_time ||
-        5,
-
-      excerpt:
-        blog.excerpt ||
-        '',
-
-      body:
-        Array.isArray(
-          blog.body
-        )
-          ? blog.body.filter(
-              (block) =>
-                block.type !==
-                'image'
-            )
-          : [],
-
-      cta:
-        blog.cta ||
-        'mbbs',
-
-      seo_title:
-        blog.seo_title ||
-        '',
-
-      meta_description:
-        blog.meta_description ||
-        '',
-
-      keywordsText:
-        Array.isArray(
-          blog.keywords
-        )
-          ? blog.keywords.join(
-              ', '
-            )
-          : '',
-
-      status:
-        blog.status ||
-        'draft'
-    });
-
-    setBlogError('');
-    setBlogEditorOpen(true);
-  };
-
-
-  const closeBlogEditor = () => {
-    if (savingBlog) return;
-
-    setBlogEditorOpen(false);
-    setEditingBlogId(null);
-    setBlogError('');
-  };
-
-
   const changeBlogField =
-    (
-      field,
-      value
-    ) => {
+    (field, value) => {
 
       setBlogForm(
-        (old) => ({
+        old => ({
           ...old,
           [field]: value
         })
@@ -1134,11 +1036,97 @@ export default function AdminDashboard() {
     };
 
 
+  const openNewBlog =
+    () => {
+
+      setEditingBlogId(null);
+
+      setBlogForm({
+        ...EMPTY_BLOG,
+        body: [
+          blankBlock(
+            'paragraph'
+          )
+        ]
+      });
+
+      setSlugTouched(false);
+      setBlogEditorOpen(true);
+    };
+
+
+  const openEditBlog =
+    blog => {
+
+      setEditingBlogId(
+        blog.id
+      );
+
+      setSlugTouched(true);
+
+      setBlogForm({
+
+        title:
+          blog.title || '',
+
+        slug:
+          blog.slug || '',
+
+        category:
+          blog.category || 'MBBS',
+
+        author:
+          blog.author ||
+          'RYC Editorial',
+
+        read_time:
+          blog.read_time || 5,
+
+        excerpt:
+          blog.excerpt || '',
+
+        body:
+          Array.isArray(
+            blog.body
+          )
+            ? blog.body.filter(
+                x =>
+                  x.type !==
+                  'image'
+              )
+            : [],
+
+        cta:
+          blog.cta || 'mbbs',
+
+        seo_title:
+          blog.seo_title || '',
+
+        meta_description:
+          blog.meta_description || '',
+
+        keywordsText:
+          Array.isArray(
+            blog.keywords
+          )
+            ? blog.keywords.join(
+                ', '
+              )
+            : '',
+
+        status:
+          blog.status || 'draft'
+      });
+
+      setBlogEditorOpen(true);
+    };
+
+
   const handleTitleChange =
-    (value) => {
+    value => {
 
       setBlogForm(
-        (old) => ({
+        old => ({
           ...old,
 
           title:
@@ -1147,25 +1135,36 @@ export default function AdminDashboard() {
           slug:
             slugTouched
               ? old.slug
-              : slugify(
-                  value
-                )
+              : slugify(value)
+        })
+      );
+    };
+
+
+  const addBodyBlock =
+    type => {
+
+      setBlogForm(
+        old => ({
+          ...old,
+
+          body: [
+            ...old.body,
+            blankBlock(type)
+          ]
         })
       );
     };
 
 
   const updateBodyBlock =
-    (
-      index,
-      values
-    ) => {
+    (index, values) => {
 
       setBlogForm(
-        (old) => {
-          const body = [
-            ...old.body
-          ];
+        old => {
+
+          const body =
+            [...old.body];
 
           body[index] = {
             ...body[index],
@@ -1181,27 +1180,11 @@ export default function AdminDashboard() {
     };
 
 
-  const addBodyBlock =
-    (type) => {
-
-      setBlogForm(
-        (old) => ({
-          ...old,
-
-          body: [
-            ...old.body,
-            blankBlock(type)
-          ]
-        })
-      );
-    };
-
-
   const removeBodyBlock =
-    (index) => {
+    index => {
 
       setBlogForm(
-        (old) => ({
+        old => ({
           ...old,
 
           body:
@@ -1214,151 +1197,19 @@ export default function AdminDashboard() {
     };
 
 
-  const moveBodyBlock =
-    (
-      index,
-      direction
-    ) => {
-
-      setBlogForm(
-        (old) => {
-          const body = [
-            ...old.body
-          ];
-
-          const nextIndex =
-            index +
-            direction;
-
-          if (
-            nextIndex < 0 ||
-            nextIndex >=
-            body.length
-          ) {
-            return old;
-          }
-
-          const temp =
-            body[index];
-
-          body[index] =
-            body[nextIndex];
-
-          body[nextIndex] =
-            temp;
-
-          return {
-            ...old,
-            body
-          };
-        }
-      );
-    };
-
-
   const saveBlog =
-    async (
-      statusOverride
-    ) => {
+    async status => {
 
-      setBlogError('');
-
-      if (
-        !blogForm.title.trim()
-      ) {
+      if (!blogForm.title.trim()) {
         setBlogError(
           'Blog title is required.'
         );
-
         return;
       }
-
-      if (
-        !blogForm.category.trim()
-      ) {
-        setBlogError(
-          'Category is required.'
-        );
-
-        return;
-      }
-
-      if (
-        !blogForm.excerpt.trim()
-      ) {
-        setBlogError(
-          'Excerpt is required.'
-        );
-
-        return;
-      }
-
-
-      const cleanBody =
-        blogForm.body
-          .map((block) => {
-
-            if (
-              block.type ===
-              'heading'
-            ) {
-              return {
-                type:
-                  'heading',
-
-                text:
-                  block.text ||
-                  ''
-              };
-            }
-
-            if (
-              block.type ===
-              'paragraph'
-            ) {
-              return {
-                type:
-                  'paragraph',
-
-                text:
-                  block.text ||
-                  ''
-              };
-            }
-
-            if (
-              block.type ===
-              'list'
-            ) {
-              return {
-                type:
-                  'list',
-
-                items:
-                  (
-                    block.items ||
-                    []
-                  )
-                    .map(
-                      (x) =>
-                        String(
-                          x ||
-                          ''
-                        ).trim()
-                    )
-                    .filter(
-                      Boolean
-                    )
-              };
-            }
-
-            return null;
-
-          })
-          .filter(Boolean);
 
 
       const payload = {
+
         title:
           blogForm.title.trim(),
 
@@ -1369,11 +1220,10 @@ export default function AdminDashboard() {
           ),
 
         category:
-          blogForm.category.trim(),
+          blogForm.category,
 
         author:
-          blogForm.author.trim() ||
-          'RYC Editorial',
+          blogForm.author,
 
         read_time:
           Number(
@@ -1381,49 +1231,42 @@ export default function AdminDashboard() {
           ) || 5,
 
         excerpt:
-          blogForm.excerpt.trim(),
+          blogForm.excerpt,
 
         body:
-          cleanBody,
+          blogForm.body,
 
         cta:
           blogForm.cta,
 
         seo_title:
-          blogForm.seo_title.trim() ||
-          blogForm.title.trim(),
+          blogForm.seo_title ||
+          blogForm.title,
 
         meta_description:
-          blogForm.meta_description.trim() ||
-          blogForm.excerpt.trim(),
+          blogForm.meta_description ||
+          blogForm.excerpt,
 
         keywords:
           blogForm.keywordsText
             .split(',')
-            .map(
-              (keyword) =>
-                keyword.trim()
-            )
-            .filter(
-              Boolean
-            ),
+            .map(x => x.trim())
+            .filter(Boolean),
 
-        status:
-          statusOverride ||
-          blogForm.status
+        status
       };
 
 
       setSavingBlog(true);
 
       try {
+
         if (editingBlogId) {
+
           await adminFetch(
             `/api/admin/blogs/${editingBlogId}`,
             {
-              method:
-                'PUT',
-
+              method: 'PUT',
               body:
                 JSON.stringify(
                   payload
@@ -1432,12 +1275,11 @@ export default function AdminDashboard() {
           );
 
         } else {
+
           await adminFetch(
             '/api/admin/blogs',
             {
-              method:
-                'POST',
-
+              method: 'POST',
               body:
                 JSON.stringify(
                   payload
@@ -1448,94 +1290,63 @@ export default function AdminDashboard() {
 
         await loadBlogs();
 
-        setBlogEditorOpen(
-          false
-        );
-
-        setEditingBlogId(
-          null
-        );
-
-        setSection(
-          'blogs'
-        );
+        setBlogEditorOpen(false);
 
       } catch (e) {
+
         setBlogError(
-          e.message ||
-          'Could not save blog.'
+          e.message
         );
 
       } finally {
-        setSavingBlog(
-          false
-        );
-      }
-    };
 
-
-  const toggleBlogStatus =
-    async (blog) => {
-
-      const nextStatus =
-        blog.status ===
-        'published'
-          ? 'draft'
-          : 'published';
-
-      try {
-        await adminFetch(
-          `/api/admin/blogs/${blog.id}`,
-          {
-            method:
-              'PUT',
-
-            body:
-              JSON.stringify({
-                status:
-                  nextStatus
-              })
-          }
-        );
-
-        await loadBlogs();
-
-      } catch (e) {
-        alert(
-          e.message ||
-          'Could not update blog.'
-        );
+        setSavingBlog(false);
       }
     };
 
 
   const deleteBlog =
-    async (blog) => {
+    async blog => {
 
-      const ok =
-        window.confirm(
-          `Delete "${blog.title}" permanently?`
-        );
-
-      if (!ok) return;
-
-      try {
-        await adminFetch(
-          `/api/admin/blogs/${blog.id}`,
-          {
-            method:
-              'DELETE'
-          }
-        );
-
-        await loadBlogs();
-
-      } catch (e) {
-        alert(
-          e.message ||
-          'Could not delete blog.'
-        );
+      if (
+        !window.confirm(
+          `Delete "${blog.title}"?`
+        )
+      ) {
+        return;
       }
+
+      await adminFetch(
+        `/api/admin/blogs/${blog.id}`,
+        {
+          method: 'DELETE'
+        }
+      );
+
+      await loadBlogs();
+    };
+
+
+  const toggleBlogStatus =
+    async blog => {
+
+      await adminFetch(
+        `/api/admin/blogs/${blog.id}`,
+        {
+          method: 'PUT',
+
+          body:
+            JSON.stringify({
+              status:
+                blog.status ===
+                'published'
+                  ? 'draft'
+                  : 'published'
+            })
+        }
+      );
+
+      await loadBlogs();
     };
 
 
@@ -1543,24 +1354,60 @@ export default function AdminDashboard() {
   // UNIVERSITY EDITOR
   // =====================================================
 
+  const changeUniversityField =
+    (field, value) => {
+
+      setUniversityForm(
+        old => ({
+          ...old,
+          [field]: value
+        })
+      );
+    };
+
+
+  const changeUniversityStream =
+    stream => {
+
+      setUniversityForm(
+        old => ({
+          ...old,
+
+          stream,
+
+          course:
+            stream === 'MBBS'
+              ? (
+                  old.stream ===
+                  'Management'
+                    ? 'MBBS'
+                    : old.course
+                )
+              : (
+                  old.stream ===
+                  'MBBS'
+                    ? 'MBA'
+                    : old.course
+                )
+        })
+      );
+    };
+
+
   const openNewUniversity =
     () => {
 
-      setEditingUniversityId(
-        null
-      );
+      setEditingUniversityId(null);
 
-      setUniversityForm(
-        EMPTY_UNIVERSITY
-      );
+      setUniversityForm({
+        ...EMPTY_UNIVERSITY
+      });
 
       setUniversitySlugTouched(
         false
       );
 
-      setUniversityError(
-        ''
-      );
+      setUniversityError('');
 
       setUniversityEditorOpen(
         true
@@ -1569,7 +1416,7 @@ export default function AdminDashboard() {
 
 
   const openEditUniversity =
-    (item) => {
+    item => {
 
       setEditingUniversityId(
         item.id
@@ -1580,41 +1427,44 @@ export default function AdminDashboard() {
       );
 
       setUniversityForm({
-        name:
-          item.name ||
-          '',
 
-        slug:
-          item.slug ||
-          '',
-
-        country:
-          item.country ||
-          'Georgia',
-
-        city:
-          item.city ||
-          '',
-
-        course:
-          item.course ||
+        stream:
+          item.stream ||
           'MBBS',
 
+        name:
+          item.name || '',
+
+        slug:
+          item.slug || '',
+
+        country:
+          item.country || '',
+
+        city:
+          item.city || '',
+
+        course:
+          item.course || '',
+
+        course_level:
+          item.course_level || '',
+
         duration:
-          item.duration ||
-          '',
+          item.duration || '',
 
         medium:
-          item.medium ||
-          'English',
+          item.medium || 'English',
 
         intake:
-          item.intake ||
+          item.intake || '',
+
+        application_deadline:
+          item.application_deadline ||
           '',
 
         currency:
-          item.currency ||
-          'USD',
+          item.currency || 'USD',
 
         tuition_fee_year:
           item.tuition_fee_year ??
@@ -1636,54 +1486,124 @@ export default function AdminDashboard() {
           item.total_course_cost ??
           '',
 
+        application_fee:
+          item.application_fee ??
+          '',
+
+        scholarship_info:
+          item.scholarship_info ||
+          '',
+
+        eligibility:
+          item.eligibility || '',
+
         neet_requirement:
           item.neet_requirement ||
           '',
 
-        eligibility:
-          item.eligibility ||
-          '',
-
-        overview:
-          item.overview ||
-          '',
-
-        recognition:
-          item.recognition ||
+        pcb_requirement:
+          item.pcb_requirement ||
           '',
 
         internship:
-          item.internship ||
+          item.internship || '',
+
+        recognition:
+          item.recognition || '',
+
+        nmc_notes:
+          item.nmc_notes || '',
+
+        fmge_next_notes:
+          item.fmge_next_notes ||
           '',
 
-        hostel:
-          item.hostel ||
+        academic_requirement:
+          item.academic_requirement ||
           '',
 
-        indian_food:
-          item.indian_food ||
+        english_requirement:
+          item.english_requirement ||
           '',
 
-        student_life:
-          item.student_life ||
+        ielts_requirement:
+          item.ielts_requirement ||
           '',
 
-        prosText:
+        toefl_requirement:
+          item.toefl_requirement ||
+          '',
+
+        gmat_gre_requirement:
+          item.gmat_gre_requirement ||
+          '',
+
+        work_experience:
+          item.work_experience ||
+          '',
+
+        specializationsText:
           Array.isArray(
-            item.pros
+            item.specializations
           )
-            ? item.pros.join(
+            ? item.specializations.join(
                 '\n'
               )
             : '',
 
+        internship_opportunities:
+          item.internship_opportunities ||
+          '',
+
+        placement_info:
+          item.placement_info ||
+          '',
+
+        post_study_opportunities:
+          item.post_study_opportunities ||
+          '',
+
+        overview:
+          item.overview || '',
+
+        accreditation:
+          item.accreditation ||
+          '',
+
+        ranking:
+          item.ranking || '',
+
+        established_year:
+          item.established_year ||
+          '',
+
+        campus:
+          item.campus || '',
+
+        hostel:
+          item.hostel || '',
+
+        indian_food:
+          item.indian_food || '',
+
+        student_life:
+          item.student_life || '',
+
+        climate:
+          item.climate || '',
+
+        airport_distance:
+          item.airport_distance ||
+          '',
+
+        prosText:
+          Array.isArray(item.pros)
+            ? item.pros.join('\n')
+            : '',
+
         consText:
-          Array.isArray(
-            item.cons
-          )
-            ? item.cons.join(
-                '\n'
-              )
+          Array.isArray(item.cons)
+            ? item.cons.join('\n')
             : '',
 
         documentsText:
@@ -1710,21 +1630,33 @@ export default function AdminDashboard() {
           ),
 
         website:
-          item.website ||
-          '',
+          item.website || '',
 
         apply_link:
-          item.apply_link ||
-          '',
+          item.apply_link || '',
 
         featured:
           Boolean(
             item.featured
           ),
 
+        popular:
+          Boolean(
+            item.popular
+          ),
+
+        budget_option:
+          Boolean(
+            item.budget_option
+          ),
+
+        recommended:
+          Boolean(
+            item.recommended
+          ),
+
         seo_title:
-          item.seo_title ||
-          '',
+          item.seo_title || '',
 
         meta_description:
           item.meta_description ||
@@ -1740,13 +1672,8 @@ export default function AdminDashboard() {
             : '',
 
         status:
-          item.status ||
-          'draft'
+          item.status || 'draft'
       });
-
-      setUniversityError(
-        ''
-      );
 
       setUniversityEditorOpen(
         true
@@ -1754,49 +1681,11 @@ export default function AdminDashboard() {
     };
 
 
-  const closeUniversityEditor =
-    () => {
-
-      if (
-        savingUniversity
-      ) {
-        return;
-      }
-
-      setUniversityEditorOpen(
-        false
-      );
-
-      setEditingUniversityId(
-        null
-      );
-
-      setUniversityError(
-        ''
-      );
-    };
-
-
-  const changeUniversityField =
-    (
-      field,
-      value
-    ) => {
+  const handleUniversityName =
+    value => {
 
       setUniversityForm(
-        (old) => ({
-          ...old,
-          [field]: value
-        })
-      );
-    };
-
-
-  const handleUniversityNameChange =
-    (value) => {
-
-      setUniversityForm(
-        (old) => ({
+        old => ({
           ...old,
 
           name:
@@ -1805,24 +1694,22 @@ export default function AdminDashboard() {
           slug:
             universitySlugTouched
               ? old.slug
-              : slugify(
-                  value
-                )
+              : slugify(value)
         })
       );
     };
 
 
   const saveUniversity =
-    async (
-      statusOverride
-    ) => {
+    async status => {
 
       setUniversityError('');
+
 
       if (
         !universityForm.name.trim()
       ) {
+
         setUniversityError(
           'University name is required.'
         );
@@ -1830,9 +1717,11 @@ export default function AdminDashboard() {
         return;
       }
 
+
       if (
         !universityForm.country.trim()
       ) {
+
         setUniversityError(
           'Country is required.'
         );
@@ -1841,7 +1730,23 @@ export default function AdminDashboard() {
       }
 
 
+      if (
+        !universityForm.course.trim()
+      ) {
+
+        setUniversityError(
+          'Course is required.'
+        );
+
+        return;
+      }
+
+
       const payload = {
+
+        stream:
+          universityForm.stream,
+
         name:
           universityForm.name.trim(),
 
@@ -1859,8 +1764,11 @@ export default function AdminDashboard() {
           null,
 
         course:
-          universityForm.course.trim() ||
-          'MBBS',
+          universityForm.course.trim(),
+
+        course_level:
+          universityForm.course_level.trim() ||
+          null,
 
         duration:
           universityForm.duration.trim() ||
@@ -1874,8 +1782,12 @@ export default function AdminDashboard() {
           universityForm.intake.trim() ||
           null,
 
+        application_deadline:
+          universityForm.application_deadline.trim() ||
+          null,
+
         currency:
-          universityForm.currency.trim() ||
+          universityForm.currency ||
           'USD',
 
         tuition_fee_year:
@@ -1903,24 +1815,105 @@ export default function AdminDashboard() {
             universityForm.total_course_cost
           ),
 
-        neet_requirement:
-          universityForm.neet_requirement.trim() ||
+        application_fee:
+          optionalNumber(
+            universityForm.application_fee
+          ),
+
+        scholarship_info:
+          universityForm.scholarship_info.trim() ||
           null,
 
         eligibility:
           universityForm.eligibility.trim() ||
           null,
 
-        overview:
-          universityForm.overview.trim() ||
+        // MBBS
+        neet_requirement:
+          universityForm.neet_requirement.trim() ||
+          null,
+
+        pcb_requirement:
+          universityForm.pcb_requirement.trim() ||
+          null,
+
+        internship:
+          universityForm.internship.trim() ||
           null,
 
         recognition:
           universityForm.recognition.trim() ||
           null,
 
-        internship:
-          universityForm.internship.trim() ||
+        nmc_notes:
+          universityForm.nmc_notes.trim() ||
+          null,
+
+        fmge_next_notes:
+          universityForm.fmge_next_notes.trim() ||
+          null,
+
+        // Management
+        academic_requirement:
+          universityForm.academic_requirement.trim() ||
+          null,
+
+        english_requirement:
+          universityForm.english_requirement.trim() ||
+          null,
+
+        ielts_requirement:
+          universityForm.ielts_requirement.trim() ||
+          null,
+
+        toefl_requirement:
+          universityForm.toefl_requirement.trim() ||
+          null,
+
+        gmat_gre_requirement:
+          universityForm.gmat_gre_requirement.trim() ||
+          null,
+
+        work_experience:
+          universityForm.work_experience.trim() ||
+          null,
+
+        specializations:
+          linesToArray(
+            universityForm.specializationsText
+          ),
+
+        internship_opportunities:
+          universityForm.internship_opportunities.trim() ||
+          null,
+
+        placement_info:
+          universityForm.placement_info.trim() ||
+          null,
+
+        post_study_opportunities:
+          universityForm.post_study_opportunities.trim() ||
+          null,
+
+        // General
+        overview:
+          universityForm.overview.trim() ||
+          null,
+
+        accreditation:
+          universityForm.accreditation.trim() ||
+          null,
+
+        ranking:
+          universityForm.ranking.trim() ||
+          null,
+
+        established_year:
+          universityForm.established_year.trim() ||
+          null,
+
+        campus:
+          universityForm.campus.trim() ||
           null,
 
         hostel:
@@ -1933,6 +1926,14 @@ export default function AdminDashboard() {
 
         student_life:
           universityForm.student_life.trim() ||
+          null,
+
+        climate:
+          universityForm.climate.trim() ||
+          null,
+
+        airport_distance:
+          universityForm.airport_distance.trim() ||
           null,
 
         pros:
@@ -1969,9 +1970,16 @@ export default function AdminDashboard() {
           null,
 
         featured:
-          Boolean(
-            universityForm.featured
-          ),
+          universityForm.featured,
+
+        popular:
+          universityForm.popular,
+
+        budget_option:
+          universityForm.budget_option,
+
+        recommended:
+          universityForm.recommended,
 
         seo_title:
           universityForm.seo_title.trim() ||
@@ -1985,17 +1993,10 @@ export default function AdminDashboard() {
         keywords:
           universityForm.keywordsText
             .split(',')
-            .map(
-              (item) =>
-                item.trim()
-            )
-            .filter(
-              Boolean
-            ),
+            .map(x => x.trim())
+            .filter(Boolean),
 
-        status:
-          statusOverride ||
-          universityForm.status
+        status
       };
 
 
@@ -2003,15 +2004,17 @@ export default function AdminDashboard() {
         true
       );
 
+
       try {
+
         if (
           editingUniversityId
         ) {
+
           await adminFetch(
             `/api/admin/universities/${editingUniversityId}`,
             {
-              method:
-                'PUT',
+              method: 'PUT',
 
               body:
                 JSON.stringify(
@@ -2021,11 +2024,11 @@ export default function AdminDashboard() {
           );
 
         } else {
+
           await adminFetch(
             '/api/admin/universities',
             {
-              method:
-                'POST',
+              method: 'POST',
 
               body:
                 JSON.stringify(
@@ -2035,27 +2038,22 @@ export default function AdminDashboard() {
           );
         }
 
+
         await loadUniversities();
 
         setUniversityEditorOpen(
           false
         );
 
-        setEditingUniversityId(
-          null
-        );
-
-        setSection(
-          'universities'
-        );
-
       } catch (e) {
+
         setUniversityError(
           e.message ||
           'Could not save university.'
         );
 
       } finally {
+
         setSavingUniversity(
           false
         );
@@ -2064,96 +2062,70 @@ export default function AdminDashboard() {
 
 
   const toggleUniversityStatus =
-    async (item) => {
+    async item => {
 
-      const nextStatus =
-        item.status ===
-        'published'
-          ? 'draft'
-          : 'published';
+      await adminFetch(
+        `/api/admin/universities/${item.id}`,
+        {
+          method: 'PUT',
 
-      try {
-        await adminFetch(
-          `/api/admin/universities/${item.id}`,
-          {
-            method:
-              'PUT',
+          body:
+            JSON.stringify({
+              status:
+                item.status ===
+                'published'
+                  ? 'draft'
+                  : 'published'
+            })
+        }
+      );
 
-            body:
-              JSON.stringify({
-                status:
-                  nextStatus
-              })
-          }
-        );
-
-        await loadUniversities();
-
-      } catch (e) {
-        alert(
-          e.message ||
-          'Could not update university.'
-        );
-      }
+      await loadUniversities();
     };
 
 
-  const toggleFeatured =
-    async (item) => {
+  const updateUniversityFlag =
+    async (
+      item,
+      field
+    ) => {
 
-      try {
-        await adminFetch(
-          `/api/admin/universities/${item.id}`,
-          {
-            method:
-              'PUT',
+      await adminFetch(
+        `/api/admin/universities/${item.id}`,
+        {
+          method: 'PUT',
 
-            body:
-              JSON.stringify({
-                featured:
-                  !item.featured
-              })
-          }
-        );
+          body:
+            JSON.stringify({
+              [field]:
+                !item[field]
+            })
+        }
+      );
 
-        await loadUniversities();
-
-      } catch (e) {
-        alert(
-          e.message ||
-          'Could not update featured status.'
-        );
-      }
+      await loadUniversities();
     };
 
 
   const deleteUniversity =
-    async (item) => {
+    async item => {
 
-      const ok =
-        window.confirm(
+      if (
+        !window.confirm(
           `Delete "${item.name}" permanently?`
-        );
-
-      if (!ok) return;
-
-      try {
-        await adminFetch(
-          `/api/admin/universities/${item.id}`,
-          {
-            method:
-              'DELETE'
-          }
-        );
-
-        await loadUniversities();
-
-      } catch (e) {
-        alert(
-          e.message ||
-          'Could not delete university.'
-        );
+        )
+      ) {
+        return;
       }
+
+      await adminFetch(
+        `/api/admin/universities/${item.id}`,
+        {
+          method: 'DELETE'
+        }
+      );
+
+      await loadUniversities();
     };
 
 
@@ -2162,8 +2134,9 @@ export default function AdminDashboard() {
   // =====================================================
 
   if (checking) {
+
     return (
-      <div className="min-h-screen bg-cream grid place-items-center text-ink/60">
+      <div className="min-h-screen bg-cream grid place-items-center">
         Loading…
       </div>
     );
@@ -2175,17 +2148,14 @@ export default function AdminDashboard() {
   }
 
 
-  // =====================================================
-  // MAIN UI
-  // =====================================================
-
   return (
+
     <div className="min-h-screen bg-cream text-ink">
 
 
       {/* HEADER */}
 
-      <header className="sticky top-0 z-40 bg-ink text-cream border-b border-cream/10">
+      <header className="sticky top-0 z-40 bg-ink text-cream">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
 
@@ -2194,13 +2164,13 @@ export default function AdminDashboard() {
             className="flex items-center gap-2"
           >
 
-            <div className="h-8 w-8 rounded-full bg-cream text-ink grid place-items-center serif italic font-medium">
+            <div className="h-8 w-8 rounded-full bg-cream text-ink grid place-items-center serif italic">
               r
             </div>
 
-            <div className="hidden sm:block">
+            <div>
 
-              <div className="serif text-[15px] font-medium">
+              <div className="serif text-[15px]">
                 Route Your Career
               </div>
 
@@ -2215,26 +2185,13 @@ export default function AdminDashboard() {
 
           <div className="ml-auto flex items-center gap-3">
 
-            {user.picture && (
+            <div className="hidden sm:block">
 
-              <img
-                src={
-                  user.picture
-                }
-                alt=""
-                className="h-8 w-8 rounded-full"
-              />
-
-            )}
-
-
-            <div className="hidden sm:block leading-tight">
-
-              <div className="text-[13px] font-medium">
+              <div className="text-[13px]">
                 {user.name}
               </div>
 
-              <div className="text-[10px] mono uppercase tracking-widest text-coral">
+              <div className="text-[10px] mono uppercase text-coral">
                 Administrator
               </div>
 
@@ -2245,10 +2202,10 @@ export default function AdminDashboard() {
               onClick={
                 signOut
               }
-              className="inline-flex items-center gap-1 rounded-full border border-cream/25 px-3 py-1.5 text-[12px] font-semibold hover:bg-cream/10"
+              className="rounded-full border border-cream/20 px-3 py-2 text-[12px] flex items-center gap-1"
             >
 
-              <LogOut className="h-3.5 w-3.5" />
+              <LogOut className="h-4 w-4" />
 
               Sign out
 
@@ -2261,70 +2218,65 @@ export default function AdminDashboard() {
       </header>
 
 
-      {/* MAIN ADMIN NAV */}
+      {/* ADMIN NAV */}
 
-      <div className="border-b border-ink/10 bg-white sticky top-[57px] z-30">
+      <div className="sticky top-[56px] z-30 bg-white border-b border-ink/10">
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-1 overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex gap-1 overflow-x-auto">
 
           {[
-            {
-              key: 'dashboard',
-              label: 'Dashboard',
-              icon: LayoutDashboard
-            },
-            {
-              key: 'leads',
-              label: 'Leads',
-              icon: Users
-            },
-            {
-              key: 'newsletter',
-              label: 'Newsletter',
-              icon: Mail
-            },
-            {
-              key: 'blogs',
-              label: 'Blogs',
-              icon: BookOpen
-            },
-            {
-              key: 'universities',
-              label: 'Universities',
-              icon: GraduationCap
-            }
+            [
+              'dashboard',
+              'Dashboard',
+              LayoutDashboard
+            ],
+            [
+              'leads',
+              'Leads',
+              Users
+            ],
+            [
+              'newsletter',
+              'Newsletter',
+              Mail
+            ],
+            [
+              'blogs',
+              'Blogs',
+              BookOpen
+            ],
+            [
+              'universities',
+              'Universities',
+              GraduationCap
+            ]
 
           ].map(
-            (item) => {
+            ([key, label, Icon]) => (
 
-              const Icon =
-                item.icon;
+              <button
+                key={
+                  key
+                }
+                onClick={() =>
+                  setSection(
+                    key
+                  )
+                }
+                className={`rounded-full px-4 py-2 flex gap-2 items-center text-[12px] font-semibold ${
+                  section === key
+                    ? 'bg-ink text-cream'
+                    : 'text-ink/60'
+                }`}
+              >
 
-              return (
-                <button
-                  key={
-                    item.key
-                  }
-                  onClick={() =>
-                    setSection(
-                      item.key
-                    )
-                  }
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold whitespace-nowrap ${
-                    section ===
-                    item.key
-                      ? 'bg-ink text-cream'
-                      : 'text-ink/60 hover:text-ink hover:bg-cream'
-                  }`}
-                >
+                <Icon className="h-4 w-4" />
 
-                  <Icon className="h-4 w-4" />
+                {label}
 
-                  {item.label}
+              </button>
 
-                </button>
-              );
-            }
+            )
           )}
 
         </div>
@@ -2335,37 +2287,27 @@ export default function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
 
-        {/* ================================================= */}
         {/* DASHBOARD */}
-        {/* ================================================= */}
 
         {section === 'dashboard' && (
 
           <>
 
-            <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex justify-between items-end">
 
-              <div>
-
-                <div className="text-[10px] mono uppercase tracking-widest text-coral">
-                  Route Your Career
-                </div>
-
-                <h1 className="serif text-4xl sm:text-5xl mt-1">
-                  Admin dashboard.
-                </h1>
-
-              </div>
+              <h1 className="serif text-5xl">
+                Admin dashboard.
+              </h1>
 
 
               <button
                 onClick={() => {
                   loadLeads();
-                  loadNewsletter();
                   loadBlogs();
+                  loadNewsletter();
                   loadUniversities();
                 }}
-                className="inline-flex items-center gap-2 rounded-full bg-ink text-cream px-4 py-2 text-[12px] font-semibold"
+                className="bg-ink text-cream rounded-full px-4 py-2 flex gap-2"
               >
 
                 <RefreshCw className="h-4 w-4" />
@@ -2377,258 +2319,119 @@ export default function AdminDashboard() {
             </div>
 
 
-            <div className="mt-8 grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="mt-8 grid grid-cols-2 lg:grid-cols-5 gap-4">
 
               {[
-                {
-                  label:
-                    'Total Leads',
-
-                  value:
-                    stats?.total_leads ??
-                    '–',
-
-                  icon:
-                    Users
-                },
-                {
-                  label:
-                    'Last 7 Days',
-
-                  value:
-                    stats?.last_7_days ??
-                    '–',
-
-                  icon:
-                    Sparkles
-                },
-                {
-                  label:
-                    'Newsletter',
-
-                  value:
-                    stats?.newsletter_subscribers ??
-                    newsletter.length,
-
-                  icon:
-                    Mail
-                },
-                {
-                  label:
-                    'Blogs',
-
-                  value:
-                    publishedBlogCount,
-
-                  icon:
-                    BookOpen
-                },
-                {
-                  label:
-                    'Universities',
-
-                  value:
-                    publishedUniversityCount,
-
-                  icon:
-                    GraduationCap
-                }
+                [
+                  'Total Leads',
+                  stats?.total_leads ??
+                  0
+                ],
+                [
+                  'Last 7 Days',
+                  stats?.last_7_days ??
+                  0
+                ],
+                [
+                  'Newsletter',
+                  newsletter.length
+                ],
+                [
+                  'Blogs',
+                  publishedBlogCount
+                ],
+                [
+                  'Universities',
+                  publishedUniversityCount
+                ]
 
               ].map(
-                (card) => {
+                ([label, value]) => (
 
-                  const Icon =
-                    card.icon;
+                  <div
+                    key={
+                      label
+                    }
+                    className="bg-white rounded-3xl border border-ink/10 p-5"
+                  >
 
-                  return (
-
-                    <div
-                      key={
-                        card.label
-                      }
-                      className="rounded-3xl border border-ink/10 bg-white p-5"
-                    >
-
-                      <div className="flex items-center justify-between">
-
-                        <div className="text-[10px] mono uppercase tracking-widest text-ink/50">
-                          {card.label}
-                        </div>
-
-                        <div className="h-9 w-9 rounded-xl bg-coral/10 text-coral grid place-items-center">
-
-                          <Icon className="h-4 w-4" />
-
-                        </div>
-
-                      </div>
-
-
-                      <div className="mt-3 serif text-4xl">
-                        {card.value}
-                      </div>
-
+                    <div className="text-[10px] mono uppercase text-ink/50">
+                      {label}
                     </div>
 
-                  );
-                }
+                    <div className="serif text-4xl mt-3">
+                      {value}
+                    </div>
+
+                  </div>
+
+                )
               )}
 
             </div>
 
 
-            <div className="mt-5 grid lg:grid-cols-3 gap-5">
+            <div className="mt-5 grid lg:grid-cols-2 gap-5">
 
-              <div className="rounded-3xl bg-white border border-ink/10 p-6">
+              <div className="bg-ink text-cream rounded-3xl p-6">
 
-                <div className="text-[10px] mono uppercase tracking-widest text-coral">
-                  Leads
-                </div>
-
-                <h2 className="serif text-2xl mt-1">
-                  Lead breakdown
-                </h2>
-
-                <div className="mt-5 grid grid-cols-2 gap-2">
-
-                  {Object.entries(
-                    stats?.by_type ||
-                    {}
-                  ).map(
-                    ([key, value]) => (
-
-                      <div
-                        key={
-                          key
-                        }
-                        className="rounded-2xl bg-cream p-3"
-                      >
-
-                        <div className="text-[9px] mono uppercase tracking-widest text-ink/50">
-                          {key}
-                        </div>
-
-                        <div className="serif text-2xl mt-1">
-                          {value}
-                        </div>
-
-                      </div>
-
-                    )
-                  )}
-
-                </div>
-
-              </div>
-
-
-              <div className="rounded-3xl bg-ink text-cream p-6">
-
-                <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                <div className="text-coral text-[10px] uppercase">
                   RYC Journal
                 </div>
 
                 <h2 className="serif text-3xl mt-2">
-                  Blog manager.
+                  Blog Manager
                 </h2>
 
-                <div className="mt-5 grid grid-cols-2 gap-2">
-
-                  <div className="rounded-2xl border border-cream/10 p-4">
-
-                    <div className="text-[10px] text-cream/50">
-                      Published
-                    </div>
-
-                    <div className="serif text-3xl">
-                      {publishedBlogCount}
-                    </div>
-
-                  </div>
-
-                  <div className="rounded-2xl border border-cream/10 p-4">
-
-                    <div className="text-[10px] text-cream/50">
-                      Drafts
-                    </div>
-
-                    <div className="serif text-3xl">
-                      {draftBlogCount}
-                    </div>
-
-                  </div>
-
-                </div>
-
-                <button
-                  onClick={() => {
-                    setSection(
-                      'blogs'
-                    );
-
-                    openNewBlog();
-                  }}
-                  className="mt-5 rounded-full bg-coral text-white px-5 py-2.5 text-[12px] font-bold"
-                >
-                  + New Blog
-                </button>
+                <p className="mt-2 text-cream/60">
+                  {publishedBlogCount} published · {draftBlogCount} drafts
+                </p>
 
               </div>
 
 
-              <div className="rounded-3xl bg-white border border-ink/10 p-6">
+              <div className="bg-white border border-ink/10 rounded-3xl p-6">
 
-                <div className="text-[10px] mono uppercase tracking-widest text-coral">
-                  Universities
+                <div className="text-coral text-[10px] uppercase">
+                  University Database
                 </div>
 
                 <h2 className="serif text-3xl mt-2">
-                  University manager.
+                  MBBS + Management
                 </h2>
 
-                <div className="mt-5 grid grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-2 gap-3">
 
-                  <div className="rounded-2xl bg-cream p-3">
-                    <div className="text-[9px] text-ink/40">
-                      Published
+                  <div className="bg-cream rounded-xl p-4">
+
+                    <Stethoscope className="h-4 w-4 text-coral" />
+
+                    <div className="serif text-3xl mt-2">
+                      {mbbsCount}
                     </div>
-                    <div className="serif text-2xl">
-                      {publishedUniversityCount}
+
+                    <div className="text-[11px]">
+                      MBBS
                     </div>
+
                   </div>
 
-                  <div className="rounded-2xl bg-cream p-3">
-                    <div className="text-[9px] text-ink/40">
-                      Draft
-                    </div>
-                    <div className="serif text-2xl">
-                      {draftUniversityCount}
-                    </div>
-                  </div>
 
-                  <div className="rounded-2xl bg-cream p-3">
-                    <div className="text-[9px] text-ink/40">
-                      Featured
+                  <div className="bg-cream rounded-xl p-4">
+
+                    <BriefcaseBusiness className="h-4 w-4 text-coral" />
+
+                    <div className="serif text-3xl mt-2">
+                      {managementCount}
                     </div>
-                    <div className="serif text-2xl">
-                      {featuredUniversityCount}
+
+                    <div className="text-[11px]">
+                      Management
                     </div>
+
                   </div>
 
                 </div>
-
-                <button
-                  onClick={() => {
-                    setSection(
-                      'universities'
-                    );
-
-                    openNewUniversity();
-                  }}
-                  className="mt-5 rounded-full bg-ink text-cream px-5 py-2.5 text-[12px] font-bold"
-                >
-                  + Add University
-                </button>
 
               </div>
 
@@ -2639,305 +2442,112 @@ export default function AdminDashboard() {
         )}
 
 
-        {/* ================================================= */}
         {/* LEADS */}
-        {/* ================================================= */}
 
         {section === 'leads' && (
 
           <>
 
-            <div>
-
-              <div className="text-[10px] mono uppercase tracking-widest text-coral">
-                CRM
-              </div>
-
-              <h1 className="serif text-4xl mt-1">
-                Student leads.
-              </h1>
-
-            </div>
+            <h1 className="serif text-4xl">
+              Student leads.
+            </h1>
 
 
-            <div className="mt-6 flex flex-wrap items-center gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
 
-              <div className="inline-flex rounded-full bg-white border border-ink/10 p-1 overflow-x-auto">
+              {LEAD_TABS.map(
+                tab => (
 
-                {LEAD_TABS.map(
-                  (tab) => (
-
-                    <button
-                      key={
+                  <button
+                    key={
+                      tab.k
+                    }
+                    onClick={() =>
+                      setLeadTab(
                         tab.k
-                      }
-                      onClick={() =>
-                        setLeadTab(
-                          tab.k
-                        )
-                      }
-                      className={`px-3 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap ${
-                        leadTab === tab.k
-                          ? 'bg-ink text-cream'
-                          : 'text-ink/60'
-                      }`}
-                    >
-                      {tab.l}
-                    </button>
-
-                  )
-                )}
-
-              </div>
-
-
-              <div className="ml-auto flex flex-wrap items-center gap-2">
-
-                <div className="inline-flex items-center gap-1 rounded-full border border-ink/15 bg-white px-3 py-1.5">
-
-                  <Filter className="h-3.5 w-3.5" />
-
-                  <input
-                    value={
-                      q
+                      )
                     }
-                    onChange={
-                      (e) =>
-                        setQ(
-                          e.target.value
-                        )
-                    }
-                    placeholder="Search leads…"
-                    className="bg-transparent text-[13px] w-48 focus:outline-none"
-                  />
+                    className={`rounded-full px-3 py-2 text-[12px] ${
+                      leadTab ===
+                      tab.k
+                        ? 'bg-ink text-cream'
+                        : 'bg-white'
+                    }`}
+                  >
+                    {tab.l}
+                  </button>
 
-                </div>
-
-
-                <button
-                  onClick={
-                    copyAll
-                  }
-                  className="rounded-full border border-ink/15 bg-white px-3 py-1.5 text-[12px] font-semibold inline-flex items-center gap-1"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                  Copy CSV
-                </button>
-
-              </div>
-
-            </div>
+                )
+              )}
 
 
-            <div className="mt-4 rounded-3xl border border-ink/10 bg-white overflow-x-auto">
-
-              <div className="min-w-[1000px]">
-
-                <div className="grid grid-cols-12 px-5 py-3 bg-cream/60 text-[10px] mono uppercase tracking-widest text-ink/60">
-
-                  <div className="col-span-3">
-                    Student
-                  </div>
-
-                  <div className="col-span-2">
-                    Phone / Email
-                  </div>
-
-                  <div className="col-span-2">
-                    Country / NEET
-                  </div>
-
-                  <div className="col-span-2">
-                    Type / Source
-                  </div>
-
-                  <div className="col-span-2">
-                    Message
-                  </div>
-
-                  <div className="col-span-1 text-right">
-                    When
-                  </div>
-
-                </div>
-
-
-                {loadingLeads && (
-                  <div className="py-10 text-center">
-                    Loading…
-                  </div>
-                )}
-
-
-                <div className="divide-y divide-ink/5">
-
-                  {filteredLeads.map(
-                    (lead) => (
-
-                      <div
-                        key={
-                          lead.id
-                        }
-                        className="grid grid-cols-12 px-5 py-4"
-                      >
-
-                        <div className="col-span-3">
-                          <div className="font-semibold text-[14px]">
-                            {lead.name}
-                          </div>
-                        </div>
-
-                        <div className="col-span-2 text-[13px]">
-
-                          {lead.phone &&
-                            lead.phone !== '-' && (
-
-                              <a
-                                href={`tel:${lead.phone}`}
-                                className="flex items-center gap-1"
-                              >
-                                <Phone className="h-3 w-3" />
-                                {lead.phone}
-                              </a>
-
-                            )}
-
-                          {lead.email && (
-
-                            <a
-                              href={`mailto:${lead.email}`}
-                              className="mt-1 flex items-center gap-1"
-                            >
-                              <Mail className="h-3 w-3" />
-                              {lead.email}
-                            </a>
-
-                          )}
-
-                        </div>
-
-                        <div className="col-span-2 text-[13px]">
-                          <div>
-                            {lead.country || '—'}
-                          </div>
-                          <div className="text-[11px] text-ink/40">
-                            NEET: {lead.neet_score || '—'}
-                          </div>
-                        </div>
-
-                        <div className="col-span-2 text-[12px]">
-                          {lead.type}
-                          <div className="text-ink/40">
-                            {lead.source}
-                          </div>
-                        </div>
-
-                        <div className="col-span-2 text-[12px]">
-                          {lead.message || '—'}
-                        </div>
-
-                        <div className="col-span-1 text-right text-[11px]">
-
-                          {fmt(
-                            lead.created_at
-                          )}
-
-                          {lead.phone &&
-                            lead.phone !== '-' && (
-
-                              <div className="mt-2">
-
-                                <a
-                                  href={`https://wa.me/${String(
-                                    lead.phone
-                                  ).replace(
-                                    /[^0-9]/g,
-                                    ''
-                                  )}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-emerald-700 inline-flex gap-1"
-                                >
-                                  <Send className="h-3 w-3" />
-                                  WA
-                                </a>
-
-                              </div>
-
-                            )}
-
-                        </div>
-
-                      </div>
-
+              <input
+                value={
+                  q
+                }
+                onChange={
+                  e =>
+                    setQ(
+                      e.target.value
                     )
-                  )}
+                }
+                placeholder="Search leads"
+                className="ml-auto border rounded-full px-4"
+              />
 
-                </div>
-
-              </div>
-
-            </div>
-
-          </>
-
-        )}
-
-
-        {/* ================================================= */}
-        {/* NEWSLETTER */}
-        {/* ================================================= */}
-
-        {section === 'newsletter' && (
-
-          <>
-
-            <div className="flex items-end justify-between gap-4">
-
-              <div>
-                <div className="text-[10px] mono uppercase tracking-widest text-coral">
-                  Audience
-                </div>
-
-                <h1 className="serif text-4xl mt-1">
-                  Newsletter subscribers.
-                </h1>
-              </div>
 
               <button
                 onClick={
-                  copyNewsletter
+                  copyAll
                 }
-                className="rounded-full bg-ink text-cream px-4 py-2 text-[12px]"
+                className="bg-white border rounded-full px-4"
               >
-                Copy Emails
+                Copy CSV
               </button>
 
             </div>
 
 
-            <div className="mt-6 rounded-3xl bg-white border border-ink/10">
+            <div className="mt-5 bg-white rounded-3xl border border-ink/10 divide-y">
 
-              {newsletter.map(
-                (item) => (
+              {loadingLeads && (
+                <div className="p-8">
+                  Loading…
+                </div>
+              )}
+
+
+              {filteredLeads.map(
+                lead => (
 
                   <div
                     key={
-                      item.id ||
-                      item.email
+                      lead.id
                     }
-                    className="p-4 border-b border-ink/5 flex items-center gap-3"
+                    className="p-5 grid sm:grid-cols-4 gap-4"
                   >
 
-                    <Mail className="h-4 w-4 text-coral" />
-
                     <div>
-                      {item.email}
+                      <strong>
+                        {lead.name}
+                      </strong>
                     </div>
 
-                    <div className="ml-auto text-[11px] text-ink/40">
+                    <div>
+                      {lead.phone}
+                      <br />
+                      {lead.email}
+                    </div>
+
+                    <div>
+                      {lead.country}
+                      <br />
+                      NEET: {lead.neet_score}
+                    </div>
+
+                    <div>
                       {fmt(
-                        item.created_at
+                        lead.created_at
                       )}
                     </div>
 
@@ -2953,31 +2563,85 @@ export default function AdminDashboard() {
         )}
 
 
-        {/* ================================================= */}
+        {/* NEWSLETTER */}
+
+        {section === 'newsletter' && (
+
+          <>
+
+            <div className="flex justify-between">
+
+              <h1 className="serif text-4xl">
+                Newsletter subscribers.
+              </h1>
+
+              <button
+                onClick={
+                  copyNewsletter
+                }
+                className="bg-ink text-cream rounded-full px-4"
+              >
+                Copy Emails
+              </button>
+
+            </div>
+
+
+            <div className="mt-6 bg-white rounded-3xl border divide-y">
+
+              {loadingNewsletter && (
+                <div className="p-8">
+                  Loading…
+                </div>
+              )}
+
+
+              {newsletter.map(
+                item => (
+
+                  <div
+                    key={
+                      item.id ||
+                      item.email
+                    }
+                    className="p-4 flex justify-between"
+                  >
+                    {item.email}
+
+                    <span>
+                      {fmt(
+                        item.created_at
+                      )}
+                    </span>
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          </>
+
+        )}
+
+
         {/* BLOGS */}
-        {/* ================================================= */}
 
         {section === 'blogs' && (
 
           <>
 
-            <div className="flex items-end justify-between gap-4">
+            <div className="flex justify-between items-end">
 
-              <div>
-                <div className="text-[10px] mono uppercase tracking-widest text-coral">
-                  RYC Journal
-                </div>
-
-                <h1 className="serif text-4xl">
-                  Blog manager.
-                </h1>
-              </div>
+              <h1 className="serif text-4xl">
+                Blog manager.
+              </h1>
 
               <button
                 onClick={
                   openNewBlog
                 }
-                className="rounded-full bg-coral text-white px-5 py-3 text-[13px] font-bold"
+                className="bg-coral text-white rounded-full px-5 py-3"
               >
                 + New Blog
               </button>
@@ -2985,37 +2649,46 @@ export default function AdminDashboard() {
             </div>
 
 
-            <div className="mt-6 rounded-3xl bg-white border border-ink/10 divide-y divide-ink/5">
+            <div className="mt-6 bg-white rounded-3xl border divide-y">
+
+              {loadingBlogs && (
+                <div className="p-8">
+                  Loading…
+                </div>
+              )}
+
 
               {blogs.map(
-                (blog) => (
+                blog => (
 
                   <div
                     key={
                       blog.id
                     }
-                    className="p-5 flex flex-wrap items-center gap-4"
+                    className="p-5 flex gap-4 items-center"
                   >
 
                     <img
                       src="/blog-default.png"
                       alt=""
-                      className="h-16 w-24 rounded-xl object-cover"
+                      className="w-24 h-16 rounded-xl object-cover"
                     />
 
                     <div className="flex-1">
 
-                      <div className="text-[10px] uppercase text-coral">
+                      <div className="text-[10px] text-coral uppercase">
                         {blog.status} · {blog.category}
                       </div>
 
-                      <div className="serif text-xl mt-1">
+                      <div className="serif text-xl">
                         {blog.title}
                       </div>
 
                     </div>
 
-                    {blog.status === 'published' && (
+
+                    {blog.status ===
+                      'published' && (
 
                       <Link
                         to={`/blog/${blog.slug}`}
@@ -3025,6 +2698,7 @@ export default function AdminDashboard() {
                       </Link>
 
                     )}
+
 
                     <button
                       onClick={() =>
@@ -3036,18 +2710,20 @@ export default function AdminDashboard() {
                       <Pencil className="h-4 w-4" />
                     </button>
 
+
                     <button
                       onClick={() =>
                         toggleBlogStatus(
                           blog
                         )
                       }
-                      className="text-[11px] border rounded-full px-3 py-2"
                     >
-                      {blog.status === 'published'
+                      {blog.status ===
+                      'published'
                         ? 'Unpublish'
                         : 'Publish'}
                     </button>
+
 
                     <button
                       onClick={() =>
@@ -3071,52 +2747,166 @@ export default function AdminDashboard() {
         )}
 
 
-        {/* ================================================= */}
         {/* UNIVERSITIES */}
-        {/* ================================================= */}
 
         {section === 'universities' && (
 
           <>
 
-            <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex flex-wrap justify-between gap-4 items-end">
 
               <div>
 
                 <div className="text-[10px] mono uppercase tracking-widest text-coral">
-                  MBBS Database
+                  RYC Institutions
                 </div>
 
-                <h1 className="serif text-4xl sm:text-5xl mt-1">
+                <h1 className="serif text-5xl">
                   University manager.
                 </h1>
 
-                <p className="mt-2 text-[13px] text-ink/60">
-                  Manage universities country-wise without editing GitHub.
-                </p>
-
               </div>
+
 
               <button
                 onClick={
                   openNewUniversity
                 }
-                className="inline-flex items-center gap-2 rounded-full bg-coral text-white px-5 py-3 text-[13px] font-bold"
+                className="bg-coral text-white rounded-full px-5 py-3 flex items-center gap-2 font-bold"
               >
+
                 <Plus className="h-4 w-4" />
+
                 Add University
+
               </button>
 
             </div>
 
 
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* STREAM FILTER */}
+
+            <div className="mt-6">
+
+              <div className="text-[10px] mono uppercase text-ink/40 mb-2">
+                Stream
+              </div>
+
+              <div className="inline-flex bg-white border rounded-full p-1">
+
+                {[
+                  'All',
+                  'MBBS',
+                  'Management'
+                ].map(
+                  stream => (
+
+                    <button
+                      key={
+                        stream
+                      }
+                      onClick={() => {
+
+                        setUniversityStreamFilter(
+                          stream
+                        );
+
+                        setUniversityCountryFilter(
+                          'All'
+                        );
+                      }}
+                      className={`rounded-full px-4 py-2 text-[12px] font-semibold ${
+                        universityStreamFilter ===
+                        stream
+                          ? 'bg-ink text-cream'
+                          : ''
+                      }`}
+                    >
+                      {stream}
+                    </button>
+
+                  )
+                )}
+
+              </div>
+
+            </div>
+
+
+            {/* COUNTRY + SEARCH */}
+
+            <div className="mt-4 flex flex-wrap gap-2">
+
+              {universityCountries.map(
+                country => (
+
+                  <button
+                    key={
+                      country
+                    }
+                    onClick={() =>
+                      setUniversityCountryFilter(
+                        country
+                      )
+                    }
+                    className={`rounded-full px-3 py-2 text-[11px] ${
+                      universityCountryFilter ===
+                      country
+                        ? 'bg-coral text-white'
+                        : 'bg-white border'
+                    }`}
+                  >
+                    {country}
+                  </button>
+
+                )
+              )}
+
+
+              <div className="ml-auto flex bg-white border rounded-full px-3 items-center">
+
+                <Search className="h-4 w-4" />
+
+                <input
+                  value={
+                    universitySearch
+                  }
+                  onChange={
+                    e =>
+                      setUniversitySearch(
+                        e.target.value
+                      )
+                  }
+                  placeholder="Search university..."
+                  className="outline-none p-2 bg-transparent"
+                />
+
+              </div>
+
+            </div>
+
+
+            {/* COUNTS */}
+
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
 
               {[
-                ['Total', universities.length],
-                ['Published', publishedUniversityCount],
-                ['Drafts', draftUniversityCount],
-                ['Featured', featuredUniversityCount]
+                [
+                  'Total',
+                  universities.length
+                ],
+                [
+                  'MBBS',
+                  mbbsCount
+                ],
+                [
+                  'Management',
+                  managementCount
+                ],
+                [
+                  'Published',
+                  publishedUniversityCount
+                ]
 
               ].map(
                 ([label, value]) => (
@@ -3125,15 +2915,17 @@ export default function AdminDashboard() {
                     key={
                       label
                     }
-                    className="rounded-3xl bg-white border border-ink/10 p-5"
+                    className="bg-white border rounded-3xl p-5"
                   >
-                    <div className="text-[10px] mono uppercase text-ink/40">
+
+                    <div className="text-[10px] uppercase text-ink/40">
                       {label}
                     </div>
 
                     <div className="serif text-4xl mt-2">
                       {value}
                     </div>
+
                   </div>
 
                 )
@@ -3142,76 +2934,20 @@ export default function AdminDashboard() {
             </div>
 
 
-            {/* COUNTRY FILTER */}
-
-            <div className="mt-6 flex flex-wrap gap-2 items-center">
-
-              <div className="inline-flex rounded-full bg-white border border-ink/10 p-1 overflow-x-auto">
-
-                {universityCountries.map(
-                  (country) => (
-
-                    <button
-                      key={
-                        country
-                      }
-                      onClick={() =>
-                        setUniversityCountryFilter(
-                          country
-                        )
-                      }
-                      className={`px-3 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap ${
-                        universityCountryFilter === country
-                          ? 'bg-ink text-cream'
-                          : 'text-ink/60'
-                      }`}
-                    >
-                      {country}
-                    </button>
-
-                  )
-                )}
-
-              </div>
-
-
-              <div className="ml-auto inline-flex items-center gap-2 bg-white border border-ink/10 rounded-full px-3 py-2">
-
-                <Search className="h-4 w-4 text-ink/40" />
-
-                <input
-                  value={
-                    universitySearch
-                  }
-                  onChange={
-                    (e) =>
-                      setUniversitySearch(
-                        e.target.value
-                      )
-                  }
-                  placeholder="Search university..."
-                  className="bg-transparent outline-none text-[13px] w-52"
-                />
-
-              </div>
-
-            </div>
-
-
             {universityError && (
 
-              <div className="mt-4 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-[13px]">
+              <div className="mt-5 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4">
                 {universityError}
               </div>
 
             )}
 
 
-            <div className="mt-5 rounded-3xl bg-white border border-ink/10 overflow-hidden">
+            <div className="mt-6 bg-white border rounded-3xl divide-y">
 
               {loadingUniversities && (
 
-                <div className="py-12 text-center">
+                <div className="p-10 text-center">
                   Loading universities…
                 </div>
 
@@ -3219,167 +2955,180 @@ export default function AdminDashboard() {
 
 
               {!loadingUniversities &&
-                filteredUniversities.length === 0 && (
+                filteredUniversities.length ===
+                  0 && (
 
-                  <div className="py-14 text-center">
+                  <div className="p-14 text-center">
 
-                    <GraduationCap className="h-10 w-10 mx-auto text-coral" />
+                    <GraduationCap className="mx-auto h-10 w-10 text-coral" />
 
                     <div className="serif text-2xl mt-3">
-                      No universities yet.
+                      No universities found.
                     </div>
-
-                    <button
-                      onClick={
-                        openNewUniversity
-                      }
-                      className="mt-4 rounded-full bg-ink text-cream px-5 py-2"
-                    >
-                      Add first university
-                    </button>
 
                   </div>
 
                 )}
 
 
-              <div className="divide-y divide-ink/5">
+              {filteredUniversities.map(
+                item => (
 
-                {filteredUniversities.map(
-                  (item) => (
+                  <div
+                    key={
+                      item.id
+                    }
+                    className="p-5 flex flex-col md:flex-row md:items-center gap-4"
+                  >
 
-                    <div
-                      key={
-                        item.id
-                      }
-                      className="p-5 flex flex-col md:flex-row md:items-center gap-4"
-                    >
+                    <div className={`h-14 w-14 rounded-2xl grid place-items-center ${
+                      item.stream ===
+                      'MBBS'
+                        ? 'bg-coral/10 text-coral'
+                        : 'bg-ink/10 text-ink'
+                    }`}>
 
-                      <div className="h-14 w-14 rounded-2xl bg-coral/10 text-coral grid place-items-center shrink-0">
+                      {item.stream ===
+                      'MBBS'
+                        ? (
+                          <Stethoscope className="h-6 w-6" />
+                        )
+                        : (
+                          <BriefcaseBusiness className="h-6 w-6" />
+                        )}
 
-                        <GraduationCap className="h-6 w-6" />
-
-                      </div>
-
-
-                      <div className="flex-1">
-
-                        <div className="flex flex-wrap gap-2 items-center">
-
-                          <span className={`text-[10px] uppercase font-bold rounded-full px-2 py-1 ${
-                            item.status === 'published'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-amber-100 text-amber-800'
-                          }`}>
-                            {item.status}
-                          </span>
+                    </div>
 
 
-                          {item.featured && (
-
-                            <span className="text-[10px] uppercase bg-coral/10 text-coral rounded-full px-2 py-1">
-                              Featured
-                            </span>
-
-                          )}
-
-                        </div>
-
-
-                        <div className="serif text-xl mt-2">
-                          {item.name}
-                        </div>
-
-
-                        <div className="text-[12px] text-ink/50 mt-1 flex flex-wrap gap-3">
-
-                          <span className="flex gap-1 items-center">
-                            <Globe2 className="h-3 w-3" />
-                            {item.country}
-                          </span>
-
-                          {item.city && (
-                            <span className="flex gap-1 items-center">
-                              <MapPin className="h-3 w-3" />
-                              {item.city}
-                            </span>
-                          )}
-
-                          {item.tuition_fee_year != null && (
-                            <span>
-                              {item.currency} {item.tuition_fee_year}/yr
-                            </span>
-                          )}
-
-                        </div>
-
-                      </div>
-
+                    <div className="flex-1">
 
                       <div className="flex flex-wrap gap-2">
 
-                        <button
-                          onClick={() =>
-                            toggleFeatured(
-                              item
-                            )
-                          }
-                          title="Featured"
-                          className={`h-9 w-9 rounded-full border grid place-items-center ${
-                            item.featured
-                              ? 'bg-coral text-white border-coral'
-                              : 'border-ink/10'
-                          }`}
-                        >
-                          <Star className="h-4 w-4" />
-                        </button>
+                        <span className="rounded-full bg-ink text-cream px-2 py-1 text-[9px] uppercase">
+                          {item.stream}
+                        </span>
+
+                        <span className={`rounded-full px-2 py-1 text-[9px] uppercase ${
+                          item.status ===
+                          'published'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {item.status}
+                        </span>
+
+                        {item.featured && (
+                          <span className="text-[9px] text-coral">
+                            Featured
+                          </span>
+                        )}
+
+                        {item.recommended && (
+                          <span className="text-[9px] text-coral">
+                            Recommended
+                          </span>
+                        )}
+
+                      </div>
 
 
-                        <button
-                          onClick={() =>
-                            openEditUniversity(
-                              item
-                            )
-                          }
-                          className="h-9 w-9 rounded-full border border-ink/10 grid place-items-center"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
+                      <div className="serif text-xl mt-2">
+                        {item.name}
+                      </div>
 
 
-                        <button
-                          onClick={() =>
-                            toggleUniversityStatus(
-                              item
-                            )
-                          }
-                          className="rounded-full border border-ink/15 px-3 py-2 text-[11px]"
-                        >
-                          {item.status === 'published'
-                            ? 'Unpublish'
-                            : 'Publish'}
-                        </button>
+                      <div className="text-[12px] text-ink/50 flex flex-wrap gap-3">
 
+                        <span>
+                          {item.course}
+                        </span>
 
-                        <button
-                          onClick={() =>
-                            deleteUniversity(
-                              item
-                            )
-                          }
-                          className="h-9 w-9 rounded-full border border-red-200 text-red-600 grid place-items-center"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <span>
+                          {item.country}
+                        </span>
+
+                        {item.city && (
+                          <span>
+                            {item.city}
+                          </span>
+                        )}
+
+                        {item.tuition_fee_year != null && (
+                          <span>
+                            {item.currency} {item.tuition_fee_year}/yr
+                          </span>
+                        )}
 
                       </div>
 
                     </div>
 
-                  )
-                )}
 
-              </div>
+                    <div className="flex flex-wrap gap-2">
+
+                      <button
+                        title="Featured"
+                        onClick={() =>
+                          updateUniversityFlag(
+                            item,
+                            'featured'
+                          )
+                        }
+                        className={`h-9 w-9 rounded-full border grid place-items-center ${
+                          item.featured
+                            ? 'bg-coral text-white'
+                            : ''
+                        }`}
+                      >
+                        <Star className="h-4 w-4" />
+                      </button>
+
+
+                      <button
+                        title="Edit"
+                        onClick={() =>
+                          openEditUniversity(
+                            item
+                          )
+                        }
+                        className="h-9 w-9 rounded-full border grid place-items-center"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+
+
+                      <button
+                        onClick={() =>
+                          toggleUniversityStatus(
+                            item
+                          )
+                        }
+                        className="border rounded-full px-3 py-2 text-[11px]"
+                      >
+                        {item.status ===
+                        'published'
+                          ? 'Unpublish'
+                          : 'Publish'}
+                      </button>
+
+
+                      <button
+                        onClick={() =>
+                          deleteUniversity(
+                            item
+                          )
+                        }
+                        className="h-9 w-9 rounded-full border border-red-200 grid place-items-center text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                )
+              )}
 
             </div>
 
@@ -3390,372 +3139,354 @@ export default function AdminDashboard() {
       </main>
 
 
-      {/* ================================================= */}
       {/* BLOG EDITOR */}
-      {/* ================================================= */}
 
       {blogEditorOpen && (
 
         <div className="fixed inset-0 z-[100] bg-black/60 overflow-y-auto">
 
-          <div className="min-h-screen py-6 px-3">
+          <div className="max-w-5xl mx-auto my-6 bg-cream rounded-3xl overflow-hidden">
 
-            <div className="max-w-5xl mx-auto bg-cream rounded-3xl overflow-hidden">
+            <div className="bg-ink text-cream p-5 flex">
 
-              <div className="sticky top-0 bg-ink text-cream p-5 flex items-center z-20">
+              <div className="serif text-xl">
+                {editingBlogId
+                  ? 'Edit Blog'
+                  : 'New Blog'}
+              </div>
 
-                <div className="serif text-xl">
-                  {editingBlogId
-                    ? 'Edit Blog'
-                    : 'New Blog'}
+              <button
+                className="ml-auto"
+                onClick={() =>
+                  setBlogEditorOpen(
+                    false
+                  )
+                }
+              >
+                <X />
+              </button>
+
+            </div>
+
+
+            <div className="p-6 space-y-4">
+
+              {blogError && (
+                <div className="bg-red-50 text-red-700 p-3">
+                  {blogError}
                 </div>
+              )}
+
+
+              <input
+                value={
+                  blogForm.title
+                }
+                onChange={
+                  e =>
+                    handleTitleChange(
+                      e.target.value
+                    )
+                }
+                placeholder="Blog title"
+                className="w-full border rounded-xl p-3"
+              />
+
+
+              <input
+                value={
+                  blogForm.slug
+                }
+                onChange={
+                  e => {
+                    setSlugTouched(
+                      true
+                    );
+
+                    changeBlogField(
+                      'slug',
+                      slugify(
+                        e.target.value
+                      )
+                    );
+                  }
+                }
+                placeholder="Slug"
+                className="w-full border rounded-xl p-3"
+              />
+
+
+              <div className="grid sm:grid-cols-2 gap-3">
+
+                <input
+                  value={
+                    blogForm.category
+                  }
+                  onChange={
+                    e =>
+                      changeBlogField(
+                        'category',
+                        e.target.value
+                      )
+                  }
+                  placeholder="Category"
+                  className="border rounded-xl p-3"
+                />
+
+                <input
+                  value={
+                    blogForm.author
+                  }
+                  onChange={
+                    e =>
+                      changeBlogField(
+                        'author',
+                        e.target.value
+                      )
+                  }
+                  placeholder="Author"
+                  className="border rounded-xl p-3"
+                />
+
+              </div>
+
+
+              <textarea
+                value={
+                  blogForm.excerpt
+                }
+                onChange={
+                  e =>
+                    changeBlogField(
+                      'excerpt',
+                      e.target.value
+                    )
+                }
+                placeholder="Excerpt"
+                className="w-full border rounded-xl p-3"
+              />
+
+
+              <div className="flex gap-2">
 
                 <button
-                  onClick={
-                    closeBlogEditor
+                  onClick={() =>
+                    addBodyBlock(
+                      'heading'
+                    )
                   }
-                  className="ml-auto"
+                  className="border rounded-full px-3 py-2"
                 >
-                  <X />
+                  Heading
+                </button>
+
+                <button
+                  onClick={() =>
+                    addBodyBlock(
+                      'paragraph'
+                    )
+                  }
+                  className="border rounded-full px-3 py-2"
+                >
+                  Paragraph
+                </button>
+
+                <button
+                  onClick={() =>
+                    addBodyBlock(
+                      'list'
+                    )
+                  }
+                  className="border rounded-full px-3 py-2"
+                >
+                  List
                 </button>
 
               </div>
 
 
-              <div className="p-6 space-y-5">
+              {blogForm.body.map(
+                (block, index) => (
 
-                {blogError && (
-                  <div className="bg-red-50 text-red-700 p-3 rounded-xl">
-                    {blogError}
-                  </div>
-                )}
-
-
-                <input
-                  value={
-                    blogForm.title
-                  }
-                  onChange={
-                    (e) =>
-                      handleTitleChange(
-                        e.target.value
-                      )
-                  }
-                  placeholder="Blog title"
-                  className="w-full border rounded-xl p-3"
-                />
-
-                <input
-                  value={
-                    blogForm.slug
-                  }
-                  onChange={
-                    (e) => {
-                      setSlugTouched(
-                        true
-                      );
-
-                      changeBlogField(
-                        'slug',
-                        slugify(
-                          e.target.value
-                        )
-                      );
+                  <div
+                    key={
+                      index
                     }
-                  }
-                  placeholder="Slug"
-                  className="w-full border rounded-xl p-3"
-                />
-
-
-                <div className="grid sm:grid-cols-2 gap-4">
-
-                  <input
-                    value={
-                      blogForm.category
-                    }
-                    onChange={
-                      (e) =>
-                        changeBlogField(
-                          'category',
-                          e.target.value
-                        )
-                    }
-                    placeholder="Category"
-                    className="border rounded-xl p-3"
-                  />
-
-                  <input
-                    value={
-                      blogForm.author
-                    }
-                    onChange={
-                      (e) =>
-                        changeBlogField(
-                          'author',
-                          e.target.value
-                        )
-                    }
-                    placeholder="Author"
-                    className="border rounded-xl p-3"
-                  />
-
-                </div>
-
-
-                <textarea
-                  value={
-                    blogForm.excerpt
-                  }
-                  onChange={
-                    (e) =>
-                      changeBlogField(
-                        'excerpt',
-                        e.target.value
-                      )
-                  }
-                  placeholder="Excerpt"
-                  rows="3"
-                  className="w-full border rounded-xl p-3"
-                />
-
-
-                <div className="flex flex-wrap gap-2">
-
-                  <button
-                    onClick={() =>
-                      addBodyBlock(
-                        'heading'
-                      )
-                    }
-                    className="border rounded-full px-3 py-2 flex gap-1"
+                    className="bg-white p-4 rounded-xl border"
                   >
-                    <Heading2 className="h-4 w-4" />
-                    Heading
-                  </button>
 
-                  <button
-                    onClick={() =>
-                      addBodyBlock(
-                        'paragraph'
-                      )
-                    }
-                    className="border rounded-full px-3 py-2 flex gap-1"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Paragraph
-                  </button>
+                    {block.type ===
+                      'heading' && (
 
-                  <button
-                    onClick={() =>
-                      addBodyBlock(
-                        'list'
-                      )
-                    }
-                    className="border rounded-full px-3 py-2 flex gap-1"
-                  >
-                    <List className="h-4 w-4" />
-                    List
-                  </button>
+                      <input
+                        value={
+                          block.text ||
+                          ''
+                        }
+                        onChange={
+                          e =>
+                            updateBodyBlock(
+                              index,
+                              {
+                                text:
+                                  e.target.value
+                              }
+                            )
+                        }
+                        className="w-full border rounded-xl p-3"
+                      />
 
-                </div>
+                    )}
 
 
-                {blogForm.body.map(
-                  (block, index) => (
+                    {block.type ===
+                      'paragraph' && (
 
-                    <div
-                      key={
-                        index
+                      <textarea
+                        rows="5"
+                        value={
+                          block.text ||
+                          ''
+                        }
+                        onChange={
+                          e =>
+                            updateBodyBlock(
+                              index,
+                              {
+                                text:
+                                  e.target.value
+                              }
+                            )
+                        }
+                        className="w-full border rounded-xl p-3"
+                      />
+
+                    )}
+
+
+                    {block.type ===
+                      'list' && (
+
+                      <textarea
+                        rows="5"
+                        value={
+                          (
+                            block.items ||
+                            []
+                          ).join('\n')
+                        }
+                        onChange={
+                          e =>
+                            updateBodyBlock(
+                              index,
+                              {
+                                items:
+                                  e.target.value.split(
+                                    '\n'
+                                  )
+                              }
+                            )
+                        }
+                        className="w-full border rounded-xl p-3"
+                      />
+
+                    )}
+
+
+                    <button
+                      onClick={() =>
+                        removeBodyBlock(
+                          index
+                        )
                       }
-                      className="bg-white border rounded-xl p-4"
+                      className="mt-2 text-red-600"
                     >
+                      Delete block
+                    </button>
 
-                      {block.type === 'heading' && (
-                        <input
-                          value={
-                            block.text ||
-                            ''
-                          }
-                          onChange={
-                            (e) =>
-                              updateBodyBlock(
-                                index,
-                                {
-                                  text:
-                                    e.target.value
-                                }
-                              )
-                          }
-                          className="w-full border rounded-xl p-3"
-                        />
-                      )}
+                  </div>
+
+                )
+              )}
 
 
-                      {block.type === 'paragraph' && (
-                        <textarea
-                          value={
-                            block.text ||
-                            ''
-                          }
-                          onChange={
-                            (e) =>
-                              updateBodyBlock(
-                                index,
-                                {
-                                  text:
-                                    e.target.value
-                                }
-                              )
-                          }
-                          rows="5"
-                          className="w-full border rounded-xl p-3"
-                        />
-                      )}
+              <input
+                value={
+                  blogForm.seo_title
+                }
+                onChange={
+                  e =>
+                    changeBlogField(
+                      'seo_title',
+                      e.target.value
+                    )
+                }
+                placeholder="SEO title"
+                className="w-full border rounded-xl p-3"
+              />
 
 
-                      {block.type === 'list' && (
-                        <textarea
-                          value={
-                            (
-                              block.items ||
-                              []
-                            ).join(
-                              '\n'
-                            )
-                          }
-                          onChange={
-                            (e) =>
-                              updateBodyBlock(
-                                index,
-                                {
-                                  items:
-                                    e.target.value.split(
-                                      '\n'
-                                    )
-                                }
-                              )
-                          }
-                          rows="5"
-                          className="w-full border rounded-xl p-3"
-                        />
-                      )}
+              <textarea
+                value={
+                  blogForm.meta_description
+                }
+                onChange={
+                  e =>
+                    changeBlogField(
+                      'meta_description',
+                      e.target.value
+                    )
+                }
+                placeholder="Meta description"
+                className="w-full border rounded-xl p-3"
+              />
 
 
-                      <div className="mt-2 flex gap-2">
-
-                        <button
-                          onClick={() =>
-                            moveBodyBlock(
-                              index,
-                              -1
-                            )
-                          }
-                        >
-                          ↑
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            moveBodyBlock(
-                              index,
-                              1
-                            )
-                          }
-                        >
-                          ↓
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            removeBodyBlock(
-                              index
-                            )
-                          }
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </button>
-
-                      </div>
-
-                    </div>
-
-                  )
-                )}
+              <input
+                value={
+                  blogForm.keywordsText
+                }
+                onChange={
+                  e =>
+                    changeBlogField(
+                      'keywordsText',
+                      e.target.value
+                    )
+                }
+                placeholder="Keywords"
+                className="w-full border rounded-xl p-3"
+              />
 
 
-                <input
-                  value={
-                    blogForm.seo_title
+              <div className="flex gap-3">
+
+                <button
+                  disabled={
+                    savingBlog
                   }
-                  onChange={
-                    (e) =>
-                      changeBlogField(
-                        'seo_title',
-                        e.target.value
-                      )
+                  onClick={() =>
+                    saveBlog(
+                      'draft'
+                    )
                   }
-                  placeholder="SEO title"
-                  className="w-full border rounded-xl p-3"
-                />
+                  className="border rounded-full px-5 py-3"
+                >
+                  Save Draft
+                </button>
 
-                <textarea
-                  value={
-                    blogForm.meta_description
+                <button
+                  disabled={
+                    savingBlog
                   }
-                  onChange={
-                    (e) =>
-                      changeBlogField(
-                        'meta_description',
-                        e.target.value
-                      )
+                  onClick={() =>
+                    saveBlog(
+                      'published'
+                    )
                   }
-                  placeholder="Meta description"
-                  className="w-full border rounded-xl p-3"
-                />
-
-                <input
-                  value={
-                    blogForm.keywordsText
-                  }
-                  onChange={
-                    (e) =>
-                      changeBlogField(
-                        'keywordsText',
-                        e.target.value
-                      )
-                  }
-                  placeholder="Keywords separated by commas"
-                  className="w-full border rounded-xl p-3"
-                />
-
-
-                <div className="flex gap-3">
-
-                  <button
-                    onClick={() =>
-                      saveBlog(
-                        'draft'
-                      )
-                    }
-                    className="border rounded-full px-5 py-3"
-                  >
-                    <Save className="inline h-4 w-4 mr-1" />
-                    Save Draft
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      saveBlog(
-                        'published'
-                      )
-                    }
-                    className="bg-coral text-white rounded-full px-5 py-3"
-                  >
-                    Publish
-                  </button>
-
-                </div>
+                  className="bg-coral text-white rounded-full px-5 py-3"
+                >
+                  Publish
+                </button>
 
               </div>
 
@@ -3768,341 +3499,484 @@ export default function AdminDashboard() {
       )}
 
 
-      {/* ================================================= */}
       {/* UNIVERSITY EDITOR */}
-      {/* ================================================= */}
 
       {universityEditorOpen && (
 
-        <div className="fixed inset-0 z-[110] bg-black/60 overflow-y-auto">
+        <div className="fixed inset-0 z-[120] bg-black/60 overflow-y-auto">
 
-          <div className="min-h-screen py-6 px-3 sm:px-6">
-
-            <div className="max-w-6xl mx-auto bg-cream rounded-3xl overflow-hidden shadow-2xl">
+          <div className="max-w-6xl mx-auto my-6 bg-cream rounded-3xl overflow-hidden shadow-2xl">
 
 
-              {/* HEADER */}
+            {/* HEADER */}
 
-              <div className="sticky top-0 z-30 bg-ink text-cream px-6 py-4 flex items-center">
+            <div className="sticky top-0 z-30 bg-ink text-cream px-6 py-4 flex">
 
-                <div>
+              <div>
 
-                  <div className="text-[10px] uppercase tracking-widest text-coral">
-                    University Manager
-                  </div>
-
-                  <div className="serif text-2xl">
-                    {editingUniversityId
-                      ? 'Edit University'
-                      : 'Add University'}
-                  </div>
-
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  University Manager
                 </div>
 
-                <button
-                  onClick={
-                    closeUniversityEditor
-                  }
-                  className="ml-auto h-10 w-10 border border-cream/20 rounded-full grid place-items-center"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="serif text-2xl">
+                  {editingUniversityId
+                    ? 'Edit University'
+                    : 'Add University'}
+                </div>
 
               </div>
 
 
-              <div className="p-6 sm:p-8 space-y-8">
+              <button
+                onClick={() =>
+                  setUniversityEditorOpen(
+                    false
+                  )
+                }
+                className="ml-auto"
+              >
+                <X />
+              </button>
+
+            </div>
 
 
-                {universityError && (
+            <div className="p-6 sm:p-8 space-y-9">
 
-                  <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4">
-                    {universityError}
-                  </div>
+              {universityError && (
 
-                )}
+                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">
+                  {universityError}
+                </div>
+
+              )}
 
 
-                {/* BASIC */}
+              {/* STREAM */}
 
-                <section>
+              <section>
 
-                  <div className="text-[10px] uppercase tracking-widest text-coral">
-                    01 — Basic Information
-                  </div>
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  01 — Select Stream
+                </div>
 
-                  <div className="mt-4 grid sm:grid-cols-2 gap-4">
 
-                    <input
-                      value={
-                        universityForm.name
-                      }
-                      onChange={
-                        (e) =>
-                          handleUniversityNameChange(
+                <div className="mt-4 grid sm:grid-cols-2 gap-4">
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      changeUniversityStream(
+                        'MBBS'
+                      )
+                    }
+                    className={`rounded-2xl border p-5 text-left ${
+                      universityForm.stream ===
+                      'MBBS'
+                        ? 'bg-ink text-cream border-ink'
+                        : 'bg-white'
+                    }`}
+                  >
+
+                    <Stethoscope className="h-6 w-6" />
+
+                    <div className="serif text-2xl mt-3">
+                      MBBS
+                    </div>
+
+                    <div className="text-[12px] opacity-60">
+                      Medical universities & MBBS programs
+                    </div>
+
+                  </button>
+
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      changeUniversityStream(
+                        'Management'
+                      )
+                    }
+                    className={`rounded-2xl border p-5 text-left ${
+                      universityForm.stream ===
+                      'Management'
+                        ? 'bg-ink text-cream border-ink'
+                        : 'bg-white'
+                    }`}
+                  >
+
+                    <BriefcaseBusiness className="h-6 w-6" />
+
+                    <div className="serif text-2xl mt-3">
+                      Management
+                    </div>
+
+                    <div className="text-[12px] opacity-60">
+                      MBA, BBA, MSc Management & business programs
+                    </div>
+
+                  </button>
+
+                </div>
+
+              </section>
+
+
+              {/* BASIC */}
+
+              <section>
+
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  02 — University
+                </div>
+
+
+                <div className="mt-4 grid sm:grid-cols-2 gap-4">
+
+                  <input
+                    value={
+                      universityForm.name
+                    }
+                    onChange={
+                      e =>
+                        handleUniversityName(
+                          e.target.value
+                        )
+                    }
+                    placeholder="University Name *"
+                    className="sm:col-span-2 border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <input
+                    value={
+                      universityForm.slug
+                    }
+                    onChange={
+                      e => {
+
+                        setUniversitySlugTouched(
+                          true
+                        );
+
+                        changeUniversityField(
+                          'slug',
+                          slugify(
                             e.target.value
                           )
+                        );
                       }
-                      placeholder="University name *"
-                      className="border rounded-xl p-3 bg-white sm:col-span-2"
-                    />
+                    }
+                    placeholder="URL Slug"
+                    className="sm:col-span-2 border rounded-xl p-3 bg-white"
+                  />
 
-                    <input
-                      value={
-                        universityForm.slug
-                      }
-                      onChange={
-                        (e) => {
-                          setUniversitySlugTouched(
-                            true
-                          );
 
-                          changeUniversityField(
-                            'slug',
-                            slugify(
+                  <input
+                    value={
+                      universityForm.country
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'country',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Country *"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <input
+                    value={
+                      universityForm.city
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'city',
+                          e.target.value
+                        )
+                    }
+                    placeholder="City"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+                </div>
+
+              </section>
+
+
+              {/* COURSE */}
+
+              <section>
+
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  03 — Course
+                </div>
+
+
+                <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                  <input
+                    value={
+                      universityForm.course
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'course',
+                          e.target.value
+                        )
+                    }
+                    placeholder={
+                      universityForm.stream ===
+                      'MBBS'
+                        ? 'MBBS / MD'
+                        : 'MBA / BBA / MSc Management'
+                    }
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <input
+                    value={
+                      universityForm.course_level
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'course_level',
+                          e.target.value
+                        )
+                    }
+                    placeholder="UG / PG / Masters"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <input
+                    value={
+                      universityForm.duration
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'duration',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Duration"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <input
+                    value={
+                      universityForm.medium
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'medium',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Medium"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <input
+                    value={
+                      universityForm.intake
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'intake',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Intake"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <input
+                    value={
+                      universityForm.application_deadline
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'application_deadline',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Application deadline"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+                </div>
+
+              </section>
+
+
+              {/* FEES */}
+
+              <section>
+
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  04 — Fees & Scholarship
+                </div>
+
+
+                <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                  <select
+                    value={
+                      universityForm.currency
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'currency',
+                          e.target.value
+                        )
+                    }
+                    className="border rounded-xl p-3 bg-white"
+                  >
+                    <option>USD</option>
+                    <option>EUR</option>
+                    <option>INR</option>
+                    <option>GBP</option>
+                    <option>AUD</option>
+                    <option>GEL</option>
+                  </select>
+
+
+                  {[
+                    [
+                      'tuition_fee_year',
+                      'Tuition Fee / Year'
+                    ],
+                    [
+                      'hostel_fee_year',
+                      'Hostel / Year'
+                    ],
+                    [
+                      'food_fee_year',
+                      'Food / Year'
+                    ],
+                    [
+                      'first_year_total',
+                      'First Year Total'
+                    ],
+                    [
+                      'total_course_cost',
+                      'Total Course Cost'
+                    ],
+                    [
+                      'application_fee',
+                      'Application Fee'
+                    ]
+
+                  ].map(
+                    ([field, label]) => (
+
+                      <input
+                        key={
+                          field
+                        }
+                        type="number"
+                        value={
+                          universityForm[field]
+                        }
+                        onChange={
+                          e =>
+                            changeUniversityField(
+                              field,
                               e.target.value
                             )
-                          );
                         }
-                      }
-                      placeholder="URL slug"
-                      className="border rounded-xl p-3 bg-white sm:col-span-2"
-                    />
+                        placeholder={
+                          label
+                        }
+                        className="border rounded-xl p-3 bg-white"
+                      />
+
+                    )
+                  )}
+
+                </div>
 
 
-                    <input
-                      value={
-                        universityForm.country
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'country',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Country *"
-                      className="border rounded-xl p-3 bg-white"
-                    />
+                <textarea
+                  rows="3"
+                  value={
+                    universityForm.scholarship_info
+                  }
+                  onChange={
+                    e =>
+                      changeUniversityField(
+                        'scholarship_info',
+                        e.target.value
+                      )
+                  }
+                  placeholder="Scholarship information"
+                  className="mt-4 w-full border rounded-xl p-3 bg-white"
+                />
 
-                    <input
-                      value={
-                        universityForm.city
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'city',
-                            e.target.value
-                          )
-                      }
-                      placeholder="City"
-                      className="border rounded-xl p-3 bg-white"
-                    />
-
-                  </div>
-
-                </section>
+              </section>
 
 
-                {/* COURSE */}
+              {/* GENERAL ELIGIBILITY */}
 
-                <section>
+              <section>
 
-                  <div className="text-[10px] uppercase tracking-widest text-coral">
-                    02 — Course
-                  </div>
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  05 — Eligibility
+                </div>
 
-                  <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <textarea
+                  rows="4"
+                  value={
+                    universityForm.eligibility
+                  }
+                  onChange={
+                    e =>
+                      changeUniversityField(
+                        'eligibility',
+                        e.target.value
+                      )
+                  }
+                  placeholder="General eligibility"
+                  className="mt-4 w-full border rounded-xl p-3 bg-white"
+                />
 
-                    <input
-                      value={
-                        universityForm.course
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'course',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Course"
-                      className="border rounded-xl p-3 bg-white"
-                    />
+              </section>
 
-                    <input
-                      value={
-                        universityForm.duration
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'duration',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Duration e.g. 6 Years"
-                      className="border rounded-xl p-3 bg-white"
-                    />
 
-                    <input
-                      value={
-                        universityForm.medium
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'medium',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Medium"
-                      className="border rounded-xl p-3 bg-white"
-                    />
+              {/* MBBS ONLY */}
 
-                    <input
-                      value={
-                        universityForm.intake
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'intake',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Intake e.g. September"
-                      className="border rounded-xl p-3 bg-white"
-                    />
+              {universityForm.stream ===
+                'MBBS' && (
+
+                <section className="rounded-3xl border border-coral/20 bg-coral/5 p-5">
+
+                  <div className="flex items-center gap-2">
+
+                    <Stethoscope className="h-5 w-5 text-coral" />
+
+                    <div className="text-[10px] uppercase tracking-widest text-coral">
+                      06 — MBBS Specific
+                    </div>
 
                   </div>
 
-                </section>
-
-
-                {/* FEES */}
-
-                <section>
-
-                  <div className="text-[10px] uppercase tracking-widest text-coral">
-                    03 — Fees
-                  </div>
-
-                  <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                    <select
-                      value={
-                        universityForm.currency
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'currency',
-                            e.target.value
-                          )
-                      }
-                      className="border rounded-xl p-3 bg-white"
-                    >
-                      <option>USD</option>
-                      <option>EUR</option>
-                      <option>INR</option>
-                      <option>GEL</option>
-                      <option>UZS</option>
-                    </select>
-
-
-                    <input
-                      type="number"
-                      value={
-                        universityForm.tuition_fee_year
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'tuition_fee_year',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Tuition / year"
-                      className="border rounded-xl p-3 bg-white"
-                    />
-
-                    <input
-                      type="number"
-                      value={
-                        universityForm.hostel_fee_year
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'hostel_fee_year',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Hostel / year"
-                      className="border rounded-xl p-3 bg-white"
-                    />
-
-                    <input
-                      type="number"
-                      value={
-                        universityForm.food_fee_year
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'food_fee_year',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Food / year"
-                      className="border rounded-xl p-3 bg-white"
-                    />
-
-                    <input
-                      type="number"
-                      value={
-                        universityForm.first_year_total
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'first_year_total',
-                            e.target.value
-                          )
-                      }
-                      placeholder="First-year total"
-                      className="border rounded-xl p-3 bg-white"
-                    />
-
-                    <input
-                      type="number"
-                      value={
-                        universityForm.total_course_cost
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'total_course_cost',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Estimated total course cost"
-                      className="border rounded-xl p-3 bg-white"
-                    />
-
-                  </div>
-
-                </section>
-
-
-                {/* ELIGIBILITY */}
-
-                <section>
-
-                  <div className="text-[10px] uppercase tracking-widest text-coral">
-                    04 — Eligibility
-                  </div>
 
                   <div className="mt-4 space-y-4">
 
@@ -4111,54 +3985,50 @@ export default function AdminDashboard() {
                         universityForm.neet_requirement
                       }
                       onChange={
-                        (e) =>
+                        e =>
                           changeUniversityField(
                             'neet_requirement',
                             e.target.value
                           )
                       }
                       placeholder="NEET requirement"
-                      className="border rounded-xl p-3 bg-white w-full"
+                      className="w-full border rounded-xl p-3 bg-white"
                     />
 
-                    <textarea
-                      rows="3"
+
+                    <input
                       value={
-                        universityForm.eligibility
+                        universityForm.pcb_requirement
                       }
                       onChange={
-                        (e) =>
+                        e =>
                           changeUniversityField(
-                            'eligibility',
+                            'pcb_requirement',
                             e.target.value
                           )
                       }
-                      placeholder="Eligibility details"
-                      className="border rounded-xl p-3 bg-white w-full"
+                      placeholder="PCB / Class 12 requirement"
+                      className="w-full border rounded-xl p-3 bg-white"
                     />
 
-                  </div>
-
-                </section>
-
-
-                {/* DETAILS */}
-
-                <section>
-
-                  <div className="text-[10px] uppercase tracking-widest text-coral">
-                    05 — Detailed Information
-                  </div>
-
-                  <div className="mt-4 space-y-4">
 
                     {[
-                      ['overview', 'Overview'],
-                      ['recognition', 'Recognition / Accreditation'],
-                      ['internship', 'Internship details'],
-                      ['hostel', 'Hostel information'],
-                      ['indian_food', 'Indian food availability'],
-                      ['student_life', 'Student life']
+                      [
+                        'recognition',
+                        'Recognition / Medical accreditation'
+                      ],
+                      [
+                        'nmc_notes',
+                        'NMC-related notes'
+                      ],
+                      [
+                        'fmge_next_notes',
+                        'FMGE / NExT preparation information'
+                      ],
+                      [
+                        'internship',
+                        'Internship information'
+                      ]
 
                     ].map(
                       ([field, label]) => (
@@ -4167,14 +4037,12 @@ export default function AdminDashboard() {
                           key={
                             field
                           }
-                          rows="4"
+                          rows="3"
                           value={
-                            universityForm[
-                              field
-                            ]
+                            universityForm[field]
                           }
                           onChange={
-                            (e) =>
+                            e =>
                               changeUniversityField(
                                 field,
                                 e.target.value
@@ -4183,7 +4051,7 @@ export default function AdminDashboard() {
                           placeholder={
                             label
                           }
-                          className="border rounded-xl p-3 bg-white w-full"
+                          className="w-full border rounded-xl p-3 bg-white"
                         />
 
                       )
@@ -4193,313 +4061,698 @@ export default function AdminDashboard() {
 
                 </section>
 
+              )}
 
-                {/* LISTS */}
 
-                <section>
+              {/* MANAGEMENT ONLY */}
 
-                  <div className="text-[10px] uppercase tracking-widest text-coral">
-                    06 — Lists
-                  </div>
+              {universityForm.stream ===
+                'Management' && (
 
-                  <p className="text-[11px] text-ink/50 mt-1">
-                    Enter one item per line.
-                  </p>
+                <section className="rounded-3xl border border-ink/10 bg-white p-5">
 
-                  <div className="mt-4 grid lg:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2">
 
-                    <textarea
-                      rows="6"
-                      value={
-                        universityForm.prosText
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'prosText',
-                            e.target.value
-                          )
-                      }
-                      placeholder={'Pros\nAffordable tuition\nEnglish medium'}
-                      className="border rounded-xl p-3 bg-white"
-                    />
+                    <BriefcaseBusiness className="h-5 w-5 text-coral" />
 
-                    <textarea
-                      rows="6"
-                      value={
-                        universityForm.consText
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'consText',
-                            e.target.value
-                          )
-                      }
-                      placeholder={'Cons\nCold winter\nLonger travel'}
-                      className="border rounded-xl p-3 bg-white"
-                    />
-
-                    <textarea
-                      rows="7"
-                      value={
-                        universityForm.documentsText
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'documentsText',
-                            e.target.value
-                          )
-                      }
-                      placeholder={'Documents required\nPassport\nNEET scorecard\n10th marksheet\n12th marksheet'}
-                      className="border rounded-xl p-3 bg-white"
-                    />
-
-                    <textarea
-                      rows="7"
-                      value={
-                        universityForm.admissionText
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'admissionText',
-                            e.target.value
-                          )
-                      }
-                      placeholder={'Admission process\nSubmit documents\nUniversity review\nAdmission letter\nVisa'}
-                      className="border rounded-xl p-3 bg-white"
-                    />
+                    <div className="text-[10px] uppercase tracking-widest text-coral">
+                      06 — Management Specific
+                    </div>
 
                   </div>
 
-                </section>
-
-
-                {/* FAQ */}
-
-                <section>
-
-                  <div className="text-[10px] uppercase tracking-widest text-coral">
-                    07 — FAQs
-                  </div>
-
-                  <p className="text-[11px] text-ink/50 mt-1">
-                    One FAQ per line. Use: Question | Answer
-                  </p>
-
-                  <textarea
-                    rows="8"
-                    value={
-                      universityForm.faqsText
-                    }
-                    onChange={
-                      (e) =>
-                        changeUniversityField(
-                          'faqsText',
-                          e.target.value
-                        )
-                    }
-                    placeholder={
-                      'Is NEET required? | Yes, qualifying NEET is required.\nIs hostel available? | Yes, university hostel options are available.'
-                    }
-                    className="mt-3 border rounded-xl p-3 bg-white w-full"
-                  />
-
-                </section>
-
-
-                {/* LINKS */}
-
-                <section>
-
-                  <div className="text-[10px] uppercase tracking-widest text-coral">
-                    08 — Links
-                  </div>
 
                   <div className="mt-4 grid sm:grid-cols-2 gap-4">
 
                     <input
                       value={
-                        universityForm.website
+                        universityForm.academic_requirement
                       }
                       onChange={
-                        (e) =>
+                        e =>
                           changeUniversityField(
-                            'website',
+                            'academic_requirement',
                             e.target.value
                           )
                       }
-                      placeholder="Official university website"
-                      className="border rounded-xl p-3 bg-white"
+                      placeholder="Academic requirement"
+                      className="border rounded-xl p-3"
                     />
+
 
                     <input
                       value={
-                        universityForm.apply_link
+                        universityForm.work_experience
                       }
                       onChange={
-                        (e) =>
+                        e =>
                           changeUniversityField(
-                            'apply_link',
+                            'work_experience',
                             e.target.value
                           )
                       }
-                      placeholder="Apply / consultation link"
-                      className="border rounded-xl p-3 bg-white"
+                      placeholder="Work experience requirement"
+                      className="border rounded-xl p-3"
+                    />
+
+
+                    <input
+                      value={
+                        universityForm.english_requirement
+                      }
+                      onChange={
+                        e =>
+                          changeUniversityField(
+                            'english_requirement',
+                            e.target.value
+                          )
+                      }
+                      placeholder="English requirement"
+                      className="border rounded-xl p-3"
+                    />
+
+
+                    <input
+                      value={
+                        universityForm.ielts_requirement
+                      }
+                      onChange={
+                        e =>
+                          changeUniversityField(
+                            'ielts_requirement',
+                            e.target.value
+                          )
+                      }
+                      placeholder="IELTS requirement"
+                      className="border rounded-xl p-3"
+                    />
+
+
+                    <input
+                      value={
+                        universityForm.toefl_requirement
+                      }
+                      onChange={
+                        e =>
+                          changeUniversityField(
+                            'toefl_requirement',
+                            e.target.value
+                          )
+                      }
+                      placeholder="TOEFL requirement"
+                      className="border rounded-xl p-3"
+                    />
+
+
+                    <input
+                      value={
+                        universityForm.gmat_gre_requirement
+                      }
+                      onChange={
+                        e =>
+                          changeUniversityField(
+                            'gmat_gre_requirement',
+                            e.target.value
+                          )
+                      }
+                      placeholder="GMAT / GRE requirement"
+                      className="border rounded-xl p-3"
                     />
 
                   </div>
 
-                </section>
+
+                  <textarea
+                    rows="6"
+                    value={
+                      universityForm.specializationsText
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'specializationsText',
+                          e.target.value
+                        )
+                    }
+                    placeholder={
+                      'Specializations — one per line\nFinance\nMarketing\nBusiness Analytics\nInternational Business'
+                    }
+                    className="mt-4 w-full border rounded-xl p-3"
+                  />
 
 
-                {/* SEO */}
+                  {[
+                    [
+                      'internship_opportunities',
+                      'Internship opportunities'
+                    ],
+                    [
+                      'placement_info',
+                      'Placement / career information'
+                    ],
+                    [
+                      'post_study_opportunities',
+                      'Post-study opportunities'
+                    ]
 
-                <section>
+                  ].map(
+                    ([field, label]) => (
 
-                  <div className="text-[10px] uppercase tracking-widest text-coral">
-                    09 — Google SEO
-                  </div>
+                      <textarea
+                        key={
+                          field
+                        }
+                        rows="3"
+                        value={
+                          universityForm[field]
+                        }
+                        onChange={
+                          e =>
+                            changeUniversityField(
+                              field,
+                              e.target.value
+                            )
+                        }
+                        placeholder={
+                          label
+                        }
+                        className="mt-4 w-full border rounded-xl p-3"
+                      />
 
-                  <div className="mt-4 space-y-4">
-
-                    <input
-                      value={
-                        universityForm.seo_title
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'seo_title',
-                            e.target.value
-                          )
-                      }
-                      placeholder="SEO title"
-                      className="border rounded-xl p-3 bg-white w-full"
-                    />
-
-                    <textarea
-                      rows="3"
-                      value={
-                        universityForm.meta_description
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'meta_description',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Meta description"
-                      className="border rounded-xl p-3 bg-white w-full"
-                    />
-
-                    <input
-                      value={
-                        universityForm.keywordsText
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'keywordsText',
-                            e.target.value
-                          )
-                      }
-                      placeholder="Keywords separated by commas"
-                      className="border rounded-xl p-3 bg-white w-full"
-                    />
-
-                  </div>
-
-                </section>
-
-
-                {/* FEATURED */}
-
-                <section className="rounded-2xl bg-white border border-ink/10 p-5">
-
-                  <label className="flex items-center gap-3 cursor-pointer">
-
-                    <input
-                      type="checkbox"
-                      checked={
-                        universityForm.featured
-                      }
-                      onChange={
-                        (e) =>
-                          changeUniversityField(
-                            'featured',
-                            e.target.checked
-                          )
-                      }
-                      className="h-5 w-5"
-                    />
-
-                    <div>
-
-                      <div className="font-semibold">
-                        Featured University
-                      </div>
-
-                      <div className="text-[11px] text-ink/50">
-                        Featured universities can later appear prominently on the homepage.
-                      </div>
-
-                    </div>
-
-                  </label>
+                    )
+                  )}
 
                 </section>
 
+              )}
 
-                {/* SAVE */}
 
-                <div className="pt-6 border-t border-ink/10 flex flex-wrap gap-3">
+              {/* UNIVERSITY INFORMATION */}
 
-                  <button
-                    disabled={
-                      savingUniversity
+              <section>
+
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  07 — University Information
+                </div>
+
+
+                <div className="mt-4 space-y-4">
+
+                  {[
+                    [
+                      'overview',
+                      'University overview'
+                    ],
+                    [
+                      'accreditation',
+                      'Accreditation'
+                    ],
+                    [
+                      'ranking',
+                      'Ranking / reputation'
+                    ],
+                    [
+                      'campus',
+                      'Campus & facilities'
+                    ]
+
+                  ].map(
+                    ([field, label]) => (
+
+                      <textarea
+                        key={
+                          field
+                        }
+                        rows="4"
+                        value={
+                          universityForm[field]
+                        }
+                        onChange={
+                          e =>
+                            changeUniversityField(
+                              field,
+                              e.target.value
+                            )
+                        }
+                        placeholder={
+                          label
+                        }
+                        className="w-full border rounded-xl p-3 bg-white"
+                      />
+
+                    )
+                  )}
+
+
+                  <input
+                    value={
+                      universityForm.established_year
                     }
-                    onClick={() =>
-                      saveUniversity(
-                        'draft'
-                      )
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'established_year',
+                          e.target.value
+                        )
                     }
-                    className="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-white px-5 py-3 font-semibold disabled:opacity-50"
-                  >
-                    <Save className="h-4 w-4" />
-                    Save Draft
-                  </button>
-
-
-                  <button
-                    disabled={
-                      savingUniversity
-                    }
-                    onClick={() =>
-                      saveUniversity(
-                        'published'
-                      )
-                    }
-                    className="inline-flex items-center gap-2 rounded-full bg-coral text-white px-6 py-3 font-bold disabled:opacity-50"
-                  >
-                    <Globe2 className="h-4 w-4" />
-                    Publish University
-                  </button>
-
-
-                  <button
-                    onClick={
-                      closeUniversityEditor
-                    }
-                    className="ml-auto px-5 py-3"
-                  >
-                    Cancel
-                  </button>
+                    placeholder="Established year"
+                    className="w-full border rounded-xl p-3 bg-white"
+                  />
 
                 </div>
+
+              </section>
+
+
+              {/* STUDENT LIFE */}
+
+              <section>
+
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  08 — Student Life
+                </div>
+
+
+                <div className="mt-4 space-y-4">
+
+                  {[
+                    [
+                      'hostel',
+                      'Hostel details'
+                    ],
+                    [
+                      'indian_food',
+                      'Indian food availability'
+                    ],
+                    [
+                      'student_life',
+                      'Student life'
+                    ],
+                    [
+                      'climate',
+                      'Climate'
+                    ],
+                    [
+                      'airport_distance',
+                      'Airport / travel information'
+                    ]
+
+                  ].map(
+                    ([field, label]) => (
+
+                      <textarea
+                        key={
+                          field
+                        }
+                        rows="3"
+                        value={
+                          universityForm[field]
+                        }
+                        onChange={
+                          e =>
+                            changeUniversityField(
+                              field,
+                              e.target.value
+                            )
+                        }
+                        placeholder={
+                          label
+                        }
+                        className="w-full border rounded-xl p-3 bg-white"
+                      />
+
+                    )
+                  )}
+
+                </div>
+
+              </section>
+
+
+              {/* LISTS */}
+
+              <section>
+
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  09 — Pros, Cons & Admission
+                </div>
+
+
+                <p className="text-[11px] text-ink/50 mt-1">
+                  Enter one item per line.
+                </p>
+
+
+                <div className="mt-4 grid lg:grid-cols-2 gap-4">
+
+                  <textarea
+                    rows="6"
+                    value={
+                      universityForm.prosText
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'prosText',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Pros"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <textarea
+                    rows="6"
+                    value={
+                      universityForm.consText
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'consText',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Cons"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <textarea
+                    rows="7"
+                    value={
+                      universityForm.documentsText
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'documentsText',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Documents required — one per line"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <textarea
+                    rows="7"
+                    value={
+                      universityForm.admissionText
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'admissionText',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Admission steps — one per line"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+                </div>
+
+              </section>
+
+
+              {/* FAQ */}
+
+              <section>
+
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  10 — FAQs
+                </div>
+
+
+                <p className="text-[11px] text-ink/50 mt-1">
+                  Use: Question | Answer
+                </p>
+
+
+                <textarea
+                  rows="8"
+                  value={
+                    universityForm.faqsText
+                  }
+                  onChange={
+                    e =>
+                      changeUniversityField(
+                        'faqsText',
+                        e.target.value
+                      )
+                  }
+                  placeholder={
+                    'Is IELTS required? | It depends on the university.\nIs hostel available? | Yes.'
+                  }
+                  className="mt-3 w-full border rounded-xl p-3 bg-white"
+                />
+
+              </section>
+
+
+              {/* LINKS */}
+
+              <section>
+
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  11 — Links
+                </div>
+
+
+                <div className="mt-4 grid sm:grid-cols-2 gap-4">
+
+                  <input
+                    value={
+                      universityForm.website
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'website',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Official website"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <input
+                    value={
+                      universityForm.apply_link
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'apply_link',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Application / consultation URL"
+                    className="border rounded-xl p-3 bg-white"
+                  />
+
+                </div>
+
+              </section>
+
+
+              {/* DISPLAY FLAGS */}
+
+              <section>
+
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  12 — Website Display
+                </div>
+
+
+                <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+                  {[
+                    [
+                      'featured',
+                      'Featured',
+                      Star
+                    ],
+                    [
+                      'popular',
+                      'Popular',
+                      Sparkles
+                    ],
+                    [
+                      'recommended',
+                      'Recommended',
+                      BadgeCheck
+                    ],
+                    [
+                      'budget_option',
+                      'Budget Option',
+                      WalletCards
+                    ]
+
+                  ].map(
+                    ([field, label, Icon]) => (
+
+                      <label
+                        key={
+                          field
+                        }
+                        className={`rounded-2xl border p-4 cursor-pointer ${
+                          universityForm[field]
+                            ? 'bg-ink text-cream'
+                            : 'bg-white'
+                        }`}
+                      >
+
+                        <input
+                          type="checkbox"
+                          checked={
+                            universityForm[field]
+                          }
+                          onChange={
+                            e =>
+                              changeUniversityField(
+                                field,
+                                e.target.checked
+                              )
+                          }
+                          className="hidden"
+                        />
+
+                        <Icon className="h-5 w-5" />
+
+                        <div className="font-semibold mt-2">
+                          {label}
+                        </div>
+
+                      </label>
+
+                    )
+                  )}
+
+                </div>
+
+              </section>
+
+
+              {/* SEO */}
+
+              <section>
+
+                <div className="text-[10px] uppercase tracking-widest text-coral">
+                  13 — Google SEO
+                </div>
+
+
+                <div className="mt-4 space-y-4">
+
+                  <input
+                    value={
+                      universityForm.seo_title
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'seo_title',
+                          e.target.value
+                        )
+                    }
+                    placeholder="SEO title"
+                    className="w-full border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <textarea
+                    rows="3"
+                    value={
+                      universityForm.meta_description
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'meta_description',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Google meta description"
+                    className="w-full border rounded-xl p-3 bg-white"
+                  />
+
+
+                  <input
+                    value={
+                      universityForm.keywordsText
+                    }
+                    onChange={
+                      e =>
+                        changeUniversityField(
+                          'keywordsText',
+                          e.target.value
+                        )
+                    }
+                    placeholder="Keywords separated by commas"
+                    className="w-full border rounded-xl p-3 bg-white"
+                  />
+
+                </div>
+
+              </section>
+
+
+              {/* SAVE */}
+
+              <div className="border-t pt-6 flex flex-wrap gap-3">
+
+                <button
+                  disabled={
+                    savingUniversity
+                  }
+                  onClick={() =>
+                    saveUniversity(
+                      'draft'
+                    )
+                  }
+                  className="border bg-white rounded-full px-5 py-3 flex items-center gap-2"
+                >
+
+                  <Save className="h-4 w-4" />
+
+                  Save Draft
+
+                </button>
+
+
+                <button
+                  disabled={
+                    savingUniversity
+                  }
+                  onClick={() =>
+                    saveUniversity(
+                      'published'
+                    )
+                  }
+                  className="bg-coral text-white rounded-full px-6 py-3 flex items-center gap-2 font-bold"
+                >
+
+                  <Globe2 className="h-4 w-4" />
+
+                  Publish University
+
+                </button>
+
+
+                <button
+                  onClick={() =>
+                    setUniversityEditorOpen(
+                      false
+                    )
+                  }
+                  className="ml-auto px-5 py-3"
+                >
+                  Cancel
+                </button>
 
               </div>
 
