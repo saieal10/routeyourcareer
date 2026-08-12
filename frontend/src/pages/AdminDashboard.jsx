@@ -24,7 +24,6 @@ import {
   RefreshCw,
   LogOut,
   Users,
-  MessageCircle,
   Phone,
   Mail,
   Filter,
@@ -41,7 +40,6 @@ import {
   FileText,
   Heading2,
   List,
-  Image as ImageIcon,
   Globe2
 } from 'lucide-react';
 
@@ -67,7 +65,6 @@ const EMPTY_BLOG = {
   category: 'MBBS',
   author: 'RYC Editorial',
   read_time: 5,
-  hero_image: '',
   excerpt: '',
   body: [],
   cta: 'mbbs',
@@ -167,14 +164,6 @@ function blankBlock(type) {
     };
   }
 
-  if (type === 'image') {
-    return {
-      type: 'image',
-      image_url: '',
-      image_alt: ''
-    };
-  }
-
   return {
     type: 'paragraph',
     text: ''
@@ -218,6 +207,7 @@ export default function AdminDashboard() {
   // =====================================================
 
   const [newsletter, setNewsletter] = useState([]);
+
   const [loadingNewsletter, setLoadingNewsletter] =
     useState(false);
 
@@ -227,6 +217,7 @@ export default function AdminDashboard() {
   // =====================================================
 
   const [blogs, setBlogs] = useState([]);
+
   const [loadingBlogs, setLoadingBlogs] =
     useState(false);
 
@@ -587,6 +578,7 @@ export default function AdminDashboard() {
 
     setBlogForm({
       ...EMPTY_BLOG,
+
       body: [
         blankBlock(
           'paragraph'
@@ -624,9 +616,6 @@ export default function AdminDashboard() {
       read_time:
         blog.read_time || 5,
 
-      hero_image:
-        blog.hero_image || '',
-
       excerpt:
         blog.excerpt || '',
 
@@ -634,7 +623,10 @@ export default function AdminDashboard() {
         Array.isArray(
           blog.body
         )
-          ? blog.body
+          ? blog.body.filter(
+              (block) =>
+                block.type !== 'image'
+            )
           : [],
 
       cta:
@@ -843,6 +835,7 @@ export default function AdminDashboard() {
       return;
     }
 
+
     const cleanBody =
       blogForm.body
         .map((block) => {
@@ -898,24 +891,6 @@ export default function AdminDashboard() {
           }
 
 
-          if (
-            block.type ===
-            'image'
-          ) {
-            return {
-              type:
-                'image',
-
-              image_url:
-                block.image_url ||
-                '',
-
-              image_alt:
-                block.image_alt ||
-                ''
-            };
-          }
-
           return null;
 
         })
@@ -943,10 +918,6 @@ export default function AdminDashboard() {
         Number(
           blogForm.read_time
         ) || 5,
-
-      hero_image:
-        blogForm.hero_image.trim() ||
-        null,
 
       excerpt:
         blogForm.excerpt.trim(),
@@ -2172,7 +2143,7 @@ export default function AdminDashboard() {
                     </h3>
 
                     <p className="mt-2 text-[13px] text-ink/50">
-                      Your old hard-coded posts are no longer needed.
+                      Create your first RYC Journal article.
                     </p>
 
                     <button
@@ -2201,27 +2172,16 @@ export default function AdminDashboard() {
                       className="p-5 flex flex-col md:flex-row md:items-center gap-4"
                     >
 
+
+                      {/* DEFAULT BLOG IMAGE */}
+
                       <div className="w-full md:w-32 h-20 rounded-xl bg-cream overflow-hidden shrink-0">
 
-                        {blog.hero_image ? (
-
-                          <img
-                            src={
-                              blog.hero_image
-                            }
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
-
-                        ) : (
-
-                          <div className="w-full h-full grid place-items-center text-ink/20">
-
-                            <ImageIcon className="h-6 w-6" />
-
-                          </div>
-
-                        )}
+                        <img
+                          src="/blog-default.png"
+                          alt={blog.title}
+                          className="w-full h-full object-cover"
+                        />
 
                       </div>
 
@@ -2587,42 +2547,33 @@ export default function AdminDashboard() {
 
                   <div className="sm:col-span-2">
 
-                    <label className="text-[10px] mono uppercase tracking-widest text-ink/50">
-                      Featured Image URL
-                    </label>
-
-                    <input
-                      value={
-                        blogForm.hero_image
-                      }
-                      onChange={(e) =>
-                        changeBlogField(
-                          'hero_image',
-                          e.target.value
-                        )
-                      }
-                      placeholder="https://..."
-                      className="mt-2 w-full rounded-xl border border-ink/15 bg-white px-4 py-3 text-[13px]"
-                    />
-
-                  </div>
-
-
-                  {blogForm.hero_image && (
-
-                    <div className="sm:col-span-2">
+                    <div className="rounded-2xl bg-white border border-ink/10 p-4 flex items-center gap-4">
 
                       <img
-                        src={
-                          blogForm.hero_image
-                        }
-                        alt=""
-                        className="w-full max-h-72 object-cover rounded-2xl border border-ink/10"
+                        src="/blog-default.png"
+                        alt="Default blog"
+                        className="h-16 w-24 object-cover rounded-xl"
                       />
+
+                      <div>
+
+                        <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                          Blog Image
+                        </div>
+
+                        <div className="text-[13px] font-semibold mt-1">
+                          Default RYC image
+                        </div>
+
+                        <div className="text-[11px] text-ink/50 mt-1">
+                          Used automatically on every blog.
+                        </div>
+
+                      </div>
 
                     </div>
 
-                  )}
+                  </div>
 
 
                   <div className="sm:col-span-2">
@@ -2722,23 +2673,6 @@ export default function AdminDashboard() {
 
                     </button>
 
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        addBodyBlock(
-                          'image'
-                        )
-                      }
-                      className="inline-flex items-center gap-2 rounded-full border border-ink/15 bg-white px-3 py-2 text-[12px] font-semibold"
-                    >
-
-                      <ImageIcon className="h-4 w-4" />
-
-                      Image
-
-                    </button>
-
                   </div>
 
 
@@ -2748,7 +2682,7 @@ export default function AdminDashboard() {
                       0 && (
 
                       <div className="rounded-2xl border border-dashed border-ink/20 py-10 text-center text-[13px] text-ink/50">
-                        Add a heading, paragraph, list or image above.
+                        Add a heading, paragraph or bullet list above.
                       </div>
 
                     )}
@@ -2775,6 +2709,7 @@ export default function AdminDashboard() {
                             <div className="ml-auto flex gap-1">
 
                               <button
+                                type="button"
                                 onClick={() =>
                                   moveBodyBlock(
                                     index,
@@ -2788,6 +2723,7 @@ export default function AdminDashboard() {
 
 
                               <button
+                                type="button"
                                 onClick={() =>
                                   moveBodyBlock(
                                     index,
@@ -2801,6 +2737,7 @@ export default function AdminDashboard() {
 
 
                               <button
+                                type="button"
                                 onClick={() =>
                                   removeBodyBlock(
                                     index
@@ -2891,56 +2828,11 @@ export default function AdminDashboard() {
                                   }
                                 )
                               }
-                              placeholder={'One bullet per line\nSecond bullet\nThird bullet'}
+                              placeholder={
+                                'One bullet per line\nSecond bullet\nThird bullet'
+                              }
                               className="w-full rounded-xl border border-ink/15 px-4 py-3 text-[14px]"
                             />
-
-                          )}
-
-
-                          {block.type ===
-                            'image' && (
-
-                            <div className="space-y-2">
-
-                              <input
-                                value={
-                                  block.image_url ||
-                                  ''
-                                }
-                                onChange={(e) =>
-                                  updateBodyBlock(
-                                    index,
-                                    {
-                                      image_url:
-                                        e.target.value
-                                    }
-                                  )
-                                }
-                                placeholder="Image URL"
-                                className="w-full rounded-xl border border-ink/15 px-4 py-3 text-[13px]"
-                              />
-
-
-                              <input
-                                value={
-                                  block.image_alt ||
-                                  ''
-                                }
-                                onChange={(e) =>
-                                  updateBodyBlock(
-                                    index,
-                                    {
-                                      image_alt:
-                                        e.target.value
-                                    }
-                                  )
-                                }
-                                placeholder="Image description / alt text"
-                                className="w-full rounded-xl border border-ink/15 px-4 py-3 text-[13px]"
-                              />
-
-                            </div>
 
                           )}
 
