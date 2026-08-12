@@ -37,7 +37,9 @@ load_dotenv(
 )
 
 
-# -------------------- MongoDB --------------------
+# =========================================================
+# MONGODB
+# =========================================================
 
 mongo_url = os.environ["MONGO_URL"]
 
@@ -50,7 +52,9 @@ db = client[
 ]
 
 
-# -------------------- Admin Emails --------------------
+# =========================================================
+# ADMIN
+# =========================================================
 
 ADMIN_EMAILS = [
     email.strip().lower()
@@ -62,7 +66,9 @@ ADMIN_EMAILS = [
 ]
 
 
-# -------------------- Google OAuth --------------------
+# =========================================================
+# GOOGLE OAUTH
+# =========================================================
 
 GOOGLE_CLIENT_ID = os.environ.get(
     "GOOGLE_CLIENT_ID"
@@ -90,7 +96,9 @@ GOOGLE_USERINFO_URL = (
 )
 
 
-# -------------------- Frontend --------------------
+# =========================================================
+# FRONTEND
+# =========================================================
 
 FRONTEND_URL = (
     "https://routeyourcareer.netlify.app"
@@ -98,7 +106,7 @@ FRONTEND_URL = (
 
 
 # =========================================================
-# FASTAPI APP
+# FASTAPI
 # =========================================================
 
 app = FastAPI(
@@ -116,6 +124,7 @@ api_router = APIRouter(
 
 
 class LeadCreate(BaseModel):
+
     name: str
     phone: str
 
@@ -140,47 +149,55 @@ class LeadCreate(BaseModel):
 
 
 class Lead(LeadCreate):
+
     id: str = Field(
-        default_factory=lambda: str(
-            uuid.uuid4()
-        )
+        default_factory=lambda:
+        str(uuid.uuid4())
     )
 
     created_at: datetime = Field(
         default_factory=lambda:
-        datetime.now(timezone.utc)
+        datetime.now(
+            timezone.utc
+        )
     )
 
 
 class NewsletterCreate(BaseModel):
+
     email: EmailStr
     source: Optional[str] = "footer"
 
 
 class Newsletter(NewsletterCreate):
+
     id: str = Field(
-        default_factory=lambda: str(
-            uuid.uuid4()
-        )
+        default_factory=lambda:
+        str(uuid.uuid4())
     )
 
     created_at: datetime = Field(
         default_factory=lambda:
-        datetime.now(timezone.utc)
+        datetime.now(
+            timezone.utc
+        )
     )
 
 
 class ChatIn(BaseModel):
+
     session_id: str
     message: str
 
 
 class ChatOut(BaseModel):
+
     session_id: str
     reply: str
 
 
 class LeadListItem(BaseModel):
+
     id: str
     name: str
     phone: str
@@ -196,15 +213,18 @@ class LeadListItem(BaseModel):
 
 
 class User(BaseModel):
+
     user_id: str
     email: str
     name: str
 
     picture: Optional[str] = None
+
     is_admin: bool = False
 
 
 class ChatLeadIn(BaseModel):
+
     session_id: str
     name: str
     phone: str
@@ -219,6 +239,7 @@ class ChatLeadIn(BaseModel):
 
 
 class BlogBodyBlock(BaseModel):
+
     type: Literal[
         "heading",
         "paragraph",
@@ -238,6 +259,7 @@ class BlogBodyBlock(BaseModel):
 
 
 class BlogCreate(BaseModel):
+
     title: str
 
     slug: Optional[str] = None
@@ -275,6 +297,7 @@ class BlogCreate(BaseModel):
 
 
 class BlogUpdate(BaseModel):
+
     title: Optional[str] = None
 
     slug: Optional[str] = None
@@ -312,16 +335,13 @@ class BlogUpdate(BaseModel):
 
 
 class Blog(BaseModel):
+
     id: str
 
     title: str
-
     slug: str
-
     category: str
-
     author: str
-
     read_time: int
 
     hero_image: Optional[str] = None
@@ -345,7 +365,6 @@ class Blog(BaseModel):
     status: str
 
     created_at: datetime
-
     updated_at: datetime
 
     published_at: Optional[
@@ -359,13 +378,26 @@ class Blog(BaseModel):
 
 
 class UniversityFAQ(BaseModel):
+
     question: str
     answer: str
 
 
 class UniversityCreate(BaseModel):
 
-    # Basic information
+    # ---------------------------------
+    # TRACK
+    # ---------------------------------
+
+    stream: Literal[
+        "MBBS",
+        "Management",
+    ]
+
+    # ---------------------------------
+    # BASIC DETAILS
+    # ---------------------------------
+
     name: str
 
     slug: Optional[str] = None
@@ -374,8 +406,13 @@ class UniversityCreate(BaseModel):
 
     city: Optional[str] = None
 
-    # Course
-    course: str = "MBBS"
+    # ---------------------------------
+    # COURSE
+    # ---------------------------------
+
+    course: str
+
+    course_level: Optional[str] = None
 
     duration: Optional[str] = None
 
@@ -383,7 +420,12 @@ class UniversityCreate(BaseModel):
 
     intake: Optional[str] = None
 
-    # Fees
+    application_deadline: Optional[str] = None
+
+    # ---------------------------------
+    # FEES
+    # ---------------------------------
+
     currency: str = "USD"
 
     tuition_fee_year: Optional[float] = None
@@ -396,17 +438,75 @@ class UniversityCreate(BaseModel):
 
     total_course_cost: Optional[float] = None
 
-    # Eligibility
-    neet_requirement: Optional[str] = None
+    application_fee: Optional[float] = None
+
+    scholarship_info: Optional[str] = None
+
+    # ---------------------------------
+    # GENERAL ELIGIBILITY
+    # ---------------------------------
 
     eligibility: Optional[str] = None
 
-    # Details
-    overview: Optional[str] = None
+    # ---------------------------------
+    # MBBS SPECIFIC
+    # ---------------------------------
+
+    neet_requirement: Optional[str] = None
+
+    pcb_requirement: Optional[str] = None
+
+    internship: Optional[str] = None
 
     recognition: Optional[str] = None
 
-    internship: Optional[str] = None
+    nmc_notes: Optional[str] = None
+
+    fmge_next_notes: Optional[str] = None
+
+    # ---------------------------------
+    # MANAGEMENT SPECIFIC
+    # ---------------------------------
+
+    academic_requirement: Optional[str] = None
+
+    english_requirement: Optional[str] = None
+
+    ielts_requirement: Optional[str] = None
+
+    toefl_requirement: Optional[str] = None
+
+    gmat_gre_requirement: Optional[str] = None
+
+    work_experience: Optional[str] = None
+
+    specializations: List[str] = Field(
+        default_factory=list
+    )
+
+    internship_opportunities: Optional[str] = None
+
+    placement_info: Optional[str] = None
+
+    post_study_opportunities: Optional[str] = None
+
+    # ---------------------------------
+    # UNIVERSITY INFORMATION
+    # ---------------------------------
+
+    overview: Optional[str] = None
+
+    accreditation: Optional[str] = None
+
+    ranking: Optional[str] = None
+
+    established_year: Optional[str] = None
+
+    campus: Optional[str] = None
+
+    # ---------------------------------
+    # STUDENT LIFE
+    # ---------------------------------
 
     hostel: Optional[str] = None
 
@@ -414,7 +514,14 @@ class UniversityCreate(BaseModel):
 
     student_life: Optional[str] = None
 
-    # Lists
+    climate: Optional[str] = None
+
+    airport_distance: Optional[str] = None
+
+    # ---------------------------------
+    # LISTS
+    # ---------------------------------
+
     pros: List[str] = Field(
         default_factory=list
     )
@@ -437,20 +544,35 @@ class UniversityCreate(BaseModel):
         default_factory=list
     )
 
-    # Links
+    # ---------------------------------
+    # LINKS
+    # ---------------------------------
+
     website: Optional[str] = None
 
     apply_link: Optional[str] = None
 
-    # Display
+    # ---------------------------------
+    # DISPLAY SETTINGS
+    # ---------------------------------
+
     featured: bool = False
+
+    popular: bool = False
+
+    budget_option: bool = False
+
+    recommended: bool = False
 
     status: Literal[
         "draft",
         "published",
     ] = "draft"
 
+    # ---------------------------------
     # SEO
+    # ---------------------------------
+
     seo_title: Optional[str] = None
 
     meta_description: Optional[str] = None
@@ -462,6 +584,13 @@ class UniversityCreate(BaseModel):
 
 class UniversityUpdate(BaseModel):
 
+    stream: Optional[
+        Literal[
+            "MBBS",
+            "Management",
+        ]
+    ] = None
+
     name: Optional[str] = None
 
     slug: Optional[str] = None
@@ -472,11 +601,15 @@ class UniversityUpdate(BaseModel):
 
     course: Optional[str] = None
 
+    course_level: Optional[str] = None
+
     duration: Optional[str] = None
 
     medium: Optional[str] = None
 
     intake: Optional[str] = None
+
+    application_deadline: Optional[str] = None
 
     currency: Optional[str] = None
 
@@ -490,21 +623,68 @@ class UniversityUpdate(BaseModel):
 
     total_course_cost: Optional[float] = None
 
-    neet_requirement: Optional[str] = None
+    application_fee: Optional[float] = None
+
+    scholarship_info: Optional[str] = None
 
     eligibility: Optional[str] = None
 
-    overview: Optional[str] = None
+    # MBBS
+    neet_requirement: Optional[str] = None
+
+    pcb_requirement: Optional[str] = None
+
+    internship: Optional[str] = None
 
     recognition: Optional[str] = None
 
-    internship: Optional[str] = None
+    nmc_notes: Optional[str] = None
+
+    fmge_next_notes: Optional[str] = None
+
+    # Management
+    academic_requirement: Optional[str] = None
+
+    english_requirement: Optional[str] = None
+
+    ielts_requirement: Optional[str] = None
+
+    toefl_requirement: Optional[str] = None
+
+    gmat_gre_requirement: Optional[str] = None
+
+    work_experience: Optional[str] = None
+
+    specializations: Optional[
+        List[str]
+    ] = None
+
+    internship_opportunities: Optional[str] = None
+
+    placement_info: Optional[str] = None
+
+    post_study_opportunities: Optional[str] = None
+
+    # General
+    overview: Optional[str] = None
+
+    accreditation: Optional[str] = None
+
+    ranking: Optional[str] = None
+
+    established_year: Optional[str] = None
+
+    campus: Optional[str] = None
 
     hostel: Optional[str] = None
 
     indian_food: Optional[str] = None
 
     student_life: Optional[str] = None
+
+    climate: Optional[str] = None
+
+    airport_distance: Optional[str] = None
 
     pros: Optional[
         List[str]
@@ -532,6 +712,12 @@ class UniversityUpdate(BaseModel):
 
     featured: Optional[bool] = None
 
+    popular: Optional[bool] = None
+
+    budget_option: Optional[bool] = None
+
+    recommended: Optional[bool] = None
+
     status: Optional[
         Literal[
             "draft",
@@ -552,6 +738,8 @@ class University(BaseModel):
 
     id: str
 
+    stream: str
+
     name: str
 
     slug: str
@@ -560,13 +748,17 @@ class University(BaseModel):
 
     city: Optional[str] = None
 
-    course: str = "MBBS"
+    course: str
+
+    course_level: Optional[str] = None
 
     duration: Optional[str] = None
 
     medium: Optional[str] = None
 
     intake: Optional[str] = None
+
+    application_deadline: Optional[str] = None
 
     currency: str = "USD"
 
@@ -580,21 +772,68 @@ class University(BaseModel):
 
     total_course_cost: Optional[float] = None
 
-    neet_requirement: Optional[str] = None
+    application_fee: Optional[float] = None
+
+    scholarship_info: Optional[str] = None
 
     eligibility: Optional[str] = None
 
-    overview: Optional[str] = None
+    # MBBS
+    neet_requirement: Optional[str] = None
+
+    pcb_requirement: Optional[str] = None
+
+    internship: Optional[str] = None
 
     recognition: Optional[str] = None
 
-    internship: Optional[str] = None
+    nmc_notes: Optional[str] = None
+
+    fmge_next_notes: Optional[str] = None
+
+    # MANAGEMENT
+    academic_requirement: Optional[str] = None
+
+    english_requirement: Optional[str] = None
+
+    ielts_requirement: Optional[str] = None
+
+    toefl_requirement: Optional[str] = None
+
+    gmat_gre_requirement: Optional[str] = None
+
+    work_experience: Optional[str] = None
+
+    specializations: List[str] = Field(
+        default_factory=list
+    )
+
+    internship_opportunities: Optional[str] = None
+
+    placement_info: Optional[str] = None
+
+    post_study_opportunities: Optional[str] = None
+
+    # DETAILS
+    overview: Optional[str] = None
+
+    accreditation: Optional[str] = None
+
+    ranking: Optional[str] = None
+
+    established_year: Optional[str] = None
+
+    campus: Optional[str] = None
 
     hostel: Optional[str] = None
 
     indian_food: Optional[str] = None
 
     student_life: Optional[str] = None
+
+    climate: Optional[str] = None
+
+    airport_distance: Optional[str] = None
 
     pros: List[str] = Field(
         default_factory=list
@@ -623,6 +862,12 @@ class University(BaseModel):
     apply_link: Optional[str] = None
 
     featured: bool = False
+
+    popular: bool = False
+
+    budget_option: bool = False
+
+    recommended: bool = False
 
     status: str
 
@@ -676,15 +921,11 @@ def make_slug(
         text
     )
 
-    text = text.strip(
-        "-"
-    )
-
-    return text
+    return text.strip("-")
 
 
 # =========================================================
-# AUTHENTICATION HELPERS
+# AUTH HELPERS
 # =========================================================
 
 
@@ -714,6 +955,7 @@ async def get_current_user(
                 1
             )[1].strip()
 
+
     if not token:
 
         raise HTTPException(
@@ -721,15 +963,19 @@ async def get_current_user(
             detail="Not authenticated",
         )
 
-    sess = await db.user_sessions.find_one(
-        {
-            "session_token":
-            token
-        },
-        {
-            "_id": 0
-        },
+
+    sess = (
+        await db.user_sessions.find_one(
+            {
+                "session_token":
+                token
+            },
+            {
+                "_id": 0
+            },
+        )
     )
+
 
     if not sess:
 
@@ -738,9 +984,11 @@ async def get_current_user(
             detail="Invalid session",
         )
 
+
     expires_at = sess.get(
         "expires_at"
     )
+
 
     if isinstance(
         expires_at,
@@ -753,6 +1001,7 @@ async def get_current_user(
             )
         )
 
+
     if (
         expires_at
         and expires_at.tzinfo is None
@@ -764,10 +1013,13 @@ async def get_current_user(
             )
         )
 
+
     if (
         expires_at
         and expires_at
-        < datetime.now(timezone.utc)
+        < datetime.now(
+            timezone.utc
+        )
     ):
 
         await db.user_sessions.delete_one(
@@ -782,6 +1034,7 @@ async def get_current_user(
             detail="Session expired",
         )
 
+
     user_doc = (
         await db.users.find_one(
             {
@@ -794,12 +1047,14 @@ async def get_current_user(
         )
     )
 
+
     if not user_doc:
 
         raise HTTPException(
             status_code=401,
             detail="User not found",
         )
+
 
     user_doc[
         "is_admin"
@@ -810,6 +1065,7 @@ async def get_current_user(
         ).lower()
         in ADMIN_EMAILS
     )
+
 
     return User(
         **user_doc
@@ -845,7 +1101,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "4.0",
+        "5.0",
 
         "google_auth":
         True,
@@ -855,6 +1111,11 @@ async def root():
 
         "university_system":
         True,
+
+        "university_streams": [
+            "MBBS",
+            "Management",
+        ],
     }
 
 
@@ -876,7 +1137,9 @@ async def create_lead(
         **payload.model_dump()
     )
 
-    doc = lead.model_dump()
+    doc = (
+        lead.model_dump()
+    )
 
     await db.leads.insert_one(
         doc
@@ -886,6 +1149,7 @@ async def create_lead(
         notify_new_lead,
         {
             **doc,
+
             "created_at":
             doc[
                 "created_at"
@@ -919,6 +1183,7 @@ async def newsletter_signup(
         )
     )
 
+
     if existing:
 
         return Newsletter(
@@ -927,13 +1192,16 @@ async def newsletter_signup(
             )
         )
 
+
     sub = Newsletter(
         **payload.model_dump()
     )
 
+
     await db.newsletter.insert_one(
         sub.model_dump()
     )
+
 
     lead = Lead(
         name="Newsletter subscriber",
@@ -946,18 +1214,22 @@ async def newsletter_signup(
         type="newsletter",
     )
 
+
     lead_doc = (
         lead.model_dump()
     )
+
 
     await db.leads.insert_one(
         lead_doc
     )
 
+
     background.add_task(
         notify_new_lead,
         {
             **lead_doc,
+
             "created_at":
             lead_doc[
                 "created_at"
@@ -965,11 +1237,12 @@ async def newsletter_signup(
         },
     )
 
+
     return sub
 
 
 # =========================================================
-# AI CHAT
+# CHAT
 # =========================================================
 
 
@@ -984,8 +1257,7 @@ async def chat(
     raise HTTPException(
         status_code=503,
         detail=(
-            "AI chat is temporarily "
-            "unavailable"
+            "AI chat is temporarily unavailable"
         ),
     )
 
@@ -1021,13 +1293,16 @@ async def chat_capture_lead(
         type="chat_lead",
     )
 
+
     doc = (
         lead.model_dump()
     )
 
+
     await db.leads.insert_one(
         doc
     )
+
 
     await db.chat_sessions.update_one(
 
@@ -1055,10 +1330,12 @@ async def chat_capture_lead(
         upsert=True,
     )
 
+
     background.add_task(
         notify_new_lead,
         {
             **doc,
+
             "created_at":
             doc[
                 "created_at"
@@ -1066,11 +1343,12 @@ async def chat_capture_lead(
         },
     )
 
+
     return lead
 
 
 # =========================================================
-# PUBLIC BLOG ROUTES
+# PUBLIC BLOGS
 # =========================================================
 
 
@@ -1100,11 +1378,13 @@ async def public_blogs():
         )
     )
 
+
     return [
         Blog(
             **doc
         )
-        for doc in docs
+        for doc
+        in docs
     ]
 
 
@@ -1131,12 +1411,14 @@ async def public_blog(
         )
     )
 
+
     if not doc:
 
         raise HTTPException(
             status_code=404,
             detail="Blog not found",
         )
+
 
     return Blog(
         **doc
@@ -1153,8 +1435,19 @@ async def public_blog(
     response_model=List[University]
 )
 async def public_universities(
+
+    stream: Optional[str] = None,
+
     country: Optional[str] = None,
+
     featured: Optional[bool] = None,
+
+    popular: Optional[bool] = None,
+
+    recommended: Optional[bool] = None,
+
+    budget_option: Optional[bool] = None,
+
     q: Optional[str] = None,
 ):
 
@@ -1162,6 +1455,19 @@ async def public_universities(
         "status":
         "published"
     }
+
+
+    if stream:
+
+        query[
+            "stream"
+        ] = {
+            "$regex":
+            f"^{re.escape(stream)}$",
+
+            "$options":
+            "i"
+        }
 
 
     if country:
@@ -1182,6 +1488,27 @@ async def public_universities(
         query[
             "featured"
         ] = featured
+
+
+    if popular is not None:
+
+        query[
+            "popular"
+        ] = popular
+
+
+    if recommended is not None:
+
+        query[
+            "recommended"
+        ] = recommended
+
+
+    if budget_option is not None:
+
+        query[
+            "budget_option"
+        ] = budget_option
 
 
     if q:
@@ -1223,24 +1550,45 @@ async def public_universities(
                     "i"
                 }
             },
+
+            {
+                "course": {
+                    "$regex":
+                    search,
+
+                    "$options":
+                    "i"
+                }
+            },
+
+            {
+                "stream": {
+                    "$regex":
+                    search,
+
+                    "$options":
+                    "i"
+                }
+            },
         ]
 
 
     docs = (
-
         await db.universities
-
         .find(
             query,
             {
                 "_id": 0
             }
         )
-
         .sort(
             [
                 (
                     "featured",
+                    -1
+                ),
+                (
+                    "recommended",
                     -1
                 ),
                 (
@@ -1249,7 +1597,6 @@ async def public_universities(
                 ),
             ]
         )
-
         .to_list(
             1000
         )
@@ -1257,12 +1604,11 @@ async def public_universities(
 
 
     return [
-
         University(
             **doc
         )
-
-        for doc in docs
+        for doc
+        in docs
     ]
 
 
@@ -1323,6 +1669,7 @@ async def google_login():
             ),
         )
 
+
     if not GOOGLE_CLIENT_SECRET:
 
         raise HTTPException(
@@ -1332,6 +1679,7 @@ async def google_login():
                 "is not configured"
             ),
         )
+
 
     params = {
 
@@ -1354,11 +1702,15 @@ async def google_login():
         "select_account",
     }
 
+
     google_url = (
         GOOGLE_AUTH_URL
         + "?"
-        + urlencode(params)
+        + urlencode(
+            params
+        )
     )
+
 
     return RedirectResponse(
         url=google_url,
@@ -1375,7 +1727,9 @@ async def google_login():
     "/auth/google/callback"
 )
 async def google_callback(
+
     code: Optional[str] = None,
+
     error: Optional[str] = None,
 ):
 
@@ -1390,6 +1744,7 @@ async def google_callback(
             status_code=302,
         )
 
+
     if not code:
 
         return RedirectResponse(
@@ -1400,6 +1755,7 @@ async def google_callback(
             ),
             status_code=302,
         )
+
 
     try:
 
@@ -1432,6 +1788,7 @@ async def google_callback(
                 )
             )
 
+
             if (
                 token_response.status_code
                 >= 300
@@ -1451,15 +1808,18 @@ async def google_callback(
                     status_code=302,
                 )
 
+
             token_data = (
                 token_response.json()
             )
+
 
             access_token = (
                 token_data.get(
                     "access_token"
                 )
             )
+
 
             if not access_token:
 
@@ -1472,6 +1832,7 @@ async def google_callback(
                     status_code=302,
                 )
 
+
             user_response = (
                 await http_client.get(
 
@@ -1483,6 +1844,7 @@ async def google_callback(
                     },
                 )
             )
+
 
             if (
                 user_response.status_code
@@ -1498,9 +1860,11 @@ async def google_callback(
                     status_code=302,
                 )
 
+
             data = (
                 user_response.json()
             )
+
 
     except Exception:
 
@@ -1590,6 +1954,7 @@ async def google_callback(
             ]
         )
 
+
         await db.users.update_one(
 
             {
@@ -1621,12 +1986,14 @@ async def google_callback(
             },
         )
 
+
     else:
 
         user_id = (
             "user_"
             + uuid.uuid4().hex[:12]
         )
+
 
         await db.users.insert_one({
 
@@ -1659,6 +2026,7 @@ async def google_callback(
     session_token = (
         uuid.uuid4().hex
     )
+
 
     expires = (
         datetime.now(
@@ -1761,6 +2129,7 @@ async def auth_logout(
         )
     )
 
+
     if token:
 
         await db.user_sessions.delete_one(
@@ -1770,6 +2139,7 @@ async def auth_logout(
             }
         )
 
+
     redirect = RedirectResponse(
         url=(
             FRONTEND_URL
@@ -1778,12 +2148,14 @@ async def auth_logout(
         status_code=302,
     )
 
+
     redirect.delete_cookie(
         key="session_token",
         path="/",
         secure=True,
         samesite="none",
     )
+
 
     return redirect
 
@@ -1803,9 +2175,7 @@ async def admin_list_leads(
 
     limit: int = 500,
 
-    type: Optional[
-        str
-    ] = None,
+    type: Optional[str] = None,
 
     user: User = Depends(
         require_admin
@@ -1813,6 +2183,7 @@ async def admin_list_leads(
 ):
 
     query = {}
+
 
     if type:
 
@@ -1822,18 +2193,14 @@ async def admin_list_leads(
 
 
     docs = (
-
         await db.leads
-
         .find(
             query
         )
-
         .sort(
             "created_at",
             -1
         )
-
         .to_list(
             limit
         )
@@ -1841,14 +2208,13 @@ async def admin_list_leads(
 
 
     return [
-
         LeadListItem(
             **_clean_mongo(
                 doc
             )
         )
-
-        for doc in docs
+        for doc
+        in docs
     ]
 
 
@@ -1880,13 +2246,9 @@ async def admin_stats(
     for lead_type in [
 
         "apply",
-
         "callback",
-
         "quick",
-
         "chat_lead",
-
         "newsletter",
 
     ]:
@@ -1894,7 +2256,6 @@ async def admin_stats(
         by_type[
             lead_type
         ] = (
-
             await db.leads.count_documents(
                 {
                     "type":
@@ -1904,8 +2265,7 @@ async def admin_stats(
         )
 
 
-    subs = (
-
+    subscribers = (
         await db.newsletter.count_documents(
             {}
         )
@@ -1913,11 +2273,9 @@ async def admin_stats(
 
 
     since = (
-
         datetime.now(
             timezone.utc
         )
-
         - timedelta(
             days=7
         )
@@ -1925,9 +2283,7 @@ async def admin_stats(
 
 
     last7 = (
-
         await db.leads.count_documents(
-
             {
                 "created_at":
                 {
@@ -1948,7 +2304,7 @@ async def admin_stats(
         by_type,
 
         "newsletter_subscribers":
-        subs,
+        subscribers,
 
         "last_7_days":
         last7,
@@ -1976,16 +2332,12 @@ async def admin_newsletter(
 ):
 
     docs = (
-
         await db.newsletter
-
         .find()
-
         .sort(
             "created_at",
             -1
         )
-
         .to_list(
             limit
         )
@@ -1993,14 +2345,13 @@ async def admin_newsletter(
 
 
     return [
-
         Newsletter(
             **_clean_mongo(
                 doc
             )
         )
-
-        for doc in docs
+        for doc
+        in docs
     ]
 
 
@@ -2014,6 +2365,7 @@ async def admin_newsletter(
     response_model=List[Blog]
 )
 async def admin_get_blogs(
+
     user: User = Depends(
         require_admin
     )
@@ -2036,11 +2388,13 @@ async def admin_get_blogs(
         )
     )
 
+
     return [
         Blog(
             **doc
         )
-        for doc in docs
+        for doc
+        in docs
     ]
 
 
@@ -2049,28 +2403,24 @@ async def admin_get_blogs(
     response_model=Blog
 )
 async def admin_create_blog(
+
     payload: BlogCreate,
+
     user: User = Depends(
         require_admin
     ),
 ):
 
-    now = (
-        datetime.now(
-            timezone.utc
-        )
+    now = datetime.now(
+        timezone.utc
     )
 
-    slug = (
-        payload.slug
-        or make_slug(
-            payload.title
-        )
-    )
 
     slug = make_slug(
-        slug
+        payload.slug
+        or payload.title
     )
+
 
     if not slug:
 
@@ -2089,6 +2439,7 @@ async def admin_create_blog(
         )
     )
 
+
     if existing:
 
         raise HTTPException(
@@ -2105,14 +2456,12 @@ async def admin_create_blog(
     )
 
 
-    published_at = None
-
-    if (
-        payload.status
-        == "published"
-    ):
-
-        published_at = now
+    published_at = (
+        now
+        if payload.status ==
+        "published"
+        else None
+    )
 
 
     doc = {
@@ -2197,8 +2546,11 @@ async def admin_create_blog(
     response_model=Blog
 )
 async def admin_update_blog(
+
     blog_id: str,
+
     payload: BlogUpdate,
+
     user: User = Depends(
         require_admin
     ),
@@ -2215,6 +2567,7 @@ async def admin_update_blog(
             },
         )
     )
+
 
     if not existing:
 
@@ -2244,7 +2597,6 @@ async def admin_update_blog(
                 )
                 else item
             )
-
             for item
             in updates[
                 "body"
@@ -2259,6 +2611,7 @@ async def admin_update_blog(
                 "slug"
             ]
         )
+
 
         duplicate = (
             await db.blogs.find_one(
@@ -2275,6 +2628,7 @@ async def admin_update_blog(
             )
         )
 
+
         if duplicate:
 
             raise HTTPException(
@@ -2284,6 +2638,7 @@ async def admin_update_blog(
                     "slug already exists"
                 ),
             )
+
 
         updates[
             "slug"
@@ -2296,6 +2651,7 @@ async def admin_update_blog(
         )
     )
 
+
     new_status = (
         updates.get(
             "status",
@@ -2305,25 +2661,18 @@ async def admin_update_blog(
 
 
     if (
-        new_status
-        == "published"
-        and old_status
-        != "published"
+        new_status == "published"
+        and old_status != "published"
     ):
 
         updates[
             "published_at"
-        ] = (
-            datetime.now(
-                timezone.utc
-            )
+        ] = datetime.now(
+            timezone.utc
         )
 
 
-    if (
-        new_status
-        == "draft"
-    ):
+    if new_status == "draft":
 
         updates[
             "published_at"
@@ -2332,10 +2681,8 @@ async def admin_update_blog(
 
     updates[
         "updated_at"
-    ] = (
-        datetime.now(
-            timezone.utc
-        )
+    ] = datetime.now(
+        timezone.utc
     )
 
 
@@ -2375,7 +2722,9 @@ async def admin_update_blog(
     "/admin/blogs/{blog_id}"
 )
 async def admin_delete_blog(
+
     blog_id: str,
+
     user: User = Depends(
         require_admin
     ),
@@ -2390,6 +2739,7 @@ async def admin_delete_blog(
         )
     )
 
+
     if (
         result.deleted_count
         == 0
@@ -2400,8 +2750,10 @@ async def admin_delete_blog(
             detail="Blog not found",
         )
 
+
     return {
-        "ok": True
+        "ok":
+        True
     }
 
 
@@ -2415,6 +2767,9 @@ async def admin_delete_blog(
     response_model=List[University]
 )
 async def admin_get_universities(
+
+    stream: Optional[str] = None,
+
     country: Optional[str] = None,
 
     user: User = Depends(
@@ -2423,6 +2778,19 @@ async def admin_get_universities(
 ):
 
     query = {}
+
+
+    if stream:
+
+        query[
+            "stream"
+        ] = {
+            "$regex":
+            f"^{re.escape(stream)}$",
+
+            "$options":
+            "i"
+        }
 
 
     if country:
@@ -2439,21 +2807,17 @@ async def admin_get_universities(
 
 
     docs = (
-
         await db.universities
-
         .find(
             query,
             {
                 "_id": 0
             }
         )
-
         .sort(
             "updated_at",
             -1
         )
-
         .to_list(
             1000
         )
@@ -2461,12 +2825,11 @@ async def admin_get_universities(
 
 
     return [
-
         University(
             **doc
         )
-
-        for doc in docs
+        for doc
+        in docs
     ]
 
 
@@ -2475,6 +2838,7 @@ async def admin_get_universities(
     response_model=University
 )
 async def admin_create_university(
+
     payload: UniversityCreate,
 
     user: User = Depends(
@@ -2527,18 +2891,17 @@ async def admin_create_university(
     )
 
 
-    published_at = None
+    published_at = (
+        now
+        if payload.status ==
+        "published"
+        else None
+    )
 
 
-    if (
-        payload.status
-        == "published"
-    ):
-
-        published_at = now
-
-
-    doc = payload.model_dump()
+    doc = (
+        payload.model_dump()
+    )
 
 
     doc.update({
@@ -2579,9 +2942,7 @@ async def admin_create_university(
     doc[
         "faqs"
     ] = [
-
         faq.model_dump()
-
         for faq
         in payload.faqs
     ]
@@ -2604,6 +2965,7 @@ async def admin_create_university(
     response_model=University
 )
 async def admin_update_university(
+
     university_id: str,
 
     payload: UniversityUpdate,
@@ -2634,8 +2996,10 @@ async def admin_update_university(
         )
 
 
-    updates = payload.model_dump(
-        exclude_none=True
+    updates = (
+        payload.model_dump(
+            exclude_none=True
+        )
     )
 
 
@@ -2693,18 +3057,14 @@ async def admin_update_university(
         updates[
             "faqs"
         ] = [
-
             (
                 faq.model_dump()
-
                 if hasattr(
                     faq,
                     "model_dump"
                 )
-
                 else faq
             )
-
             for faq
             in updates[
                 "faqs"
@@ -2724,10 +3084,8 @@ async def admin_update_university(
 
 
     if (
-        new_status
-        == "published"
-        and old_status
-        != "published"
+        new_status == "published"
+        and old_status != "published"
     ):
 
         updates[
@@ -2737,10 +3095,7 @@ async def admin_update_university(
         )
 
 
-    if (
-        new_status
-        == "draft"
-    ):
+    if new_status == "draft":
 
         updates[
             "published_at"
@@ -2790,6 +3145,7 @@ async def admin_update_university(
     "/admin/universities/{university_id}"
 )
 async def admin_delete_university(
+
     university_id: str,
 
     user: User = Depends(
@@ -2819,7 +3175,8 @@ async def admin_delete_university(
 
 
     return {
-        "ok": True
+        "ok":
+        True
     }
 
 
@@ -2834,18 +3191,18 @@ async def admin_delete_university(
 async def lead_stats_public():
 
     total = (
-
         await db.leads.count_documents(
             {}
         )
     )
 
-    subscribers = (
 
+    subscribers = (
         await db.newsletter.count_documents(
             {}
         )
     )
+
 
     return {
 
@@ -2861,7 +3218,6 @@ async def lead_stats_public():
 # ROUTER
 # =========================================================
 
-
 app.include_router(
     api_router
 )
@@ -2870,7 +3226,6 @@ app.include_router(
 # =========================================================
 # CORS
 # =========================================================
-
 
 app.add_middleware(
 
@@ -2896,7 +3251,6 @@ app.add_middleware(
 # LOGGING
 # =========================================================
 
-
 logging.basicConfig(
 
     level=logging.INFO,
@@ -2917,7 +3271,6 @@ logger = logging.getLogger(
 # =========================================================
 # SHUTDOWN
 # =========================================================
-
 
 @app.on_event(
     "shutdown"
