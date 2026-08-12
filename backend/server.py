@@ -23,7 +23,6 @@ from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Literal
 
-
 from notifier import notify_new_lead
 
 
@@ -112,7 +111,7 @@ api_router = APIRouter(
 
 
 # =========================================================
-# MODELS
+# LEAD MODELS
 # =========================================================
 
 
@@ -239,7 +238,6 @@ class BlogBodyBlock(BaseModel):
 
 
 class BlogCreate(BaseModel):
-
     title: str
 
     slug: Optional[str] = None
@@ -256,7 +254,9 @@ class BlogCreate(BaseModel):
 
     body: List[
         BlogBodyBlock
-    ] = []
+    ] = Field(
+        default_factory=list
+    )
 
     cta: Optional[str] = "mbbs"
 
@@ -264,7 +264,9 @@ class BlogCreate(BaseModel):
 
     meta_description: Optional[str] = None
 
-    keywords: List[str] = []
+    keywords: List[str] = Field(
+        default_factory=list
+    )
 
     status: Literal[
         "draft",
@@ -273,7 +275,6 @@ class BlogCreate(BaseModel):
 
 
 class BlogUpdate(BaseModel):
-
     title: Optional[str] = None
 
     slug: Optional[str] = None
@@ -311,7 +312,6 @@ class BlogUpdate(BaseModel):
 
 
 class Blog(BaseModel):
-
     id: str
 
     title: str
@@ -338,9 +338,301 @@ class Blog(BaseModel):
 
     meta_description: Optional[str] = None
 
-    keywords: List[str] = []
+    keywords: List[str] = Field(
+        default_factory=list
+    )
 
     status: str
+
+    created_at: datetime
+
+    updated_at: datetime
+
+    published_at: Optional[
+        datetime
+    ] = None
+
+
+# =========================================================
+# UNIVERSITY MODELS
+# =========================================================
+
+
+class UniversityFAQ(BaseModel):
+    question: str
+    answer: str
+
+
+class UniversityCreate(BaseModel):
+
+    # Basic information
+    name: str
+
+    slug: Optional[str] = None
+
+    country: str
+
+    city: Optional[str] = None
+
+    # Course
+    course: str = "MBBS"
+
+    duration: Optional[str] = None
+
+    medium: Optional[str] = "English"
+
+    intake: Optional[str] = None
+
+    # Fees
+    currency: str = "USD"
+
+    tuition_fee_year: Optional[float] = None
+
+    hostel_fee_year: Optional[float] = None
+
+    food_fee_year: Optional[float] = None
+
+    first_year_total: Optional[float] = None
+
+    total_course_cost: Optional[float] = None
+
+    # Eligibility
+    neet_requirement: Optional[str] = None
+
+    eligibility: Optional[str] = None
+
+    # Details
+    overview: Optional[str] = None
+
+    recognition: Optional[str] = None
+
+    internship: Optional[str] = None
+
+    hostel: Optional[str] = None
+
+    indian_food: Optional[str] = None
+
+    student_life: Optional[str] = None
+
+    # Lists
+    pros: List[str] = Field(
+        default_factory=list
+    )
+
+    cons: List[str] = Field(
+        default_factory=list
+    )
+
+    documents_required: List[str] = Field(
+        default_factory=list
+    )
+
+    admission_process: List[str] = Field(
+        default_factory=list
+    )
+
+    faqs: List[
+        UniversityFAQ
+    ] = Field(
+        default_factory=list
+    )
+
+    # Links
+    website: Optional[str] = None
+
+    apply_link: Optional[str] = None
+
+    # Display
+    featured: bool = False
+
+    status: Literal[
+        "draft",
+        "published",
+    ] = "draft"
+
+    # SEO
+    seo_title: Optional[str] = None
+
+    meta_description: Optional[str] = None
+
+    keywords: List[str] = Field(
+        default_factory=list
+    )
+
+
+class UniversityUpdate(BaseModel):
+
+    name: Optional[str] = None
+
+    slug: Optional[str] = None
+
+    country: Optional[str] = None
+
+    city: Optional[str] = None
+
+    course: Optional[str] = None
+
+    duration: Optional[str] = None
+
+    medium: Optional[str] = None
+
+    intake: Optional[str] = None
+
+    currency: Optional[str] = None
+
+    tuition_fee_year: Optional[float] = None
+
+    hostel_fee_year: Optional[float] = None
+
+    food_fee_year: Optional[float] = None
+
+    first_year_total: Optional[float] = None
+
+    total_course_cost: Optional[float] = None
+
+    neet_requirement: Optional[str] = None
+
+    eligibility: Optional[str] = None
+
+    overview: Optional[str] = None
+
+    recognition: Optional[str] = None
+
+    internship: Optional[str] = None
+
+    hostel: Optional[str] = None
+
+    indian_food: Optional[str] = None
+
+    student_life: Optional[str] = None
+
+    pros: Optional[
+        List[str]
+    ] = None
+
+    cons: Optional[
+        List[str]
+    ] = None
+
+    documents_required: Optional[
+        List[str]
+    ] = None
+
+    admission_process: Optional[
+        List[str]
+    ] = None
+
+    faqs: Optional[
+        List[UniversityFAQ]
+    ] = None
+
+    website: Optional[str] = None
+
+    apply_link: Optional[str] = None
+
+    featured: Optional[bool] = None
+
+    status: Optional[
+        Literal[
+            "draft",
+            "published",
+        ]
+    ] = None
+
+    seo_title: Optional[str] = None
+
+    meta_description: Optional[str] = None
+
+    keywords: Optional[
+        List[str]
+    ] = None
+
+
+class University(BaseModel):
+
+    id: str
+
+    name: str
+
+    slug: str
+
+    country: str
+
+    city: Optional[str] = None
+
+    course: str = "MBBS"
+
+    duration: Optional[str] = None
+
+    medium: Optional[str] = None
+
+    intake: Optional[str] = None
+
+    currency: str = "USD"
+
+    tuition_fee_year: Optional[float] = None
+
+    hostel_fee_year: Optional[float] = None
+
+    food_fee_year: Optional[float] = None
+
+    first_year_total: Optional[float] = None
+
+    total_course_cost: Optional[float] = None
+
+    neet_requirement: Optional[str] = None
+
+    eligibility: Optional[str] = None
+
+    overview: Optional[str] = None
+
+    recognition: Optional[str] = None
+
+    internship: Optional[str] = None
+
+    hostel: Optional[str] = None
+
+    indian_food: Optional[str] = None
+
+    student_life: Optional[str] = None
+
+    pros: List[str] = Field(
+        default_factory=list
+    )
+
+    cons: List[str] = Field(
+        default_factory=list
+    )
+
+    documents_required: List[str] = Field(
+        default_factory=list
+    )
+
+    admission_process: List[str] = Field(
+        default_factory=list
+    )
+
+    faqs: List[
+        UniversityFAQ
+    ] = Field(
+        default_factory=list
+    )
+
+    website: Optional[str] = None
+
+    apply_link: Optional[str] = None
+
+    featured: bool = False
+
+    status: str
+
+    seo_title: Optional[str] = None
+
+    meta_description: Optional[str] = None
+
+    keywords: List[str] = Field(
+        default_factory=list
+    )
 
     created_at: datetime
 
@@ -553,12 +845,15 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "3.0",
+        "4.0",
 
         "google_auth":
         True,
 
         "blog_system":
+        True,
+
+        "university_system":
         True,
     }
 
@@ -844,6 +1139,166 @@ async def public_blog(
         )
 
     return Blog(
+        **doc
+    )
+
+
+# =========================================================
+# PUBLIC UNIVERSITIES
+# =========================================================
+
+
+@api_router.get(
+    "/universities",
+    response_model=List[University]
+)
+async def public_universities(
+    country: Optional[str] = None,
+    featured: Optional[bool] = None,
+    q: Optional[str] = None,
+):
+
+    query = {
+        "status":
+        "published"
+    }
+
+
+    if country:
+
+        query[
+            "country"
+        ] = {
+            "$regex":
+            f"^{re.escape(country)}$",
+
+            "$options":
+            "i"
+        }
+
+
+    if featured is not None:
+
+        query[
+            "featured"
+        ] = featured
+
+
+    if q:
+
+        search = re.escape(
+            q.strip()
+        )
+
+        query[
+            "$or"
+        ] = [
+
+            {
+                "name": {
+                    "$regex":
+                    search,
+
+                    "$options":
+                    "i"
+                }
+            },
+
+            {
+                "country": {
+                    "$regex":
+                    search,
+
+                    "$options":
+                    "i"
+                }
+            },
+
+            {
+                "city": {
+                    "$regex":
+                    search,
+
+                    "$options":
+                    "i"
+                }
+            },
+        ]
+
+
+    docs = (
+
+        await db.universities
+
+        .find(
+            query,
+            {
+                "_id": 0
+            }
+        )
+
+        .sort(
+            [
+                (
+                    "featured",
+                    -1
+                ),
+                (
+                    "name",
+                    1
+                ),
+            ]
+        )
+
+        .to_list(
+            1000
+        )
+    )
+
+
+    return [
+
+        University(
+            **doc
+        )
+
+        for doc in docs
+    ]
+
+
+@api_router.get(
+    "/universities/{slug}",
+    response_model=University
+)
+async def public_university(
+    slug: str
+):
+
+    doc = (
+        await db.universities.find_one(
+            {
+                "slug":
+                slug,
+
+                "status":
+                "published",
+            },
+            {
+                "_id": 0
+            },
+        )
+    )
+
+
+    if not doc:
+
+        raise HTTPException(
+            status_code=404,
+            detail="University not found",
+        )
+
+
+    return University(
         **doc
     )
 
@@ -1835,24 +2290,6 @@ async def admin_update_blog(
         ] = new_slug
 
 
-    if (
-        "title" in updates
-        and "slug"
-        not in updates
-        and not existing.get(
-            "slug"
-        )
-    ):
-
-        updates[
-            "slug"
-        ] = make_slug(
-            updates[
-                "title"
-            ]
-        )
-
-
     old_status = (
         existing.get(
             "status"
@@ -1962,6 +2399,424 @@ async def admin_delete_blog(
             status_code=404,
             detail="Blog not found",
         )
+
+    return {
+        "ok": True
+    }
+
+
+# =========================================================
+# ADMIN UNIVERSITIES
+# =========================================================
+
+
+@api_router.get(
+    "/admin/universities",
+    response_model=List[University]
+)
+async def admin_get_universities(
+    country: Optional[str] = None,
+
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    query = {}
+
+
+    if country:
+
+        query[
+            "country"
+        ] = {
+            "$regex":
+            f"^{re.escape(country)}$",
+
+            "$options":
+            "i"
+        }
+
+
+    docs = (
+
+        await db.universities
+
+        .find(
+            query,
+            {
+                "_id": 0
+            }
+        )
+
+        .sort(
+            "updated_at",
+            -1
+        )
+
+        .to_list(
+            1000
+        )
+    )
+
+
+    return [
+
+        University(
+            **doc
+        )
+
+        for doc in docs
+    ]
+
+
+@api_router.post(
+    "/admin/universities",
+    response_model=University
+)
+async def admin_create_university(
+    payload: UniversityCreate,
+
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    now = datetime.now(
+        timezone.utc
+    )
+
+
+    slug = make_slug(
+        payload.slug
+        or payload.name
+    )
+
+
+    if not slug:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid university slug",
+        )
+
+
+    existing = (
+        await db.universities.find_one(
+            {
+                "slug":
+                slug
+            }
+        )
+    )
+
+
+    if existing:
+
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "A university with this "
+                "slug already exists"
+            ),
+        )
+
+
+    university_id = str(
+        uuid.uuid4()
+    )
+
+
+    published_at = None
+
+
+    if (
+        payload.status
+        == "published"
+    ):
+
+        published_at = now
+
+
+    doc = payload.model_dump()
+
+
+    doc.update({
+
+        "id":
+        university_id,
+
+        "slug":
+        slug,
+
+        "seo_title":
+        (
+            payload.seo_title
+            or payload.name
+        ),
+
+        "meta_description":
+        (
+            payload.meta_description
+            or payload.overview
+            or (
+                f"Explore {payload.name} "
+                f"in {payload.country}."
+            )
+        ),
+
+        "created_at":
+        now,
+
+        "updated_at":
+        now,
+
+        "published_at":
+        published_at,
+    })
+
+
+    doc[
+        "faqs"
+    ] = [
+
+        faq.model_dump()
+
+        for faq
+        in payload.faqs
+    ]
+
+
+    await db.universities.insert_one(
+        doc
+    )
+
+
+    return University(
+        **_clean_mongo(
+            doc
+        )
+    )
+
+
+@api_router.put(
+    "/admin/universities/{university_id}",
+    response_model=University
+)
+async def admin_update_university(
+    university_id: str,
+
+    payload: UniversityUpdate,
+
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    existing = (
+        await db.universities.find_one(
+            {
+                "id":
+                university_id
+            },
+            {
+                "_id": 0
+            },
+        )
+    )
+
+
+    if not existing:
+
+        raise HTTPException(
+            status_code=404,
+            detail="University not found",
+        )
+
+
+    updates = payload.model_dump(
+        exclude_none=True
+    )
+
+
+    if "slug" in updates:
+
+        new_slug = make_slug(
+            updates[
+                "slug"
+            ]
+        )
+
+
+        if not new_slug:
+
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid university slug",
+            )
+
+
+        duplicate = (
+            await db.universities.find_one(
+                {
+                    "slug":
+                    new_slug,
+
+                    "id":
+                    {
+                        "$ne":
+                        university_id
+                    },
+                }
+            )
+        )
+
+
+        if duplicate:
+
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "A university with this "
+                    "slug already exists"
+                ),
+            )
+
+
+        updates[
+            "slug"
+        ] = new_slug
+
+
+    if "faqs" in updates:
+
+        updates[
+            "faqs"
+        ] = [
+
+            (
+                faq.model_dump()
+
+                if hasattr(
+                    faq,
+                    "model_dump"
+                )
+
+                else faq
+            )
+
+            for faq
+            in updates[
+                "faqs"
+            ]
+        ]
+
+
+    old_status = existing.get(
+        "status"
+    )
+
+
+    new_status = updates.get(
+        "status",
+        old_status
+    )
+
+
+    if (
+        new_status
+        == "published"
+        and old_status
+        != "published"
+    ):
+
+        updates[
+            "published_at"
+        ] = datetime.now(
+            timezone.utc
+        )
+
+
+    if (
+        new_status
+        == "draft"
+    ):
+
+        updates[
+            "published_at"
+        ] = None
+
+
+    updates[
+        "updated_at"
+    ] = datetime.now(
+        timezone.utc
+    )
+
+
+    await db.universities.update_one(
+
+        {
+            "id":
+            university_id
+        },
+
+        {
+            "$set":
+            updates
+        },
+    )
+
+
+    updated = (
+        await db.universities.find_one(
+            {
+                "id":
+                university_id
+            },
+            {
+                "_id": 0
+            },
+        )
+    )
+
+
+    return University(
+        **updated
+    )
+
+
+@api_router.delete(
+    "/admin/universities/{university_id}"
+)
+async def admin_delete_university(
+    university_id: str,
+
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    result = (
+        await db.universities.delete_one(
+            {
+                "id":
+                university_id
+            }
+        )
+    )
+
+
+    if (
+        result.deleted_count
+        == 0
+    ):
+
+        raise HTTPException(
+            status_code=404,
+            detail="University not found",
+        )
+
 
     return {
         "ok": True
