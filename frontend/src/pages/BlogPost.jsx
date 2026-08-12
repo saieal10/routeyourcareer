@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { brand } from '../mock';
+
 import {
   Clock,
   ArrowUpRight,
@@ -18,6 +19,9 @@ import AiChatWidget from '../components/AiChatWidget';
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL ||
   'https://routeyourcareer.onrender.com';
+
+
+const DEFAULT_BLOG_IMAGE = '/blog-default.png';
 
 
 function ctaFor(cta) {
@@ -114,6 +118,8 @@ export default function BlogPost() {
 
         setPost(data);
 
+
+        // Load related articles
         try {
           const relatedResponse = await fetch(
             `${BACKEND_URL}/api/blogs`
@@ -123,17 +129,19 @@ export default function BlogPost() {
             const allBlogs =
               await relatedResponse.json();
 
-            const relatedPosts = Array.isArray(allBlogs)
-              ? allBlogs
-                  .filter(
-                    (item) =>
-                      item.slug !== data.slug
-                  )
-                  .slice(0, 3)
-              : [];
+            const relatedPosts =
+              Array.isArray(allBlogs)
+                ? allBlogs
+                    .filter(
+                      (item) =>
+                        item.slug !== data.slug
+                    )
+                    .slice(0, 3)
+                : [];
 
             setRelated(relatedPosts);
           }
+
         } catch (relatedError) {
           console.error(
             'Related blog error:',
@@ -154,10 +162,15 @@ export default function BlogPost() {
       }
     };
 
+
     loadPost();
 
   }, [slug]);
 
+
+  // ==========================================
+  // LOADING
+  // ==========================================
 
   if (loading) {
     return (
@@ -186,6 +199,10 @@ export default function BlogPost() {
     );
   }
 
+
+  // ==========================================
+  // NOT FOUND
+  // ==========================================
 
   if (error === 'not-found' || !post) {
     return (
@@ -221,6 +238,10 @@ export default function BlogPost() {
     );
   }
 
+
+  // ==========================================
+  // LOAD ERROR
+  // ==========================================
 
   if (error === 'load-error') {
     return (
@@ -260,7 +281,9 @@ export default function BlogPost() {
 
       <article>
 
+        {/* ========================================== */}
         {/* ARTICLE HEADER */}
+        {/* ========================================== */}
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-10">
 
@@ -327,125 +350,101 @@ export default function BlogPost() {
         </div>
 
 
-        {/* HERO IMAGE */}
+        {/* ========================================== */}
+        {/* DEFAULT BLOG IMAGE */}
+        {/* ========================================== */}
 
-        {post.hero_image && (
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-10">
 
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-10">
+          <img
+            src={DEFAULT_BLOG_IMAGE}
+            alt={post.title}
+            className="rounded-3xl object-cover w-full aspect-[16/8]"
+          />
 
-            <img
-              src={post.hero_image}
-              alt={post.title}
-              className="rounded-3xl object-cover w-full aspect-[16/8]"
-            />
-
-          </div>
-
-        )}
+        </div>
 
 
+        {/* ========================================== */}
         {/* ARTICLE BODY */}
+        {/* ========================================== */}
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-12 pb-4">
 
-          {(post.body || []).map((block, index) => {
+          {(post.body || []).map(
+            (block, index) => {
 
-            if (
-              block.type === 'heading'
-            ) {
-              return (
-                <h2
-                  key={index}
-                  className="serif text-3xl font-medium text-ink mt-10 mb-3 leading-tight"
-                >
-                  {block.text}
-                </h2>
-              );
+              // HEADING
+              if (block.type === 'heading') {
+                return (
+                  <h2
+                    key={index}
+                    className="serif text-3xl font-medium text-ink mt-10 mb-3 leading-tight"
+                  >
+                    {block.text}
+                  </h2>
+                );
+              }
+
+
+              // PARAGRAPH
+              if (block.type === 'paragraph') {
+                return (
+                  <p
+                    key={index}
+                    className="text-ink/80 text-[16px] leading-[1.7] mt-3"
+                  >
+                    {block.text}
+                  </p>
+                );
+              }
+
+
+              // BULLET LIST
+              if (block.type === 'list') {
+                return (
+                  <ul
+                    key={index}
+                    className="mt-4 space-y-2 pl-1"
+                  >
+
+                    {(block.items || []).map(
+                      (item, itemIndex) => (
+
+                        <li
+                          key={itemIndex}
+                          className="flex items-start gap-2 text-ink/80 text-[15px]"
+                        >
+
+                          <span className="mt-2 h-1.5 w-1.5 rounded-full bg-coral shrink-0" />
+
+                          {item}
+
+                        </li>
+
+                      )
+                    )}
+
+                  </ul>
+                );
+              }
+
+
+              /*
+                Old image blocks are intentionally ignored.
+
+                We are using one default image for
+                every blog article.
+              */
+
+              return null;
             }
+          )}
 
 
-            if (
-              block.type === 'paragraph'
-            ) {
-              return (
-                <p
-                  key={index}
-                  className="text-ink/80 text-[16px] leading-[1.7] mt-3"
-                >
-                  {block.text}
-                </p>
-              );
-            }
-
-
-            if (
-              block.type === 'list'
-            ) {
-              return (
-                <ul
-                  key={index}
-                  className="mt-4 space-y-2 pl-1"
-                >
-
-                  {(block.items || []).map(
-                    (item, itemIndex) => (
-
-                      <li
-                        key={itemIndex}
-                        className="flex items-start gap-2 text-ink/80 text-[15px]"
-                      >
-
-                        <span className="mt-2 h-1.5 w-1.5 rounded-full bg-coral shrink-0" />
-
-                        {item}
-
-                      </li>
-
-                    )
-                  )}
-
-                </ul>
-              );
-            }
-
-
-            if (
-              block.type === 'image' &&
-              block.image_url
-            ) {
-              return (
-                <figure
-                  key={index}
-                  className="mt-8"
-                >
-
-                  <img
-                    src={block.image_url}
-                    alt={
-                      block.image_alt ||
-                      post.title
-                    }
-                    className="rounded-2xl w-full object-cover"
-                  />
-
-                  {block.image_alt && (
-
-                    <figcaption className="mt-2 text-[11px] text-ink/50 text-center">
-                      {block.image_alt}
-                    </figcaption>
-
-                  )}
-
-                </figure>
-              );
-            }
-
-
-            return null;
-          })}
-
-
+          {/* ========================================== */}
           {/* CTA */}
+          {/* ========================================== */}
 
           <div className="mt-14 rounded-3xl bg-ink text-cream p-8">
 
@@ -507,7 +506,9 @@ export default function BlogPost() {
         </div>
 
 
+        {/* ========================================== */}
         {/* RELATED POSTS */}
+        {/* ========================================== */}
 
         {related.length > 0 && (
 
@@ -519,6 +520,7 @@ export default function BlogPost() {
 
             </div>
 
+
             <h3 className="serif text-3xl mt-2 text-ink">
 
               Keep reading.
@@ -528,70 +530,67 @@ export default function BlogPost() {
 
             <div className="mt-6 grid sm:grid-cols-3 gap-5">
 
-              {related.map((item) => (
+              {related.map(
+                (item) => (
 
-                <Link
-                  key={item.id || item.slug}
-                  to={`/blog/${item.slug}`}
-                  className="group rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift block"
-                >
+                  <Link
+                    key={
+                      item.id ||
+                      item.slug
+                    }
+                    to={`/blog/${item.slug}`}
+                    className="group rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift block"
+                  >
 
-                  <div className="aspect-[16/10] overflow-hidden bg-ink/5">
 
-                    {item.hero_image ? (
+                    {/* SAME DEFAULT IMAGE */}
+
+                    <div className="aspect-[16/10] overflow-hidden bg-ink/5">
 
                       <img
-                        src={item.hero_image}
+                        src={DEFAULT_BLOG_IMAGE}
                         alt={item.title}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
-
-                    ) : (
-
-                      <div className="w-full h-full flex items-center justify-center">
-
-                        <BookOpen className="h-8 w-8 text-ink/20" />
-
-                      </div>
-
-                    )}
-
-                  </div>
-
-
-                  <div className="p-5">
-
-                    <div className="flex items-center justify-between">
-
-                      <span className="inline-flex items-center rounded-full bg-cream border border-ink/10 text-ink text-[10px] font-bold uppercase tracking-widest px-2 py-0.5">
-
-                        {item.category}
-
-                      </span>
-
-
-                      <span className="text-[10px] mono uppercase tracking-widest text-ink/40 flex items-center gap-1">
-
-                        <Clock className="h-3 w-3" />
-
-                        {item.read_time || 5} min
-
-                      </span>
 
                     </div>
 
 
-                    <h4 className="mt-3 serif text-[19px] font-medium text-ink leading-snug">
+                    <div className="p-5">
 
-                      {item.title}
+                      <div className="flex items-center justify-between gap-3">
 
-                    </h4>
+                        <span className="inline-flex items-center rounded-full bg-cream border border-ink/10 text-ink text-[10px] font-bold uppercase tracking-widest px-2 py-0.5">
 
-                  </div>
+                          {item.category}
 
-                </Link>
+                        </span>
 
-              ))}
+
+                        <span className="text-[10px] mono uppercase tracking-widest text-ink/40 flex items-center gap-1 whitespace-nowrap">
+
+                          <Clock className="h-3 w-3" />
+
+                          {item.read_time || 5} min
+
+                        </span>
+
+                      </div>
+
+
+                      <h4 className="mt-3 serif text-[19px] font-medium text-ink leading-snug">
+
+                        {item.title}
+
+                      </h4>
+
+                    </div>
+
+                  </Link>
+
+                )
+              )}
 
             </div>
 
