@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from google import genai
+
 import os
 import logging
 import uuid
@@ -94,6 +96,27 @@ GOOGLE_TOKEN_URL = (
 GOOGLE_USERINFO_URL = (
     "https://openidconnect.googleapis.com/v1/userinfo"
 )
+
+
+# =========================================================
+# GEMINI
+# =========================================================
+
+GEMINI_API_KEY = os.environ.get(
+    "GEMINI_API_KEY"
+)
+
+GEMINI_MODEL = os.environ.get(
+    "GEMINI_MODEL",
+    "gemini-2.5-flash"
+)
+
+gemini_client = None
+
+if GEMINI_API_KEY:
+    gemini_client = genai.Client(
+        api_key=GEMINI_API_KEY
+    )
 
 
 # =========================================================
@@ -261,17 +284,11 @@ class BlogBodyBlock(BaseModel):
 class BlogCreate(BaseModel):
 
     title: str
-
     slug: Optional[str] = None
-
     category: str
-
     author: str = "RYC Editorial"
-
     read_time: int = 5
-
     hero_image: Optional[str] = None
-
     excerpt: str
 
     body: List[
@@ -281,9 +298,7 @@ class BlogCreate(BaseModel):
     )
 
     cta: Optional[str] = "mbbs"
-
     seo_title: Optional[str] = None
-
     meta_description: Optional[str] = None
 
     keywords: List[str] = Field(
@@ -299,17 +314,11 @@ class BlogCreate(BaseModel):
 class BlogUpdate(BaseModel):
 
     title: Optional[str] = None
-
     slug: Optional[str] = None
-
     category: Optional[str] = None
-
     author: Optional[str] = None
-
     read_time: Optional[int] = None
-
     hero_image: Optional[str] = None
-
     excerpt: Optional[str] = None
 
     body: Optional[
@@ -317,9 +326,7 @@ class BlogUpdate(BaseModel):
     ] = None
 
     cta: Optional[str] = None
-
     seo_title: Optional[str] = None
-
     meta_description: Optional[str] = None
 
     keywords: Optional[
@@ -337,39 +344,22 @@ class BlogUpdate(BaseModel):
 class Blog(BaseModel):
 
     id: str
-
     title: str
     slug: str
     category: str
     author: str
     read_time: int
-
     hero_image: Optional[str] = None
-
     excerpt: str
-
-    body: List[
-        BlogBodyBlock
-    ]
-
+    body: List[BlogBodyBlock]
     cta: Optional[str] = None
-
     seo_title: Optional[str] = None
-
     meta_description: Optional[str] = None
-
-    keywords: List[str] = Field(
-        default_factory=list
-    )
-
+    keywords: List[str] = Field(default_factory=list)
     status: str
-
     created_at: datetime
     updated_at: datetime
-
-    published_at: Optional[
-        datetime
-    ] = None
+    published_at: Optional[datetime] = None
 
 
 # =========================================================
@@ -385,99 +375,49 @@ class UniversityFAQ(BaseModel):
 
 class UniversityCreate(BaseModel):
 
-    # ---------------------------------
-    # TRACK
-    # ---------------------------------
-
     stream: Literal[
         "MBBS",
         "Management",
     ]
 
-    # ---------------------------------
-    # BASIC DETAILS
-    # ---------------------------------
-
     name: str
-
     slug: Optional[str] = None
-
     country: str
-
     city: Optional[str] = None
 
-    # ---------------------------------
-    # COURSE
-    # ---------------------------------
-
     course: str
-
     course_level: Optional[str] = None
-
     duration: Optional[str] = None
-
     medium: Optional[str] = "English"
-
     intake: Optional[str] = None
-
     application_deadline: Optional[str] = None
-
-    # ---------------------------------
-    # FEES
-    # ---------------------------------
 
     currency: str = "USD"
 
     tuition_fee_year: Optional[float] = None
-
     hostel_fee_year: Optional[float] = None
-
     food_fee_year: Optional[float] = None
-
     first_year_total: Optional[float] = None
-
     total_course_cost: Optional[float] = None
-
     application_fee: Optional[float] = None
-
     scholarship_info: Optional[str] = None
-
-    # ---------------------------------
-    # GENERAL ELIGIBILITY
-    # ---------------------------------
 
     eligibility: Optional[str] = None
 
-    # ---------------------------------
-    # MBBS SPECIFIC
-    # ---------------------------------
-
+    # MBBS
     neet_requirement: Optional[str] = None
-
     pcb_requirement: Optional[str] = None
-
     internship: Optional[str] = None
-
     recognition: Optional[str] = None
-
     nmc_notes: Optional[str] = None
-
     fmge_next_notes: Optional[str] = None
 
-    # ---------------------------------
-    # MANAGEMENT SPECIFIC
-    # ---------------------------------
-
+    # Management
     academic_requirement: Optional[str] = None
-
     english_requirement: Optional[str] = None
-
     ielts_requirement: Optional[str] = None
-
     toefl_requirement: Optional[str] = None
-
     gmat_gre_requirement: Optional[str] = None
-
     work_experience: Optional[str] = None
 
     specializations: List[str] = Field(
@@ -485,42 +425,20 @@ class UniversityCreate(BaseModel):
     )
 
     internship_opportunities: Optional[str] = None
-
     placement_info: Optional[str] = None
-
     post_study_opportunities: Optional[str] = None
 
-    # ---------------------------------
-    # UNIVERSITY INFORMATION
-    # ---------------------------------
-
     overview: Optional[str] = None
-
     accreditation: Optional[str] = None
-
     ranking: Optional[str] = None
-
     established_year: Optional[str] = None
-
     campus: Optional[str] = None
 
-    # ---------------------------------
-    # STUDENT LIFE
-    # ---------------------------------
-
     hostel: Optional[str] = None
-
     indian_food: Optional[str] = None
-
     student_life: Optional[str] = None
-
     climate: Optional[str] = None
-
     airport_distance: Optional[str] = None
-
-    # ---------------------------------
-    # LISTS
-    # ---------------------------------
 
     pros: List[str] = Field(
         default_factory=list
@@ -544,24 +462,12 @@ class UniversityCreate(BaseModel):
         default_factory=list
     )
 
-    # ---------------------------------
-    # LINKS
-    # ---------------------------------
-
     website: Optional[str] = None
-
     apply_link: Optional[str] = None
 
-    # ---------------------------------
-    # DISPLAY SETTINGS
-    # ---------------------------------
-
     featured: bool = False
-
     popular: bool = False
-
     budget_option: bool = False
-
     recommended: bool = False
 
     status: Literal[
@@ -569,12 +475,7 @@ class UniversityCreate(BaseModel):
         "published",
     ] = "draft"
 
-    # ---------------------------------
-    # SEO
-    # ---------------------------------
-
     seo_title: Optional[str] = None
-
     meta_description: Optional[str] = None
 
     keywords: List[str] = Field(
@@ -592,67 +493,41 @@ class UniversityUpdate(BaseModel):
     ] = None
 
     name: Optional[str] = None
-
     slug: Optional[str] = None
-
     country: Optional[str] = None
-
     city: Optional[str] = None
 
     course: Optional[str] = None
-
     course_level: Optional[str] = None
-
     duration: Optional[str] = None
-
     medium: Optional[str] = None
-
     intake: Optional[str] = None
-
     application_deadline: Optional[str] = None
 
     currency: Optional[str] = None
 
     tuition_fee_year: Optional[float] = None
-
     hostel_fee_year: Optional[float] = None
-
     food_fee_year: Optional[float] = None
-
     first_year_total: Optional[float] = None
-
     total_course_cost: Optional[float] = None
-
     application_fee: Optional[float] = None
-
     scholarship_info: Optional[str] = None
 
     eligibility: Optional[str] = None
 
-    # MBBS
     neet_requirement: Optional[str] = None
-
     pcb_requirement: Optional[str] = None
-
     internship: Optional[str] = None
-
     recognition: Optional[str] = None
-
     nmc_notes: Optional[str] = None
-
     fmge_next_notes: Optional[str] = None
 
-    # Management
     academic_requirement: Optional[str] = None
-
     english_requirement: Optional[str] = None
-
     ielts_requirement: Optional[str] = None
-
     toefl_requirement: Optional[str] = None
-
     gmat_gre_requirement: Optional[str] = None
-
     work_experience: Optional[str] = None
 
     specializations: Optional[
@@ -660,62 +535,33 @@ class UniversityUpdate(BaseModel):
     ] = None
 
     internship_opportunities: Optional[str] = None
-
     placement_info: Optional[str] = None
-
     post_study_opportunities: Optional[str] = None
 
-    # General
     overview: Optional[str] = None
-
     accreditation: Optional[str] = None
-
     ranking: Optional[str] = None
-
     established_year: Optional[str] = None
-
     campus: Optional[str] = None
 
     hostel: Optional[str] = None
-
     indian_food: Optional[str] = None
-
     student_life: Optional[str] = None
-
     climate: Optional[str] = None
-
     airport_distance: Optional[str] = None
 
-    pros: Optional[
-        List[str]
-    ] = None
-
-    cons: Optional[
-        List[str]
-    ] = None
-
-    documents_required: Optional[
-        List[str]
-    ] = None
-
-    admission_process: Optional[
-        List[str]
-    ] = None
-
-    faqs: Optional[
-        List[UniversityFAQ]
-    ] = None
+    pros: Optional[List[str]] = None
+    cons: Optional[List[str]] = None
+    documents_required: Optional[List[str]] = None
+    admission_process: Optional[List[str]] = None
+    faqs: Optional[List[UniversityFAQ]] = None
 
     website: Optional[str] = None
-
     apply_link: Optional[str] = None
 
     featured: Optional[bool] = None
-
     popular: Optional[bool] = None
-
     budget_option: Optional[bool] = None
-
     recommended: Optional[bool] = None
 
     status: Optional[
@@ -726,166 +572,93 @@ class UniversityUpdate(BaseModel):
     ] = None
 
     seo_title: Optional[str] = None
-
     meta_description: Optional[str] = None
-
-    keywords: Optional[
-        List[str]
-    ] = None
+    keywords: Optional[List[str]] = None
 
 
 class University(BaseModel):
 
     id: str
-
     stream: str
-
     name: str
-
     slug: str
-
     country: str
-
     city: Optional[str] = None
 
     course: str
-
     course_level: Optional[str] = None
-
     duration: Optional[str] = None
-
     medium: Optional[str] = None
-
     intake: Optional[str] = None
-
     application_deadline: Optional[str] = None
 
     currency: str = "USD"
 
     tuition_fee_year: Optional[float] = None
-
     hostel_fee_year: Optional[float] = None
-
     food_fee_year: Optional[float] = None
-
     first_year_total: Optional[float] = None
-
     total_course_cost: Optional[float] = None
-
     application_fee: Optional[float] = None
-
     scholarship_info: Optional[str] = None
 
     eligibility: Optional[str] = None
 
-    # MBBS
     neet_requirement: Optional[str] = None
-
     pcb_requirement: Optional[str] = None
-
     internship: Optional[str] = None
-
     recognition: Optional[str] = None
-
     nmc_notes: Optional[str] = None
-
     fmge_next_notes: Optional[str] = None
 
-    # MANAGEMENT
     academic_requirement: Optional[str] = None
-
     english_requirement: Optional[str] = None
-
     ielts_requirement: Optional[str] = None
-
     toefl_requirement: Optional[str] = None
-
     gmat_gre_requirement: Optional[str] = None
-
     work_experience: Optional[str] = None
 
-    specializations: List[str] = Field(
-        default_factory=list
-    )
+    specializations: List[str] = Field(default_factory=list)
 
     internship_opportunities: Optional[str] = None
-
     placement_info: Optional[str] = None
-
     post_study_opportunities: Optional[str] = None
 
-    # DETAILS
     overview: Optional[str] = None
-
     accreditation: Optional[str] = None
-
     ranking: Optional[str] = None
-
     established_year: Optional[str] = None
-
     campus: Optional[str] = None
 
     hostel: Optional[str] = None
-
     indian_food: Optional[str] = None
-
     student_life: Optional[str] = None
-
     climate: Optional[str] = None
-
     airport_distance: Optional[str] = None
 
-    pros: List[str] = Field(
-        default_factory=list
-    )
-
-    cons: List[str] = Field(
-        default_factory=list
-    )
-
-    documents_required: List[str] = Field(
-        default_factory=list
-    )
-
-    admission_process: List[str] = Field(
-        default_factory=list
-    )
-
-    faqs: List[
-        UniversityFAQ
-    ] = Field(
-        default_factory=list
-    )
+    pros: List[str] = Field(default_factory=list)
+    cons: List[str] = Field(default_factory=list)
+    documents_required: List[str] = Field(default_factory=list)
+    admission_process: List[str] = Field(default_factory=list)
+    faqs: List[UniversityFAQ] = Field(default_factory=list)
 
     website: Optional[str] = None
-
     apply_link: Optional[str] = None
 
     featured: bool = False
-
     popular: bool = False
-
     budget_option: bool = False
-
     recommended: bool = False
 
     status: str
 
     seo_title: Optional[str] = None
-
     meta_description: Optional[str] = None
-
-    keywords: List[str] = Field(
-        default_factory=list
-    )
+    keywords: List[str] = Field(default_factory=list)
 
     created_at: datetime
-
     updated_at: datetime
-
-    published_at: Optional[
-        datetime
-    ] = None
+    published_at: Optional[datetime] = None
 
 
 # =========================================================
@@ -898,22 +671,14 @@ def _clean_mongo(doc):
     if not doc:
         return doc
 
-    doc.pop(
-        "_id",
-        None
-    )
+    doc.pop("_id", None)
 
     return doc
 
 
-def make_slug(
-    text: str
-) -> str:
+def make_slug(text: str) -> str:
 
-    text = (
-        text.strip()
-        .lower()
-    )
+    text = text.strip().lower()
 
     text = re.sub(
         r"[^a-z0-9]+",
@@ -949,77 +714,56 @@ async def get_current_user(
         if auth.lower().startswith(
             "bearer "
         ):
-
             token = auth.split(
                 " ",
                 1
             )[1].strip()
 
-
     if not token:
-
         raise HTTPException(
             status_code=401,
             detail="Not authenticated",
         )
 
-
-    sess = (
-        await db.user_sessions.find_one(
-            {
-                "session_token":
-                token
-            },
-            {
-                "_id": 0
-            },
-        )
+    sess = await db.user_sessions.find_one(
+        {
+            "session_token": token
+        },
+        {
+            "_id": 0
+        },
     )
 
-
     if not sess:
-
         raise HTTPException(
             status_code=401,
             detail="Invalid session",
         )
 
-
     expires_at = sess.get(
         "expires_at"
     )
-
 
     if isinstance(
         expires_at,
         str
     ):
-
-        expires_at = (
-            datetime.fromisoformat(
-                expires_at
-            )
+        expires_at = datetime.fromisoformat(
+            expires_at
         )
-
 
     if (
         expires_at
         and expires_at.tzinfo is None
     ):
-
-        expires_at = (
-            expires_at.replace(
-                tzinfo=timezone.utc
-            )
+        expires_at = expires_at.replace(
+            tzinfo=timezone.utc
         )
-
 
     if (
         expires_at
         and expires_at
-        < datetime.now(
-            timezone.utc
-        )
+        < datetime.now(timezone.utc)
     ):
 
         await db.user_sessions.delete_one(
@@ -1034,38 +778,29 @@ async def get_current_user(
             detail="Session expired",
         )
 
-
-    user_doc = (
-        await db.users.find_one(
-            {
-                "user_id":
-                sess["user_id"]
-            },
-            {
-                "_id": 0
-            },
-        )
+    user_doc = await db.users.find_one(
+        {
+            "user_id":
+            sess["user_id"]
+        },
+        {
+            "_id": 0
+        },
     )
 
-
     if not user_doc:
-
         raise HTTPException(
             status_code=401,
             detail="User not found",
         )
 
-
-    user_doc[
-        "is_admin"
-    ] = (
+    user_doc["is_admin"] = (
         user_doc.get(
             "email",
             ""
         ).lower()
         in ADMIN_EMAILS
     )
-
 
     return User(
         **user_doc
@@ -1101,7 +836,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "5.0",
+        "6.0",
 
         "google_auth":
         True,
@@ -1112,10 +847,11 @@ async def root():
         "university_system":
         True,
 
-        "university_streams": [
-            "MBBS",
-            "Management",
-        ],
+        "ai_chat":
+        bool(GEMINI_API_KEY),
+
+        "ai_model":
+        GEMINI_MODEL,
     }
 
 
@@ -1137,9 +873,7 @@ async def create_lead(
         **payload.model_dump()
     )
 
-    doc = (
-        lead.model_dump()
-    )
+    doc = lead.model_dump()
 
     await db.leads.insert_one(
         doc
@@ -1149,11 +883,8 @@ async def create_lead(
         notify_new_lead,
         {
             **doc,
-
             "created_at":
-            doc[
-                "created_at"
-            ].isoformat(),
+            doc["created_at"].isoformat(),
         },
     )
 
@@ -1174,15 +905,12 @@ async def newsletter_signup(
     background: BackgroundTasks,
 ):
 
-    existing = (
-        await db.newsletter.find_one(
-            {
-                "email":
-                payload.email
-            }
-        )
+    existing = await db.newsletter.find_one(
+        {
+            "email":
+            payload.email
+        }
     )
-
 
     if existing:
 
@@ -1192,16 +920,13 @@ async def newsletter_signup(
             )
         )
 
-
     sub = Newsletter(
         **payload.model_dump()
     )
 
-
     await db.newsletter.insert_one(
         sub.model_dump()
     )
-
 
     lead = Lead(
         name="Newsletter subscriber",
@@ -1214,22 +939,16 @@ async def newsletter_signup(
         type="newsletter",
     )
 
-
-    lead_doc = (
-        lead.model_dump()
-    )
-
+    lead_doc = lead.model_dump()
 
     await db.leads.insert_one(
         lead_doc
     )
 
-
     background.add_task(
         notify_new_lead,
         {
             **lead_doc,
-
             "created_at":
             lead_doc[
                 "created_at"
@@ -1237,13 +956,195 @@ async def newsletter_signup(
         },
     )
 
-
     return sub
 
 
 # =========================================================
-# CHAT
+# AI CHAT
 # =========================================================
+
+
+RYC_SYSTEM_PROMPT = """
+You are the Route Your Career AI Guidance Assistant.
+
+Route Your Career is an education guidance platform for Indian students.
+
+You help with:
+
+- MBBS abroad
+- Management and business education abroad
+- MBBS in Georgia
+- MBBS in Uzbekistan
+- MBBS in other international destinations
+- MBA, BBA and MSc Management abroad
+- University selection
+- Eligibility
+- NEET guidance
+- Fees and living costs
+- Scholarships
+- Admissions
+- Student life
+- Career guidance
+
+STYLE:
+
+Speak naturally like an experienced education counsellor.
+
+Do not sound like a scripted chatbot.
+
+Answer the student's actual question first.
+
+Keep most answers clear and relatively concise.
+
+Ask a follow-up question only when it genuinely helps.
+
+Do not tell every student to contact WhatsApp.
+
+Do not repeatedly advertise Route Your Career.
+
+IMPORTANT ACCURACY RULES:
+
+Never invent exact current tuition fees, admission deadlines,
+visa rules, university rankings, scholarships, medical recognition
+or licensing requirements.
+
+If the information is likely to change, say that the exact current
+information should be verified.
+
+For MBBS questions, distinguish:
+1. university admission eligibility
+2. Indian NEET/NMC requirements
+3. licensing after graduation
+
+Do not guarantee FMGE/NExT success, admission, visa approval,
+scholarships, jobs or medical registration.
+
+For Management questions, distinguish courses such as MBA,
+BBA, MSc Management, Finance, Marketing, Business Analytics
+and International Business.
+
+If a student gives their budget, academic score, NEET score,
+preferred country or career goal, use those details naturally
+in the answer.
+
+You may suggest speaking with a Route Your Career counsellor
+when the student needs a personalised shortlist, document review,
+admission processing or application support.
+
+Never request or reveal passwords, API keys, OTPs or banking
+information.
+"""
+
+
+async def get_chat_history(
+    session_id: str
+):
+
+    doc = await db.chat_sessions.find_one(
+        {
+            "session_id":
+            session_id
+        },
+        {
+            "_id": 0
+        },
+    )
+
+    if not doc:
+        return []
+
+    return doc.get(
+        "messages",
+        []
+    )[-12:]
+
+
+async def get_university_context(
+    message: str
+):
+
+    words = (
+        message
+        .lower()
+        .strip()
+    )
+
+    query = {
+        "status":
+        "published"
+    }
+
+    if "georgia" in words:
+        query["country"] = {
+            "$regex":
+            "^Georgia$",
+            "$options":
+            "i"
+        }
+
+    elif "uzbekistan" in words:
+        query["country"] = {
+            "$regex":
+            "^Uzbekistan$",
+            "$options":
+            "i"
+        }
+
+    if (
+        "mbbs" in words
+        or "neet" in words
+        or "medical" in words
+    ):
+        query["stream"] = "MBBS"
+
+    elif (
+        "mba" in words
+        or "management" in words
+        or "business" in words
+        or "bba" in words
+    ):
+        query["stream"] = "Management"
+
+    docs = (
+        await db.universities
+        .find(
+            query,
+            {
+                "_id": 0
+            }
+        )
+        .limit(8)
+        .to_list(8)
+    )
+
+    if not docs:
+        return ""
+
+    pieces = []
+
+    for u in docs:
+
+        pieces.append(
+            f"""
+University: {u.get('name')}
+Country: {u.get('country')}
+City: {u.get('city')}
+Stream: {u.get('stream')}
+Course: {u.get('course')}
+Duration: {u.get('duration')}
+Currency: {u.get('currency')}
+Tuition/year: {u.get('tuition_fee_year')}
+Hostel/year: {u.get('hostel_fee_year')}
+Eligibility: {u.get('eligibility')}
+NEET requirement: {u.get('neet_requirement')}
+Scholarship: {u.get('scholarship_info')}
+Overview: {u.get('overview')}
+"""
+        )
+
+    return "\n".join(
+        pieces
+    )
 
 
 @api_router.post(
@@ -1254,16 +1155,190 @@ async def chat(
     payload: ChatIn
 ):
 
-    raise HTTPException(
-        status_code=503,
-        detail=(
-            "AI chat is temporarily unavailable"
-        ),
-    )
+    if not gemini_client:
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Gemini API is not configured"
+            ),
+        )
+
+    user_message = (
+        payload.message
+        or ""
+    ).strip()
+
+    if not user_message:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Message is required",
+        )
+
+    try:
+
+        history = await get_chat_history(
+            payload.session_id
+        )
+
+        university_context = (
+            await get_university_context(
+                user_message
+            )
+        )
+
+        prompt = RYC_SYSTEM_PROMPT
+
+        if university_context:
+
+            prompt += """
+
+The following university information comes from the
+Route Your Career database.
+
+Use it when relevant.
+
+Do not change or invent exact numbers.
+
+ROUTE YOUR CAREER UNIVERSITY DATA:
+"""
+
+            prompt += university_context
+
+        prompt += "\n\nConversation:\n"
+
+        for item in history:
+
+            role = item.get(
+                "role"
+            )
+
+            content = item.get(
+                "content"
+            )
+
+            if not content:
+                continue
+
+            if role == "user":
+                prompt += (
+                    "\nStudent: "
+                    + str(content)
+                )
+
+            elif role == "assistant":
+                prompt += (
+                    "\nAssistant: "
+                    + str(content)
+                )
+
+        prompt += (
+            "\nStudent: "
+            + user_message
+            + "\nAssistant:"
+        )
+
+        response = await gemini_client.aio.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+        )
+
+        reply = (
+            response.text
+            or ""
+        ).strip()
+
+        if not reply:
+
+            reply = (
+                "I couldn't generate a useful answer "
+                "just now. Please try asking again."
+            )
+
+        now = datetime.now(
+            timezone.utc
+        )
+
+        await db.chat_sessions.update_one(
+            {
+                "session_id":
+                payload.session_id
+            },
+
+            {
+                "$set": {
+                    "session_id":
+                    payload.session_id,
+
+                    "updated_at":
+                    now,
+                },
+
+                "$setOnInsert": {
+                    "created_at":
+                    now,
+                },
+
+                "$push": {
+                    "messages": {
+                        "$each": [
+                            {
+                                "role":
+                                "user",
+
+                                "content":
+                                user_message,
+
+                                "created_at":
+                                now,
+                            },
+                            {
+                                "role":
+                                "assistant",
+
+                                "content":
+                                reply,
+
+                                "created_at":
+                                now,
+                            },
+                        ],
+
+                        "$slice":
+                        -30,
+                    }
+                },
+            },
+
+            upsert=True,
+        )
+
+        return ChatOut(
+            session_id=
+            payload.session_id,
+
+            reply=
+            reply,
+        )
+
+    except Exception as exc:
+
+        logging.exception(
+            "Gemini AI chat error: %s",
+            exc
+        )
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "AI assistant temporarily unavailable"
+            ),
+        )
 
 
 # =========================================================
-# CHAT LEAD
+# CHAT LEAD CAPTURE
 # =========================================================
 
 
@@ -1278,11 +1353,8 @@ async def chat_capture_lead(
 
     lead = Lead(
         name=payload.name,
-
         phone=payload.phone,
-
         country=payload.country,
-
         neet_score=payload.neet_score,
 
         source=(
@@ -1293,19 +1365,13 @@ async def chat_capture_lead(
         type="chat_lead",
     )
 
-
-    doc = (
-        lead.model_dump()
-    )
-
+    doc = lead.model_dump()
 
     await db.leads.insert_one(
         doc
     )
 
-
     await db.chat_sessions.update_one(
-
         {
             "session_id":
             payload.session_id
@@ -1313,10 +1379,6 @@ async def chat_capture_lead(
 
         {
             "$set": {
-
-                "session_id":
-                payload.session_id,
-
                 "lead_id":
                 lead.id,
 
@@ -1330,7 +1392,6 @@ async def chat_capture_lead(
         upsert=True,
     )
 
-
     background.add_task(
         notify_new_lead,
         {
@@ -1342,7 +1403,6 @@ async def chat_capture_lead(
             ].isoformat(),
         },
     )
-
 
     return lead
 
@@ -1378,13 +1438,9 @@ async def public_blogs():
         )
     )
 
-
     return [
-        Blog(
-            **doc
-        )
-        for doc
-        in docs
+        Blog(**doc)
+        for doc in docs
     ]
 
 
@@ -1396,21 +1452,18 @@ async def public_blog(
     slug: str
 ):
 
-    doc = (
-        await db.blogs.find_one(
-            {
-                "slug":
-                slug,
+    doc = await db.blogs.find_one(
+        {
+            "slug":
+            slug,
 
-                "status":
-                "published",
-            },
-            {
-                "_id": 0
-            },
-        )
+            "status":
+            "published",
+        },
+        {
+            "_id": 0
+        },
     )
-
 
     if not doc:
 
@@ -1418,7 +1471,6 @@ async def public_blog(
             status_code=404,
             detail="Blog not found",
         )
-
 
     return Blog(
         **doc
@@ -1435,19 +1487,12 @@ async def public_blog(
     response_model=List[University]
 )
 async def public_universities(
-
     stream: Optional[str] = None,
-
     country: Optional[str] = None,
-
     featured: Optional[bool] = None,
-
     popular: Optional[bool] = None,
-
     recommended: Optional[bool] = None,
-
     budget_option: Optional[bool] = None,
-
     q: Optional[str] = None,
 ):
 
@@ -1456,60 +1501,35 @@ async def public_universities(
         "published"
     }
 
-
     if stream:
 
-        query[
-            "stream"
-        ] = {
+        query["stream"] = {
             "$regex":
             f"^{re.escape(stream)}$",
-
             "$options":
             "i"
         }
-
 
     if country:
 
-        query[
-            "country"
-        ] = {
+        query["country"] = {
             "$regex":
             f"^{re.escape(country)}$",
-
             "$options":
             "i"
         }
 
-
     if featured is not None:
-
-        query[
-            "featured"
-        ] = featured
-
+        query["featured"] = featured
 
     if popular is not None:
-
-        query[
-            "popular"
-        ] = popular
-
+        query["popular"] = popular
 
     if recommended is not None:
-
-        query[
-            "recommended"
-        ] = recommended
-
+        query["recommended"] = recommended
 
     if budget_option is not None:
-
-        query[
-            "budget_option"
-        ] = budget_option
-
+        query["budget_option"] = budget_option
 
     if q:
 
@@ -1517,61 +1537,32 @@ async def public_universities(
             q.strip()
         )
 
-        query[
-            "$or"
-        ] = [
-
+        query["$or"] = [
             {
                 "name": {
-                    "$regex":
-                    search,
-
-                    "$options":
-                    "i"
+                    "$regex": search,
+                    "$options": "i"
                 }
             },
-
             {
                 "country": {
-                    "$regex":
-                    search,
-
-                    "$options":
-                    "i"
+                    "$regex": search,
+                    "$options": "i"
                 }
             },
-
             {
                 "city": {
-                    "$regex":
-                    search,
-
-                    "$options":
-                    "i"
+                    "$regex": search,
+                    "$options": "i"
                 }
             },
-
             {
                 "course": {
-                    "$regex":
-                    search,
-
-                    "$options":
-                    "i"
-                }
-            },
-
-            {
-                "stream": {
-                    "$regex":
-                    search,
-
-                    "$options":
-                    "i"
+                    "$regex": search,
+                    "$options": "i"
                 }
             },
         ]
-
 
     docs = (
         await db.universities
@@ -1583,32 +1574,17 @@ async def public_universities(
         )
         .sort(
             [
-                (
-                    "featured",
-                    -1
-                ),
-                (
-                    "recommended",
-                    -1
-                ),
-                (
-                    "name",
-                    1
-                ),
+                ("featured", -1),
+                ("recommended", -1),
+                ("name", 1),
             ]
         )
-        .to_list(
-            1000
-        )
+        .to_list(1000)
     )
 
-
     return [
-        University(
-            **doc
-        )
-        for doc
-        in docs
+        University(**doc)
+        for doc in docs
     ]
 
 
@@ -1620,21 +1596,18 @@ async def public_university(
     slug: str
 ):
 
-    doc = (
-        await db.universities.find_one(
-            {
-                "slug":
-                slug,
+    doc = await db.universities.find_one(
+        {
+            "slug":
+            slug,
 
-                "status":
-                "published",
-            },
-            {
-                "_id": 0
-            },
-        )
+            "status":
+            "published",
+        },
+        {
+            "_id": 0
+        },
     )
-
 
     if not doc:
 
@@ -1642,7 +1615,6 @@ async def public_university(
             status_code=404,
             detail="University not found",
         )
-
 
     return University(
         **doc
@@ -1660,29 +1632,18 @@ async def public_university(
 async def google_login():
 
     if not GOOGLE_CLIENT_ID:
-
         raise HTTPException(
             status_code=500,
-            detail=(
-                "GOOGLE_CLIENT_ID "
-                "is not configured"
-            ),
+            detail="GOOGLE_CLIENT_ID is not configured",
         )
-
 
     if not GOOGLE_CLIENT_SECRET:
-
         raise HTTPException(
             status_code=500,
-            detail=(
-                "GOOGLE_CLIENT_SECRET "
-                "is not configured"
-            ),
+            detail="GOOGLE_CLIENT_SECRET is not configured",
         )
 
-
     params = {
-
         "client_id":
         GOOGLE_CLIENT_ID,
 
@@ -1702,15 +1663,11 @@ async def google_login():
         "select_account",
     }
 
-
     google_url = (
         GOOGLE_AUTH_URL
         + "?"
-        + urlencode(
-            params
-        )
+        + urlencode(params)
     )
-
 
     return RedirectResponse(
         url=google_url,
@@ -1727,9 +1684,7 @@ async def google_login():
     "/auth/google/callback"
 )
 async def google_callback(
-
     code: Optional[str] = None,
-
     error: Optional[str] = None,
 ):
 
@@ -1744,7 +1699,6 @@ async def google_callback(
             status_code=302,
         )
 
-
     if not code:
 
         return RedirectResponse(
@@ -1756,7 +1710,6 @@ async def google_callback(
             status_code=302,
         )
 
-
     try:
 
         async with httpx.AsyncClient(
@@ -1765,11 +1718,9 @@ async def google_callback(
 
             token_response = (
                 await http_client.post(
-
                     GOOGLE_TOKEN_URL,
 
                     data={
-
                         "code":
                         code,
 
@@ -1787,7 +1738,6 @@ async def google_callback(
                     },
                 )
             )
-
 
             if (
                 token_response.status_code
@@ -1808,18 +1758,15 @@ async def google_callback(
                     status_code=302,
                 )
 
-
             token_data = (
                 token_response.json()
             )
-
 
             access_token = (
                 token_data.get(
                     "access_token"
                 )
             )
-
 
             if not access_token:
 
@@ -1832,10 +1779,8 @@ async def google_callback(
                     status_code=302,
                 )
 
-
             user_response = (
                 await http_client.get(
-
                     GOOGLE_USERINFO_URL,
 
                     headers={
@@ -1844,7 +1789,6 @@ async def google_callback(
                     },
                 )
             )
-
 
             if (
                 user_response.status_code
@@ -1860,11 +1804,9 @@ async def google_callback(
                     status_code=302,
                 )
 
-
             data = (
                 user_response.json()
             )
-
 
     except Exception:
 
@@ -1881,7 +1823,6 @@ async def google_callback(
             status_code=302,
         )
 
-
     email = (
         data.get(
             "email"
@@ -1889,13 +1830,9 @@ async def google_callback(
         or ""
     ).strip().lower()
 
-
-    email_verified = (
-        data.get(
-            "email_verified"
-        )
+    email_verified = data.get(
+        "email_verified"
     )
-
 
     if not email:
 
@@ -1908,7 +1845,6 @@ async def google_callback(
             status_code=302,
         )
 
-
     if email_verified is False:
 
         return RedirectResponse(
@@ -1919,7 +1855,6 @@ async def google_callback(
             ),
             status_code=302,
         )
-
 
     if email not in ADMIN_EMAILS:
 
@@ -1932,31 +1867,23 @@ async def google_callback(
             status_code=302,
         )
 
-
-    user_doc = (
-        await db.users.find_one(
-            {
-                "email":
-                email
-            },
-            {
-                "_id": 0
-            },
-        )
+    user_doc = await db.users.find_one(
+        {
+            "email":
+            email
+        },
+        {
+            "_id": 0
+        },
     )
-
 
     if user_doc:
 
         user_id = (
-            user_doc[
-                "user_id"
-            ]
+            user_doc["user_id"]
         )
 
-
         await db.users.update_one(
-
             {
                 "user_id":
                 user_id
@@ -1964,7 +1891,6 @@ async def google_callback(
 
             {
                 "$set": {
-
                     "name":
                     (
                         data.get(
@@ -1986,7 +1912,6 @@ async def google_callback(
             },
         )
 
-
     else:
 
         user_id = (
@@ -1994,39 +1919,37 @@ async def google_callback(
             + uuid.uuid4().hex[:12]
         )
 
+        await db.users.insert_one(
+            {
+                "user_id":
+                user_id,
 
-        await db.users.insert_one({
+                "email":
+                email,
 
-            "user_id":
-            user_id,
+                "name":
+                (
+                    data.get(
+                        "name"
+                    )
+                    or email
+                ),
 
-            "email":
-            email,
-
-            "name":
-            (
+                "picture":
                 data.get(
-                    "name"
-                )
-                or email
-            ),
+                    "picture"
+                ),
 
-            "picture":
-            data.get(
-                "picture"
-            ),
-
-            "created_at":
-            datetime.now(
-                timezone.utc
-            ),
-        })
-
+                "created_at":
+                datetime.now(
+                    timezone.utc
+                ),
+            }
+        )
 
     session_token = (
         uuid.uuid4().hex
     )
-
 
     expires = (
         datetime.now(
@@ -2037,50 +1960,39 @@ async def google_callback(
         )
     )
 
+    await db.user_sessions.insert_one(
+        {
+            "user_id":
+            user_id,
 
-    await db.user_sessions.insert_one({
+            "session_token":
+            session_token,
 
-        "user_id":
-        user_id,
+            "expires_at":
+            expires,
 
-        "session_token":
-        session_token,
-
-        "expires_at":
-        expires,
-
-        "created_at":
-        datetime.now(
-            timezone.utc
-        ),
-    })
-
+            "created_at":
+            datetime.now(
+                timezone.utc
+            ),
+        }
+    )
 
     redirect = RedirectResponse(
-
         url=(
             FRONTEND_URL
             + "/admin"
         ),
-
         status_code=302,
     )
 
-
     redirect.set_cookie(
-
         key="session_token",
-
         value=session_token,
-
         httponly=True,
-
         secure=True,
-
         samesite="none",
-
         path="/",
-
         max_age=(
             7
             * 24
@@ -2088,7 +2000,6 @@ async def google_callback(
             * 60
         ),
     )
-
 
     return redirect
 
@@ -2123,12 +2034,9 @@ async def auth_logout(
     request: Request,
 ):
 
-    token = (
-        request.cookies.get(
-            "session_token"
-        )
+    token = request.cookies.get(
+        "session_token"
     )
-
 
     if token:
 
@@ -2139,7 +2047,6 @@ async def auth_logout(
             }
         )
 
-
     redirect = RedirectResponse(
         url=(
             FRONTEND_URL
@@ -2148,14 +2055,12 @@ async def auth_logout(
         status_code=302,
     )
 
-
     redirect.delete_cookie(
         key="session_token",
         path="/",
         secure=True,
         samesite="none",
     )
-
 
     return redirect
 
@@ -2172,11 +2077,8 @@ async def auth_logout(
     ]
 )
 async def admin_list_leads(
-
     limit: int = 500,
-
     type: Optional[str] = None,
-
     user: User = Depends(
         require_admin
     ),
@@ -2184,37 +2086,24 @@ async def admin_list_leads(
 
     query = {}
 
-
     if type:
-
-        query[
-            "type"
-        ] = type
-
+        query["type"] = type
 
     docs = (
         await db.leads
-        .find(
-            query
-        )
+        .find(query)
         .sort(
             "created_at",
             -1
         )
-        .to_list(
-            limit
-        )
+        .to_list(limit)
     )
-
 
     return [
         LeadListItem(
-            **_clean_mongo(
-                doc
-            )
+            **_clean_mongo(doc)
         )
-        for doc
-        in docs
+        for doc in docs
     ]
 
 
@@ -2227,50 +2116,39 @@ async def admin_list_leads(
     "/admin/stats"
 )
 async def admin_stats(
-
     user: User = Depends(
         require_admin
     )
 ):
 
-    total = (
-        await db.leads.count_documents(
-            {}
-        )
+    total = await db.leads.count_documents(
+        {}
     )
-
 
     by_type = {}
 
-
     for lead_type in [
-
         "apply",
         "callback",
         "quick",
         "chat_lead",
         "newsletter",
-
     ]:
 
         by_type[
             lead_type
-        ] = (
-            await db.leads.count_documents(
-                {
-                    "type":
-                    lead_type
-                }
-            )
+        ] = await db.leads.count_documents(
+            {
+                "type":
+                lead_type
+            }
         )
-
 
     subscribers = (
         await db.newsletter.count_documents(
             {}
         )
     )
-
 
     since = (
         datetime.now(
@@ -2281,12 +2159,10 @@ async def admin_stats(
         )
     )
 
-
     last7 = (
         await db.leads.count_documents(
             {
-                "created_at":
-                {
+                "created_at": {
                     "$gte":
                     since
                 }
@@ -2294,9 +2170,7 @@ async def admin_stats(
         )
     )
 
-
     return {
-
         "total_leads":
         total,
 
@@ -2323,9 +2197,7 @@ async def admin_stats(
     ]
 )
 async def admin_newsletter(
-
     limit: int = 500,
-
     user: User = Depends(
         require_admin
     ),
@@ -2338,20 +2210,14 @@ async def admin_newsletter(
             "created_at",
             -1
         )
-        .to_list(
-            limit
-        )
+        .to_list(limit)
     )
-
 
     return [
         Newsletter(
-            **_clean_mongo(
-                doc
-            )
+            **_clean_mongo(doc)
         )
-        for doc
-        in docs
+        for doc in docs
     ]
 
 
@@ -2365,7 +2231,6 @@ async def admin_newsletter(
     response_model=List[Blog]
 )
 async def admin_get_blogs(
-
     user: User = Depends(
         require_admin
     )
@@ -2388,13 +2253,9 @@ async def admin_get_blogs(
         )
     )
 
-
     return [
-        Blog(
-            **doc
-        )
-        for doc
-        in docs
+        Blog(**doc)
+        for doc in docs
     ]
 
 
@@ -2403,9 +2264,7 @@ async def admin_get_blogs(
     response_model=Blog
 )
 async def admin_create_blog(
-
     payload: BlogCreate,
-
     user: User = Depends(
         require_admin
     ),
@@ -2415,12 +2274,10 @@ async def admin_create_blog(
         timezone.utc
     )
 
-
     slug = make_slug(
         payload.slug
         or payload.title
     )
-
 
     if not slug:
 
@@ -2429,32 +2286,25 @@ async def admin_create_blog(
             detail="Invalid blog slug",
         )
 
-
-    existing = (
-        await db.blogs.find_one(
-            {
-                "slug":
-                slug
-            }
-        )
+    existing = await db.blogs.find_one(
+        {
+            "slug":
+            slug
+        }
     )
-
 
     if existing:
 
         raise HTTPException(
             status_code=409,
             detail=(
-                "A blog with this "
-                "slug already exists"
+                "A blog with this slug already exists"
             ),
         )
-
 
     blog_id = str(
         uuid.uuid4()
     )
-
 
     published_at = (
         now
@@ -2463,9 +2313,7 @@ async def admin_create_blog(
         else None
     )
 
-
     doc = {
-
         "id":
         blog_id,
 
@@ -2493,8 +2341,7 @@ async def admin_create_blog(
         "body":
         [
             block.model_dump()
-            for block
-            in payload.body
+            for block in payload.body
         ],
 
         "cta":
@@ -2528,16 +2375,12 @@ async def admin_create_blog(
         published_at,
     }
 
-
     await db.blogs.insert_one(
         doc
     )
 
-
     return Blog(
-        **_clean_mongo(
-            doc
-        )
+        **_clean_mongo(doc)
     )
 
 
@@ -2546,28 +2389,22 @@ async def admin_create_blog(
     response_model=Blog
 )
 async def admin_update_blog(
-
     blog_id: str,
-
     payload: BlogUpdate,
-
     user: User = Depends(
         require_admin
     ),
 ):
 
-    existing = (
-        await db.blogs.find_one(
-            {
-                "id":
-                blog_id
-            },
-            {
-                "_id": 0
-            },
-        )
+    existing = await db.blogs.find_one(
+        {
+            "id":
+            blog_id
+        },
+        {
+            "_id": 0
+        },
     )
-
 
     if not existing:
 
@@ -2576,19 +2413,13 @@ async def admin_update_blog(
             detail="Blog not found",
         )
 
-
-    updates = (
-        payload.model_dump(
-            exclude_none=True
-        )
+    updates = payload.model_dump(
+        exclude_none=True
     )
-
 
     if "body" in updates:
 
-        updates[
-            "body"
-        ] = [
+        updates["body"] = [
             (
                 item.model_dump()
                 if hasattr(
@@ -2598,96 +2429,68 @@ async def admin_update_blog(
                 else item
             )
             for item
-            in updates[
-                "body"
-            ]
+            in updates["body"]
         ]
-
 
     if "slug" in updates:
 
         new_slug = make_slug(
-            updates[
-                "slug"
-            ]
+            updates["slug"]
         )
 
+        duplicate = await db.blogs.find_one(
+            {
+                "slug":
+                new_slug,
 
-        duplicate = (
-            await db.blogs.find_one(
+                "id":
                 {
-                    "slug":
-                    new_slug,
-
-                    "id":
-                    {
-                        "$ne":
-                        blog_id
-                    },
-                }
-            )
+                    "$ne":
+                    blog_id
+                },
+            }
         )
-
 
         if duplicate:
 
             raise HTTPException(
                 status_code=409,
                 detail=(
-                    "A blog with this "
-                    "slug already exists"
+                    "A blog with this slug already exists"
                 ),
             )
 
+        updates["slug"] = new_slug
 
-        updates[
-            "slug"
-        ] = new_slug
-
-
-    old_status = (
-        existing.get(
-            "status"
-        )
+    old_status = existing.get(
+        "status"
     )
 
-
-    new_status = (
-        updates.get(
-            "status",
-            old_status
-        )
+    new_status = updates.get(
+        "status",
+        old_status
     )
-
 
     if (
         new_status == "published"
         and old_status != "published"
     ):
-
-        updates[
-            "published_at"
-        ] = datetime.now(
-            timezone.utc
+        updates["published_at"] = (
+            datetime.now(
+                timezone.utc
+            )
         )
 
-
     if new_status == "draft":
+        updates["published_at"] = None
 
-        updates[
-            "published_at"
-        ] = None
-
-
-    updates[
-        "updated_at"
-    ] = datetime.now(
-        timezone.utc
+    updates["updated_at"] = (
+        datetime.now(
+            timezone.utc
+        )
     )
 
-
     await db.blogs.update_one(
-
         {
             "id":
             blog_id
@@ -2699,19 +2502,15 @@ async def admin_update_blog(
         },
     )
 
-
-    updated = (
-        await db.blogs.find_one(
-            {
-                "id":
-                blog_id
-            },
-            {
-                "_id": 0
-            },
-        )
+    updated = await db.blogs.find_one(
+        {
+            "id":
+            blog_id
+        },
+        {
+            "_id": 0
+        },
     )
-
 
     return Blog(
         **updated
@@ -2722,34 +2521,25 @@ async def admin_update_blog(
     "/admin/blogs/{blog_id}"
 )
 async def admin_delete_blog(
-
     blog_id: str,
-
     user: User = Depends(
         require_admin
     ),
 ):
 
-    result = (
-        await db.blogs.delete_one(
-            {
-                "id":
-                blog_id
-            }
-        )
+    result = await db.blogs.delete_one(
+        {
+            "id":
+            blog_id
+        }
     )
 
-
-    if (
-        result.deleted_count
-        == 0
-    ):
+    if result.deleted_count == 0:
 
         raise HTTPException(
             status_code=404,
             detail="Blog not found",
         )
-
 
     return {
         "ok":
@@ -2767,11 +2557,8 @@ async def admin_delete_blog(
     response_model=List[University]
 )
 async def admin_get_universities(
-
     stream: Optional[str] = None,
-
     country: Optional[str] = None,
-
     user: User = Depends(
         require_admin
     ),
@@ -2779,32 +2566,23 @@ async def admin_get_universities(
 
     query = {}
 
-
     if stream:
 
-        query[
-            "stream"
-        ] = {
+        query["stream"] = {
             "$regex":
             f"^{re.escape(stream)}$",
-
             "$options":
             "i"
         }
-
 
     if country:
 
-        query[
-            "country"
-        ] = {
+        query["country"] = {
             "$regex":
             f"^{re.escape(country)}$",
-
             "$options":
             "i"
         }
-
 
     docs = (
         await db.universities
@@ -2823,13 +2601,9 @@ async def admin_get_universities(
         )
     )
 
-
     return [
-        University(
-            **doc
-        )
-        for doc
-        in docs
+        University(**doc)
+        for doc in docs
     ]
 
 
@@ -2838,9 +2612,7 @@ async def admin_get_universities(
     response_model=University
 )
 async def admin_create_university(
-
     payload: UniversityCreate,
-
     user: User = Depends(
         require_admin
     ),
@@ -2850,12 +2622,10 @@ async def admin_create_university(
         timezone.utc
     )
 
-
     slug = make_slug(
         payload.slug
         or payload.name
     )
-
 
     if not slug:
 
@@ -2864,32 +2634,25 @@ async def admin_create_university(
             detail="Invalid university slug",
         )
 
-
-    existing = (
-        await db.universities.find_one(
-            {
-                "slug":
-                slug
-            }
-        )
+    existing = await db.universities.find_one(
+        {
+            "slug":
+            slug
+        }
     )
-
 
     if existing:
 
         raise HTTPException(
             status_code=409,
             detail=(
-                "A university with this "
-                "slug already exists"
+                "A university with this slug already exists"
             ),
         )
-
 
     university_id = str(
         uuid.uuid4()
     )
-
 
     published_at = (
         now
@@ -2898,65 +2661,54 @@ async def admin_create_university(
         else None
     )
 
+    doc = payload.model_dump()
 
-    doc = (
-        payload.model_dump()
+    doc.update(
+        {
+            "id":
+            university_id,
+
+            "slug":
+            slug,
+
+            "seo_title":
+            (
+                payload.seo_title
+                or payload.name
+            ),
+
+            "meta_description":
+            (
+                payload.meta_description
+                or payload.overview
+                or (
+                    f"Explore {payload.name} "
+                    f"in {payload.country}."
+                )
+            ),
+
+            "created_at":
+            now,
+
+            "updated_at":
+            now,
+
+            "published_at":
+            published_at,
+        }
     )
 
-
-    doc.update({
-
-        "id":
-        university_id,
-
-        "slug":
-        slug,
-
-        "seo_title":
-        (
-            payload.seo_title
-            or payload.name
-        ),
-
-        "meta_description":
-        (
-            payload.meta_description
-            or payload.overview
-            or (
-                f"Explore {payload.name} "
-                f"in {payload.country}."
-            )
-        ),
-
-        "created_at":
-        now,
-
-        "updated_at":
-        now,
-
-        "published_at":
-        published_at,
-    })
-
-
-    doc[
-        "faqs"
-    ] = [
+    doc["faqs"] = [
         faq.model_dump()
-        for faq
-        in payload.faqs
+        for faq in payload.faqs
     ]
-
 
     await db.universities.insert_one(
         doc
     )
 
-
     return University(
-        **_clean_mongo(
-            doc
-        )
+        **_clean_mongo(doc)
     )
 
 
@@ -2965,28 +2717,22 @@ async def admin_create_university(
     response_model=University
 )
 async def admin_update_university(
-
     university_id: str,
-
     payload: UniversityUpdate,
-
     user: User = Depends(
         require_admin
     ),
 ):
 
-    existing = (
-        await db.universities.find_one(
-            {
-                "id":
-                university_id
-            },
-            {
-                "_id": 0
-            },
-        )
+    existing = await db.universities.find_one(
+        {
+            "id":
+            university_id
+        },
+        {
+            "_id": 0
+        },
     )
-
 
     if not existing:
 
@@ -2995,22 +2741,15 @@ async def admin_update_university(
             detail="University not found",
         )
 
-
-    updates = (
-        payload.model_dump(
-            exclude_none=True
-        )
+    updates = payload.model_dump(
+        exclude_none=True
     )
-
 
     if "slug" in updates:
 
         new_slug = make_slug(
-            updates[
-                "slug"
-            ]
+            updates["slug"]
         )
-
 
         if not new_slug:
 
@@ -3019,44 +2758,33 @@ async def admin_update_university(
                 detail="Invalid university slug",
             )
 
+        duplicate = await db.universities.find_one(
+            {
+                "slug":
+                new_slug,
 
-        duplicate = (
-            await db.universities.find_one(
+                "id":
                 {
-                    "slug":
-                    new_slug,
-
-                    "id":
-                    {
-                        "$ne":
-                        university_id
-                    },
-                }
-            )
+                    "$ne":
+                    university_id
+                },
+            }
         )
-
 
         if duplicate:
 
             raise HTTPException(
                 status_code=409,
                 detail=(
-                    "A university with this "
-                    "slug already exists"
+                    "A university with this slug already exists"
                 ),
             )
 
-
-        updates[
-            "slug"
-        ] = new_slug
-
+        updates["slug"] = new_slug
 
     if "faqs" in updates:
 
-        updates[
-            "faqs"
-        ] = [
+        updates["faqs"] = [
             (
                 faq.model_dump()
                 if hasattr(
@@ -3065,52 +2793,38 @@ async def admin_update_university(
                 )
                 else faq
             )
-            for faq
-            in updates[
-                "faqs"
-            ]
+            for faq in updates["faqs"]
         ]
-
 
     old_status = existing.get(
         "status"
     )
-
 
     new_status = updates.get(
         "status",
         old_status
     )
 
-
     if (
         new_status == "published"
         and old_status != "published"
     ):
-
-        updates[
-            "published_at"
-        ] = datetime.now(
-            timezone.utc
+        updates["published_at"] = (
+            datetime.now(
+                timezone.utc
+            )
         )
 
-
     if new_status == "draft":
+        updates["published_at"] = None
 
-        updates[
-            "published_at"
-        ] = None
-
-
-    updates[
-        "updated_at"
-    ] = datetime.now(
-        timezone.utc
+    updates["updated_at"] = (
+        datetime.now(
+            timezone.utc
+        )
     )
 
-
     await db.universities.update_one(
-
         {
             "id":
             university_id
@@ -3122,19 +2836,15 @@ async def admin_update_university(
         },
     )
 
-
-    updated = (
-        await db.universities.find_one(
-            {
-                "id":
-                university_id
-            },
-            {
-                "_id": 0
-            },
-        )
+    updated = await db.universities.find_one(
+        {
+            "id":
+            university_id
+        },
+        {
+            "_id": 0
+        },
     )
-
 
     return University(
         **updated
@@ -3145,34 +2855,25 @@ async def admin_update_university(
     "/admin/universities/{university_id}"
 )
 async def admin_delete_university(
-
     university_id: str,
-
     user: User = Depends(
         require_admin
     ),
 ):
 
-    result = (
-        await db.universities.delete_one(
-            {
-                "id":
-                university_id
-            }
-        )
+    result = await db.universities.delete_one(
+        {
+            "id":
+            university_id
+        }
     )
 
-
-    if (
-        result.deleted_count
-        == 0
-    ):
+    if result.deleted_count == 0:
 
         raise HTTPException(
             status_code=404,
             detail="University not found",
         )
-
 
     return {
         "ok":
@@ -3181,7 +2882,7 @@ async def admin_delete_university(
 
 
 # =========================================================
-# LEGACY PUBLIC STATS
+# PUBLIC STATS
 # =========================================================
 
 
@@ -3196,16 +2897,13 @@ async def lead_stats_public():
         )
     )
 
-
     subscribers = (
         await db.newsletter.count_documents(
             {}
         )
     )
 
-
     return {
-
         "total_leads":
         total,
 
@@ -3228,7 +2926,6 @@ app.include_router(
 # =========================================================
 
 app.add_middleware(
-
     CORSMiddleware,
 
     allow_origins=[
@@ -3252,7 +2949,6 @@ app.add_middleware(
 # =========================================================
 
 logging.basicConfig(
-
     level=logging.INFO,
 
     format=(
@@ -3271,6 +2967,7 @@ logger = logging.getLogger(
 # =========================================================
 # SHUTDOWN
 # =========================================================
+
 
 @app.on_event(
     "shutdown"
