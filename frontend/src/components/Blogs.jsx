@@ -4,18 +4,50 @@ import {
   Clock,
   ArrowUpRight,
   BookOpen,
-  Loader2
+  Loader2,
+  CalendarDays
 } from 'lucide-react';
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL ||
   'https://routeyourcareer.onrender.com';
 
+
+/* =========================================================
+   DATE FORMATTER
+   ========================================================= */
+
+function formatBlogDate(dateValue) {
+  if (!dateValue) return '';
+
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+}
+
+
+/* =========================================================
+   BLOG COMPONENT
+   ========================================================= */
+
 export default function Blogs() {
   const [blogs, setBlogs] = useState([]);
   const [cat, setCat] = useState('All');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+
+  /* =========================================================
+     LOAD BLOGS
+     ========================================================= */
 
   useEffect(() => {
     const loadBlogs = async () => {
@@ -33,9 +65,33 @@ export default function Blogs() {
 
         const data = await response.json();
 
-        setBlogs(
-          Array.isArray(data) ? data : []
+        const blogList =
+          Array.isArray(data) ? data : [];
+
+
+        /* -----------------------------------------
+           NEWEST BLOG FIRST
+           ----------------------------------------- */
+
+        const sortedBlogs = [...blogList].sort(
+          (a, b) => {
+            const dateA = new Date(
+              a.published_at ||
+              a.created_at ||
+              0
+            ).getTime();
+
+            const dateB = new Date(
+              b.published_at ||
+              b.created_at ||
+              0
+            ).getTime();
+
+            return dateB - dateA;
+          }
         );
+
+        setBlogs(sortedBlogs);
 
       } catch (err) {
         console.error(
@@ -56,6 +112,10 @@ export default function Blogs() {
   }, []);
 
 
+  /* =========================================================
+     CATEGORIES
+     ========================================================= */
+
   const categories = useMemo(() => {
     const uniqueCategories = [
       ...new Set(
@@ -74,6 +134,10 @@ export default function Blogs() {
   }, [blogs]);
 
 
+  /* =========================================================
+     FILTER BLOGS
+     ========================================================= */
+
   const filteredBlogs =
     cat === 'All'
       ? blogs
@@ -82,6 +146,10 @@ export default function Blogs() {
             blog.category === cat
         );
 
+
+  /* =========================================================
+     PAGE
+     ========================================================= */
 
   return (
     <section
@@ -104,7 +172,7 @@ export default function Blogs() {
 
               <BookOpen className="h-3.5 w-3.5" />
 
-              / 10 — RYC Journal
+              RYC Journal
 
             </div>
 
@@ -246,83 +314,128 @@ export default function Blogs() {
             <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
 
               {filteredBlogs.map(
-                (blog) => (
+                (blog) => {
 
-                  <Link
-                    key={
-                      blog.id ||
-                      blog.slug
-                    }
-                    to={`/blog/${blog.slug}`}
-                    className="group rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift block"
-                  >
+                  const publishedDate =
+                    formatBlogDate(
+                      blog.published_at ||
+                      blog.created_at
+                    );
 
+                  return (
 
-                    {/* DEFAULT IMAGE FOR EVERY BLOG */}
-
-                    <div className="aspect-[16/10] overflow-hidden bg-ink/5">
-
-                      <img
-                        src="/blog-default.png"
-                        alt={blog.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-
-                    </div>
+                    <Link
+                      key={
+                        blog.id ||
+                        blog.slug
+                      }
+                      to={`/blog/${blog.slug}`}
+                      className="group rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift block"
+                    >
 
 
-                    {/* CARD CONTENT */}
+                      {/* =============================== */}
+                      {/* DEFAULT BLOG IMAGE */}
+                      {/* =============================== */}
 
-                    <div className="p-5">
+                      <div className="aspect-[16/10] overflow-hidden bg-ink/5">
 
-                      <div className="flex items-center justify-between gap-3">
-
-                        <span className="inline-flex items-center rounded-full bg-cream border border-ink/10 text-ink text-[10px] font-bold uppercase tracking-widest px-2 py-0.5">
-
-                          {blog.category}
-
-                        </span>
-
-
-                        <span className="text-[10px] mono uppercase tracking-widest text-ink/40 flex items-center gap-1 whitespace-nowrap">
-
-                          <Clock className="h-3 w-3" />
-
-                          {blog.read_time || 5} min
-
-                        </span>
+                        <img
+                          src="/blog-default.png"
+                          alt={blog.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
 
                       </div>
 
 
-                      <h3 className="mt-3 serif text-[22px] font-medium text-ink leading-snug">
+                      {/* =============================== */}
+                      {/* CARD CONTENT */}
+                      {/* =============================== */}
 
-                        {blog.title}
-
-                      </h3>
-
-
-                      <p className="mt-2 text-[13px] text-ink/70 leading-relaxed">
-
-                        {blog.excerpt}
-
-                      </p>
+                      <div className="p-5">
 
 
-                      <div className="mt-4 inline-flex items-center gap-1 text-ink group-hover:text-coral font-semibold text-[13px]">
+                        {/* CATEGORY */}
 
-                        Read the story
+                        <div className="flex items-center justify-between gap-3">
 
-                        <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
+                          <span className="inline-flex items-center rounded-full bg-cream border border-ink/10 text-ink text-[10px] font-bold uppercase tracking-widest px-2 py-0.5">
+
+                            {blog.category || 'MBBS'}
+
+                          </span>
+
+                        </div>
+
+
+                        {/* =============================== */}
+                        {/* REAL PUBLICATION DATE */}
+                        {/* + READING TIME */}
+                        {/* =============================== */}
+
+                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] mono uppercase tracking-widest text-ink/40">
+
+
+                          {publishedDate && (
+
+                            <span className="flex items-center gap-1">
+
+                              <CalendarDays className="h-3 w-3" />
+
+                              {publishedDate}
+
+                            </span>
+
+                          )}
+
+
+                          <span className="flex items-center gap-1">
+
+                            <Clock className="h-3 w-3" />
+
+                            {blog.read_time || 5} min read
+
+                          </span>
+
+                        </div>
+
+
+                        {/* TITLE */}
+
+                        <h3 className="mt-3 serif text-[22px] font-medium text-ink leading-snug">
+
+                          {blog.title}
+
+                        </h3>
+
+
+                        {/* EXCERPT */}
+
+                        <p className="mt-2 text-[13px] text-ink/70 leading-relaxed">
+
+                          {blog.excerpt}
+
+                        </p>
+
+
+                        {/* READ BUTTON */}
+
+                        <div className="mt-4 inline-flex items-center gap-1 text-ink group-hover:text-coral font-semibold text-[13px]">
+
+                          Read the story
+
+                          <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
+
+                        </div>
 
                       </div>
 
-                    </div>
+                    </Link>
 
-                  </Link>
-
-                )
+                  );
+                }
               )}
 
             </div>
