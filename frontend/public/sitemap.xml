@@ -8,7 +8,7 @@
     <priority>1.0</priority>
   </url>
 
-  <!-- SPECIAL COUNTRY PAGES -->
+  <!-- FEATURED COUNTRY PAGES -->
   <url>
     <loc>https://routeyourcareer.in/countries/georgia</loc>
     <changefreq>weekly</changefreq>
@@ -125,11 +125,11 @@
     <priority>0.8</priority>
   </url>
 
-  <!-- COURSE FINDER -->
+  <!-- QUIZ -->
   <url>
     <loc>https://routeyourcareer.in/quiz</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
 
 </urlset>
