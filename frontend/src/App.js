@@ -12,9 +12,12 @@ import {
 import Home from './pages/Home';
 import CountryGeorgia from './pages/CountryGeorgia';
 import CountryItaly from './pages/CountryItaly';
+import ItalyCourses from './pages/ItalyCourses';
+
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AuthCallback from './pages/AuthCallback';
+
 import CountryDetail from './pages/CountryDetail';
 import BlogPost from './pages/BlogPost';
 import CourseFinderQuiz from './pages/CourseFinderQuiz';
@@ -139,6 +142,16 @@ function AppRouter() {
       <Route
         path="/countries/italy"
         element={<CountryItaly />}
+      />
+
+
+      {/* =========================
+          ITALY COURSE FINDER
+      ========================= */}
+
+      <Route
+        path="/countries/italy/courses"
+        element={<ItalyCourses />}
       />
 
 
