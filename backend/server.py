@@ -2929,7 +2929,9 @@ app.add_middleware(
     CORSMiddleware,
 
     allow_origins=[
-        "https://routeyourcareer.netlify.app"
+        "https://routeyourcareer.in",
+        "https://www.routeyourcareer.in",
+        "https://routeyourcareer.netlify.app",
     ],
 
     allow_credentials=True,
