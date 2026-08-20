@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+
 import {
   Clock,
   ArrowUpRight,
@@ -8,180 +9,313 @@ import {
   CalendarDays
 } from 'lucide-react';
 
+
 const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL ||
   'https://routeyourcareer.onrender.com';
 
 
-/* =========================================================
-   DATE FORMATTER
-   ========================================================= */
+function formatBlogDate(value) {
 
-function formatBlogDate(dateValue) {
-  if (!dateValue) return '';
+  if (!value) {
+    return '';
+  }
 
-  const date = new Date(dateValue);
+  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return '';
   }
 
-  return date.toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
+  return date.toLocaleDateString(
+    'en-IN',
+    {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    }
+  );
 }
 
 
-/* =========================================================
-   BLOG COMPONENT
-   ========================================================= */
-
 export default function Blogs() {
-  const [blogs, setBlogs] = useState([]);
-  const [cat, setCat] = useState('All');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+
+  const [blogs, setBlogs] =
+    useState([]);
+
+  const [category, setCategory] =
+    useState('All');
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState('');
 
 
-  /* =========================================================
-     LOAD BLOGS
-     ========================================================= */
+  /*
+  =========================================================
+  LOAD BLOGS
+  =========================================================
+  */
 
   useEffect(() => {
-    const loadBlogs = async () => {
+
+    let mounted = true;
+
+
+    async function loadBlogs() {
+
       try {
+
         setLoading(true);
         setError('');
 
-        const response = await fetch(
-          `${BACKEND_URL}/api/blogs`
-        );
+
+        const response =
+          await fetch(
+            `${BACKEND_URL}/api/blogs`,
+            {
+              method: 'GET',
+              headers: {
+                Accept:
+                  'application/json'
+              }
+            }
+          );
+
 
         if (!response.ok) {
-          throw new Error('Could not load blogs');
+
+          throw new Error(
+            `Blog request failed: ${response.status}`
+          );
+
         }
 
-        const data = await response.json();
 
-        const blogList =
-          Array.isArray(data) ? data : [];
+        const data =
+          await response.json();
 
 
-        /* -----------------------------------------
-           NEWEST BLOG FIRST
-           ----------------------------------------- */
+        if (!mounted) {
+          return;
+        }
 
-        const sortedBlogs = [...blogList].sort(
+
+        const list =
+          Array.isArray(data)
+            ? data
+            : [];
+
+
+        /*
+        Only published posts.
+
+        Backend already does this,
+        but this gives us an extra
+        safety check.
+        */
+
+        const published =
+          list.filter(
+            (blog) =>
+              blog &&
+              blog.status ===
+                'published'
+          );
+
+
+        /*
+        Newest first
+        */
+
+        published.sort(
           (a, b) => {
-            const dateA = new Date(
-              a.published_at ||
-              a.created_at ||
-              0
-            ).getTime();
 
-            const dateB = new Date(
-              b.published_at ||
-              b.created_at ||
-              0
-            ).getTime();
+            const aDate =
+              new Date(
+                a.published_at ||
+                a.created_at ||
+                0
+              ).getTime();
 
-            return dateB - dateA;
+            const bDate =
+              new Date(
+                b.published_at ||
+                b.created_at ||
+                0
+              ).getTime();
+
+
+            return bDate - aDate;
+
           }
         );
 
-        setBlogs(sortedBlogs);
 
-      } catch (err) {
+        setBlogs(published);
+
+      }
+
+      catch (err) {
+
         console.error(
-          'Blog loading error:',
+          'RYC blog error:',
           err
         );
 
-        setError(
-          'Articles are temporarily unavailable.'
-        );
 
-      } finally {
-        setLoading(false);
+        if (mounted) {
+
+          setError(
+            'We could not load the RYC Journal right now.'
+          );
+
+        }
+
       }
-    };
+
+      finally {
+
+        if (mounted) {
+          setLoading(false);
+        }
+
+      }
+
+    }
+
 
     loadBlogs();
+
+
+    return () => {
+
+      mounted = false;
+
+    };
+
   }, []);
 
 
-  /* =========================================================
-     CATEGORIES
-     ========================================================= */
+  /*
+  =========================================================
+  CATEGORIES
+  =========================================================
+  */
 
-  const categories = useMemo(() => {
-    const uniqueCategories = [
-      ...new Set(
+  const categories = [
+    'All',
+    ...Array.from(
+      new Set(
         blogs
           .map(
-            (blog) => blog.category
+            (blog) =>
+              blog.category
           )
           .filter(Boolean)
       )
-    ];
-
-    return [
-      'All',
-      ...uniqueCategories
-    ];
-  }, [blogs]);
+    )
+  ];
 
 
-  /* =========================================================
-     FILTER BLOGS
-     ========================================================= */
+  /*
+  =========================================================
+  FILTER
+  =========================================================
+  */
 
-  const filteredBlogs =
-    cat === 'All'
+  const visibleBlogs =
+    category === 'All'
+
       ? blogs
+
       : blogs.filter(
           (blog) =>
-            blog.category === cat
+            blog.category ===
+            category
         );
 
 
-  /* =========================================================
-     PAGE
-     ========================================================= */
+  /*
+  =========================================================
+  PAGE
+  =========================================================
+  */
 
   return (
+
     <section
       id="blog"
       className="py-24 bg-cream"
     >
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div
+        className="
+          max-w-7xl
+          mx-auto
+          px-4
+          sm:px-6
+        "
+      >
 
 
-        {/* =============================== */}
-        {/* HEADING */}
-        {/* =============================== */}
+        {/* =================================================
+            HEADING
+        ================================================= */}
 
-        <div className="grid lg:grid-cols-12 gap-8 items-end">
+        <div
+          className="
+            grid
+            lg:grid-cols-12
+            gap-8
+            items-end
+          "
+        >
 
-          <div className="lg:col-span-7">
+          <div
+            className="lg:col-span-7"
+          >
 
-            <div className="text-[11px] mono uppercase tracking-widest text-coral flex items-center gap-2">
+            <div
+              className="
+                text-[11px]
+                mono
+                uppercase
+                tracking-widest
+                text-coral
+                flex
+                items-center
+                gap-2
+              "
+            >
 
-              <BookOpen className="h-3.5 w-3.5" />
+              <BookOpen
+                className="h-3.5 w-3.5"
+              />
 
               RYC Journal
 
             </div>
 
 
-            <h2 className="serif mt-3 text-5xl sm:text-6xl font-normal leading-[0.95] text-ink">
+            <h2
+              className="
+                serif
+                mt-3
+                text-5xl
+                sm:text-6xl
+                font-normal
+                leading-[0.95]
+                text-ink
+              "
+            >
 
               Read{' '}
 
-              <em className="font-light">
+              <em
+                className="font-light"
+              >
                 before you apply.
               </em>
 
@@ -190,30 +324,86 @@ export default function Blogs() {
           </div>
 
 
-          <p className="lg:col-span-5 text-ink/70 text-[15px] leading-relaxed">
+          <div
+            className="lg:col-span-5"
+          >
 
-            Practical guides on MBBS abroad,
-            NEET, universities, admissions,
-            visas and student life — published
-            by Route Your Career.
+            <p
+              className="
+                text-ink/70
+                text-[15px]
+                leading-relaxed
+              "
+            >
 
-          </p>
+              Practical guides on
+              MBBS abroad, NEET,
+              universities, admissions,
+              visas and student life —
+              published by Route Your
+              Career.
+
+            </p>
+
+
+            {!loading &&
+              !error &&
+              blogs.length > 0 && (
+
+                <div
+                  className="
+                    mt-3
+                    text-[11px]
+                    mono
+                    uppercase
+                    tracking-widest
+                    text-coral
+                  "
+                >
+
+                  {blogs.length}
+                  {' '}
+                  published articles
+
+                </div>
+
+              )}
+
+          </div>
 
         </div>
 
 
-        {/* =============================== */}
-        {/* LOADING */}
-        {/* =============================== */}
+        {/* =================================================
+            LOADING
+        ================================================= */}
 
         {loading && (
 
-          <div className="mt-12 flex items-center justify-center gap-2 text-ink/60">
+          <div
+            className="
+              mt-12
+              min-h-[180px]
+              flex
+              items-center
+              justify-center
+              gap-2
+              text-ink/60
+            "
+          >
 
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <Loader2
+              className="
+                h-5
+                w-5
+                animate-spin
+              "
+            />
 
-            <span className="text-[13px]">
-              Loading articles...
+            <span
+              className="text-[13px]"
+            >
+              Loading RYC Journal...
             </span>
 
           </div>
@@ -221,77 +411,157 @@ export default function Blogs() {
         )}
 
 
-        {/* =============================== */}
-        {/* ERROR */}
-        {/* =============================== */}
-
-        {!loading && error && (
-
-          <div className="mt-10 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-[13px] text-red-700">
-
-            {error}
-
-          </div>
-
-        )}
-
-
-        {/* =============================== */}
-        {/* NO BLOGS */}
-        {/* =============================== */}
+        {/* =================================================
+            ERROR
+        ================================================= */}
 
         {!loading &&
-          !error &&
-          blogs.length === 0 && (
+          error && (
 
-            <div className="mt-10 rounded-3xl bg-white border border-ink/10 px-6 py-12 text-center">
+            <div
+              className="
+                mt-10
+                rounded-3xl
+                border
+                border-red-200
+                bg-red-50
+                px-6
+                py-8
+                text-center
+              "
+            >
 
-              <BookOpen className="h-8 w-8 mx-auto text-coral" />
+              <BookOpen
+                className="
+                  h-7
+                  w-7
+                  mx-auto
+                  text-red-500
+                "
+              />
 
-              <h3 className="serif mt-4 text-2xl text-ink">
 
-                The new RYC Journal is coming.
+              <div
+                className="
+                  mt-3
+                  text-[14px]
+                  text-red-700
+                "
+              >
 
-              </h3>
+                {error}
 
-              <p className="mt-2 text-[14px] text-ink/60">
-
-                New guides and counselling
-                resources will be published here soon.
-
-              </p>
+              </div>
 
             </div>
 
           )}
 
 
-        {/* =============================== */}
-        {/* CATEGORY FILTER */}
-        {/* =============================== */}
+        {/* =================================================
+            EMPTY
+        ================================================= */}
+
+        {!loading &&
+          !error &&
+          blogs.length === 0 && (
+
+            <div
+              className="
+                mt-10
+                rounded-3xl
+                bg-white
+                border
+                border-ink/10
+                px-6
+                py-12
+                text-center
+              "
+            >
+
+              <BookOpen
+                className="
+                  h-8
+                  w-8
+                  mx-auto
+                  text-coral
+                "
+              />
+
+
+              <h3
+                className="
+                  serif
+                  mt-4
+                  text-2xl
+                  text-ink
+                "
+              >
+
+                No published articles yet.
+
+              </h3>
+
+            </div>
+
+          )}
+
+
+        {/* =================================================
+            CATEGORIES
+        ================================================= */}
 
         {!loading &&
           !error &&
           blogs.length > 0 && (
 
-            <div className="mt-6 inline-flex rounded-full bg-white border border-ink/10 p-1 overflow-x-auto max-w-full">
+            <div
+              className="
+                mt-8
+                flex
+                flex-wrap
+                gap-2
+              "
+            >
 
               {categories.map(
-                (category) => (
+                (item) => (
 
                   <button
-                    key={category}
+                    key={item}
+                    type="button"
                     onClick={() =>
-                      setCat(category)
+                      setCategory(item)
                     }
-                    className={`px-3 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors ${
-                      cat === category
-                        ? 'bg-ink text-cream'
-                        : 'text-ink/60 hover:text-ink'
-                    }`}
+                    className={`
+                      rounded-full
+                      border
+                      px-4
+                      py-2
+                      text-[12px]
+                      font-semibold
+                      transition-colors
+
+                      ${
+                        category === item
+
+                          ? `
+                            bg-ink
+                            text-cream
+                            border-ink
+                          `
+
+                          : `
+                            bg-white
+                            text-ink/65
+                            border-ink/10
+                            hover:text-ink
+                          `
+                      }
+                    `}
                   >
 
-                    {category}
+                    {item}
 
                   </button>
 
@@ -303,24 +573,33 @@ export default function Blogs() {
           )}
 
 
-        {/* =============================== */}
-        {/* BLOG CARDS */}
-        {/* =============================== */}
+        {/* =================================================
+            BLOG CARDS
+        ================================================= */}
 
         {!loading &&
           !error &&
-          filteredBlogs.length > 0 && (
+          visibleBlogs.length > 0 && (
 
-            <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div
+              className="
+                mt-8
+                grid
+                sm:grid-cols-2
+                lg:grid-cols-3
+                gap-5
+              "
+            >
 
-              {filteredBlogs.map(
+              {visibleBlogs.map(
                 (blog) => {
 
-                  const publishedDate =
+                  const date =
                     formatBlogDate(
                       blog.published_at ||
                       blog.created_at
                     );
+
 
                   return (
 
@@ -329,104 +608,232 @@ export default function Blogs() {
                         blog.id ||
                         blog.slug
                       }
-                      to={`/blog/${blog.slug}`}
-                      className="group rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift block"
+                      to={
+                        `/blog/${blog.slug}`
+                      }
+                      className="
+                        group
+                        rounded-3xl
+                        overflow-hidden
+                        bg-white
+                        border
+                        border-ink/10
+                        card-lift
+                        flex
+                        flex-col
+                      "
                     >
 
 
-                      {/* =============================== */}
-                      {/* DEFAULT BLOG IMAGE */}
-                      {/* =============================== */}
+                      {/* IMAGE */}
 
-                      <div className="aspect-[16/10] overflow-hidden bg-ink/5">
+                      <div
+                        className="
+                          aspect-[16/10]
+                          overflow-hidden
+                          bg-sand
+                        "
+                      >
 
                         <img
-                          src="/blog-default.png"
-                          alt={blog.title}
+                          src={
+                            blog.hero_image ||
+                            '/blog-default.png'
+                          }
+                          alt={
+                            blog.title ||
+                            'Route Your Career article'
+                          }
                           loading="lazy"
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          onError={
+                            (e) => {
+
+                              e.currentTarget.onerror =
+                                null;
+
+                              e.currentTarget.src =
+                                '/blog-default.png';
+
+                            }
+                          }
+                          className="
+                            w-full
+                            h-full
+                            object-cover
+                            transition-transform
+                            duration-700
+                            group-hover:scale-105
+                          "
                         />
 
                       </div>
 
 
-                      {/* =============================== */}
-                      {/* CARD CONTENT */}
-                      {/* =============================== */}
+                      {/* CONTENT */}
 
-                      <div className="p-5">
+                      <div
+                        className="
+                          p-5
+                          flex
+                          flex-col
+                          flex-1
+                        "
+                      >
 
 
-                        {/* CATEGORY */}
+                        <div
+                          className="
+                            flex
+                            items-center
+                            justify-between
+                            gap-3
+                          "
+                        >
 
-                        <div className="flex items-center justify-between gap-3">
+                          <span
+                            className="
+                              inline-flex
+                              items-center
+                              rounded-full
+                              bg-cream
+                              border
+                              border-ink/10
+                              text-ink
+                              text-[10px]
+                              font-bold
+                              uppercase
+                              tracking-widest
+                              px-2
+                              py-1
+                            "
+                          >
 
-                          <span className="inline-flex items-center rounded-full bg-cream border border-ink/10 text-ink text-[10px] font-bold uppercase tracking-widest px-2 py-0.5">
-
-                            {blog.category || 'MBBS'}
+                            {
+                              blog.category ||
+                              'Guide'
+                            }
 
                           </span>
 
                         </div>
 
 
-                        {/* =============================== */}
-                        {/* REAL PUBLICATION DATE */}
-                        {/* + READING TIME */}
-                        {/* =============================== */}
+                        <div
+                          className="
+                            mt-3
+                            flex
+                            flex-wrap
+                            items-center
+                            gap-x-4
+                            gap-y-1
+                            text-[10px]
+                            mono
+                            uppercase
+                            tracking-widest
+                            text-ink/40
+                          "
+                        >
 
-                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] mono uppercase tracking-widest text-ink/40">
 
+                          {date && (
 
-                          {publishedDate && (
+                            <span
+                              className="
+                                flex
+                                items-center
+                                gap-1
+                              "
+                            >
 
-                            <span className="flex items-center gap-1">
+                              <CalendarDays
+                                className="h-3 w-3"
+                              />
 
-                              <CalendarDays className="h-3 w-3" />
-
-                              {publishedDate}
+                              {date}
 
                             </span>
 
                           )}
 
 
-                          <span className="flex items-center gap-1">
+                          <span
+                            className="
+                              flex
+                              items-center
+                              gap-1
+                            "
+                          >
 
-                            <Clock className="h-3 w-3" />
+                            <Clock
+                              className="h-3 w-3"
+                            />
 
-                            {blog.read_time || 5} min read
+                            {
+                              blog.read_time ||
+                              5
+                            }
+                            {' '}
+                            min read
 
                           </span>
 
                         </div>
 
 
-                        {/* TITLE */}
-
-                        <h3 className="mt-3 serif text-[22px] font-medium text-ink leading-snug">
+                        <h3
+                          className="
+                            mt-3
+                            serif
+                            text-[22px]
+                            font-medium
+                            text-ink
+                            leading-snug
+                          "
+                        >
 
                           {blog.title}
 
                         </h3>
 
 
-                        {/* EXCERPT */}
-
-                        <p className="mt-2 text-[13px] text-ink/70 leading-relaxed">
+                        <p
+                          className="
+                            mt-2
+                            text-[13px]
+                            text-ink/70
+                            leading-relaxed
+                          "
+                        >
 
                           {blog.excerpt}
 
                         </p>
 
 
-                        {/* READ BUTTON */}
+                        <div
+                          className="
+                            mt-auto
+                            pt-5
+                            inline-flex
+                            items-center
+                            gap-1
+                            text-ink
+                            group-hover:text-coral
+                            font-semibold
+                            text-[13px]
+                          "
+                        >
 
-                        <div className="mt-4 inline-flex items-center gap-1 text-ink group-hover:text-coral font-semibold text-[13px]">
+                          Read article
 
-                          Read the story
-
-                          <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
+                          <ArrowUpRight
+                            className="
+                              h-4
+                              w-4
+                              transition-transform
+                              group-hover:rotate-45
+                            "
+                          />
 
                         </div>
 
@@ -435,6 +842,7 @@ export default function Blogs() {
                     </Link>
 
                   );
+
                 }
               )}
 
@@ -442,8 +850,11 @@ export default function Blogs() {
 
           )}
 
+
       </div>
 
     </section>
+
   );
+
 }
