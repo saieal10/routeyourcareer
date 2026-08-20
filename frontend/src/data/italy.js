@@ -22,9 +22,9 @@
 
 export const italyData = {
 
-  /* ======================================================
-     BASIC
-  ====================================================== */
+  // ======================================================
+  // BASIC
+  // ======================================================
 
   code: 'it',
 
@@ -34,9 +34,9 @@ export const italyData = {
     'https://flagcdn.com/w80/it.png',
 
 
-  /* ======================================================
-     SEO
-  ====================================================== */
+  // ======================================================
+  // SEO
+  // ======================================================
 
   seo: {
 
@@ -61,9 +61,9 @@ export const italyData = {
   },
 
 
-  /* ======================================================
-     HERO
-  ====================================================== */
+  // ======================================================
+  // HERO
+  // ======================================================
 
   tagline:
     'Bachelor’s + Master’s in Italy — world-class public universities at accessible fees.',
@@ -85,9 +85,9 @@ export const italyData = {
   ],
 
 
-  /* ======================================================
-     QUICK FACTS
-  ====================================================== */
+  // ======================================================
+  // QUICK FACTS
+  // ======================================================
 
   quickFacts: [
 
@@ -124,56 +124,63 @@ export const italyData = {
   ],
 
 
-  /* ======================================================
-     PROGRAMME AREAS
-  ====================================================== */
+  // ======================================================
+  // PROGRAMME AREAS
+  // ======================================================
 
   programmeAreas: [
 
     {
-      name: 'Business & Management',
+      name:
+        'Business & Management',
 
       examples:
         'Business, Management, Economics, Finance, Marketing, International Business'
     },
 
     {
-      name: 'Computer Science & AI',
+      name:
+        'Computer Science & AI',
 
       examples:
         'Artificial Intelligence, Computer Science, Data Science, Robotics, Cybersecurity'
     },
 
     {
-      name: 'Engineering',
+      name:
+        'Engineering',
 
       examples:
         'Mechanical, Automotive, Computer, Electronics, Civil, Sustainable Engineering'
     },
 
     {
-      name: 'Economics & Finance',
+      name:
+        'Economics & Finance',
 
       examples:
         'Economics, Finance, Business Economics, Economics & Management'
     },
 
     {
-      name: 'Architecture & Design',
+      name:
+        'Architecture & Design',
 
       examples:
         'Architecture, Urban Planning, Sustainable Building, Design'
     },
 
     {
-      name: 'Law & International Studies',
+      name:
+        'Law & International Studies',
 
       examples:
         'Global Law, European Studies, International Relations, Governance'
     },
 
     {
-      name: 'Life Sciences',
+      name:
+        'Life Sciences',
 
       examples:
         'Biotechnology, Biosciences, Health Economics and related fields'
@@ -182,169 +189,263 @@ export const italyData = {
   ],
 
 
-  /* ======================================================
-     FEATURED BACHELOR'S PROGRAMMES
-  ====================================================== */
+  // ======================================================
+  // FEATURED BACHELOR'S PROGRAMMES
+  // ======================================================
 
   featuredBachelors: [
 
     {
-      university: 'Sapienza University of Rome',
-      course: 'Applied Computer Science and Artificial Intelligence',
-      field: 'Computer Science & AI'
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Applied Computer Science and Artificial Intelligence',
+
+      field:
+        'Computer Science & AI'
     },
 
     {
-      university: 'Sapienza University of Rome',
-      course: 'Sustainable Building Engineering',
-      field: 'Engineering'
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Sustainable Building Engineering',
+
+      field:
+        'Engineering'
     },
 
     {
-      university: 'University of Pavia',
-      course: 'Artificial Intelligence',
-      field: 'Artificial Intelligence'
+      university:
+        'University of Pavia',
+
+      course:
+        'Artificial Intelligence',
+
+      field:
+        'Artificial Intelligence'
     },
 
     {
-      university: 'University of Turin',
-      course: 'Business & Management',
-      field: 'Business'
+      university:
+        'University of Turin',
+
+      course:
+        'Business & Management',
+
+      field:
+        'Business'
     },
 
     {
-      university: 'University of Turin',
-      course: 'Global Law and Transnational Legal Studies',
-      field: 'Law'
+      university:
+        'University of Turin',
+
+      course:
+        'Global Law and Transnational Legal Studies',
+
+      field:
+        'Law'
     },
 
     {
-      university: 'University of Pisa',
-      course: 'Management for Business and Economics',
-      field: 'Management'
+      university:
+        'University of Pisa',
+
+      course:
+        'Management for Business and Economics',
+
+      field:
+        'Management'
     },
 
     {
-      university: 'University of Rome Tor Vergata',
-      course: 'Business Administration & Economics',
-      field: 'Business & Economics'
+      university:
+        'University of Rome Tor Vergata',
+
+      course:
+        'Business Administration & Economics',
+
+      field:
+        'Business & Economics'
     },
 
     {
-      university: 'Politecnico di Torino',
-      course: 'Computer Engineering',
-      field: 'Engineering'
+      university:
+        'Politecnico di Torino',
+
+      course:
+        'Computer Engineering',
+
+      field:
+        'Engineering'
     },
 
     {
-      university: 'Politecnico di Torino',
-      course: 'Automotive Engineering',
-      field: 'Engineering'
+      university:
+        'Politecnico di Torino',
+
+      course:
+        'Automotive Engineering',
+
+      field:
+        'Engineering'
     },
 
     {
-      university: 'University of Camerino',
-      course: 'Biosciences and Biotechnology',
-      field: 'Life Sciences'
+      university:
+        'University of Camerino',
+
+      course:
+        'Biosciences and Biotechnology',
+
+      field:
+        'Life Sciences'
     },
 
   ],
 
 
-  /* ======================================================
-     FEATURED MASTER'S PROGRAMMES
-  ====================================================== */
+  // ======================================================
+  // FEATURED MASTER'S PROGRAMMES
+  // ======================================================
 
   featuredMasters: [
 
     {
-      university: 'Sapienza University of Rome',
-      course: 'Artificial Intelligence and Robotics',
-      field: 'Artificial Intelligence'
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Artificial Intelligence and Robotics',
+
+      field:
+        'Artificial Intelligence'
     },
 
     {
-      university: 'Sapienza University of Rome',
-      course: 'Business Management',
-      field: 'Management'
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Business Management',
+
+      field:
+        'Management'
     },
 
     {
-      university: 'Sapienza University of Rome',
-      course: 'Data Science',
-      field: 'Data Science'
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Data Science',
+
+      field:
+        'Data Science'
     },
 
     {
-      university: 'Sapienza University of Rome',
-      course: 'Finance and Insurance',
-      field: 'Finance'
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Finance and Insurance',
+
+      field:
+        'Finance'
     },
 
     {
-      university: 'Sapienza University of Rome',
-      course: 'Management Engineering',
-      field: 'Engineering & Management'
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Management Engineering',
+
+      field:
+        'Engineering & Management'
     },
 
     {
-      university: 'Sapienza University of Rome',
-      course: 'Health Economics',
-      field: 'Economics'
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Health Economics',
+
+      field:
+        'Economics'
     },
 
     {
-      university: 'Sapienza University of Rome',
+      university:
+        'Sapienza University of Rome',
+
       course:
         'Economics and Communication for Management and Innovation',
-      field: 'Economics & Management'
+
+      field:
+        'Economics & Management'
     },
 
     {
-      university: 'Sapienza University of Rome',
-      course: 'Electrical Engineering',
-      field: 'Engineering'
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Electrical Engineering',
+
+      field:
+        'Engineering'
     },
 
   ],
 
 
-  /* ======================================================
-     ELIGIBILITY
-  ====================================================== */
+  // ======================================================
+  // ELIGIBILITY
+  // ======================================================
 
   eligibility: [
 
     {
-      k: 'Bachelor’s',
+      k:
+        'Bachelor’s',
 
       v:
         'Applicants generally need a recognised Class XII qualification. Subject prerequisites, minimum marks and entrance-test requirements depend on the individual programme.'
     },
 
     {
-      k: 'Master’s',
+      k:
+        'Master’s',
 
       v:
         'Applicants generally require a recognised Bachelor’s degree in a relevant academic field. Universities may assess previous subjects, credits and academic background.'
     },
 
     {
-      k: 'English',
+      k:
+        'English',
 
       v:
         'English-taught programmes may require IELTS, TOEFL or another accepted proof of English. Some universities or programmes may accept alternative evidence, subject to their rules.'
     },
 
     {
-      k: 'Programme test',
+      k:
+        'Programme test',
 
       v:
         'Some Bachelor’s and Master’s programmes have entrance tests, interviews, portfolio requirements or additional selection criteria.'
     },
 
     {
-      k: 'Passport',
+      k:
+        'Passport',
 
       v:
         'A valid passport is required for university pre-enrolment and the student visa process.'
@@ -353,9 +454,9 @@ export const italyData = {
   ],
 
 
-  /* ======================================================
-     TUITION & LIVING COST
-  ====================================================== */
+  // ======================================================
+  // TUITION & LIVING COST
+  // ======================================================
 
   fees: {
 
@@ -417,97 +518,115 @@ export const italyData = {
   },
 
 
-  /* ======================================================
-     SCHOLARSHIPS / FEE SUPPORT
-  ====================================================== */
+  // ======================================================
+  // SCHOLARSHIPS / FEE SUPPORT
+  // ======================================================
 
   scholarships: [
 
     {
-      name: 'Regional Right-to-Study Benefits',
+      name:
+        'Regional Right-to-Study Benefits',
 
       body:
         'Italian regions operate financial-support schemes for eligible university students. Depending on the region and the student’s financial situation, support may include scholarships, accommodation, meals or other student benefits. Eligibility and award amounts vary each year.',
 
-      tag: 'NEED-BASED'
+      tag:
+        'NEED-BASED'
     },
 
     {
-      name: 'University Tuition Reductions',
+      name:
+        'University Tuition Reductions',
 
       body:
         'Public universities may calculate tuition according to family financial circumstances or offer reduced fixed fees and exemptions to eligible international students. Rules vary by institution.',
 
-      tag: 'FEE REDUCTION'
+      tag:
+        'FEE REDUCTION'
     },
 
     {
-      name: 'University Merit Scholarships',
+      name:
+        'University Merit Scholarships',
 
       body:
         'Individual universities may offer scholarships or tuition waivers based on academic merit, programme and yearly funding. Each scholarship has its own application requirements and deadlines.',
 
-      tag: 'MERIT'
+      tag:
+        'MERIT'
     },
 
     {
-      name: 'MAECI Scholarships',
+      name:
+        'MAECI Scholarships',
 
       body:
         'The Italian Ministry of Foreign Affairs and International Cooperation publishes scholarship calls for eligible international students, particularly for selected postgraduate and higher-education pathways. Students should check the current annual call.',
 
-      tag: 'GOVERNMENT'
+      tag:
+        'GOVERNMENT'
     },
 
   ],
 
 
-  /* ======================================================
-     APPLICATION PROCESS
-  ====================================================== */
+  // ======================================================
+  // APPLICATION PROCESS
+  // ======================================================
 
   visaSteps: [
 
     {
-      m: 'Step 1',
+      m:
+        'Step 1',
 
-      title: 'Course and university shortlist',
+      title:
+        'Course and university shortlist',
 
       body:
         'Choose programmes according to your previous education, academic subjects, career goal, tuition budget and admission requirements.'
     },
 
     {
-      m: 'Step 2',
+      m:
+        'Step 2',
 
-      title: 'University application',
+      title:
+        'University application',
 
       body:
         'Submit the university application with academic documents and any programme-specific requirements such as English scores, CV, SOP, portfolio or entrance tests.'
     },
 
     {
-      m: 'Step 3',
+      m:
+        'Step 3',
 
-      title: 'Admission decision',
+      title:
+        'Admission decision',
 
       body:
         'If successful, the university issues the relevant admission or conditional admission documentation.'
     },
 
     {
-      m: 'Step 4',
+      m:
+        'Step 4',
 
-      title: 'Universitaly pre-enrolment',
+      title:
+        'Universitaly pre-enrolment',
 
       body:
         'Non-EU students requiring a study visa generally complete the applicable pre-enrolment procedure through the official Universitaly system.'
     },
 
     {
-      m: 'Step 5',
+      m:
+        'Step 5',
 
-      title: 'Student visa and arrival',
+      title:
+        'Student visa and arrival',
 
       body:
         'Complete the Type D study-visa process, travel to Italy and follow the required residence-permit and university-enrolment procedures after arrival.'
@@ -516,9 +635,9 @@ export const italyData = {
   ],
 
 
-  /* ======================================================
-     UNIVERSITIES
-  ====================================================== */
+  // ======================================================
+  // UNIVERSITIES
+  // ======================================================
 
   universities: [
 
@@ -541,9 +660,9 @@ export const italyData = {
       notes:
         'Large public research university offering English-taught options across artificial intelligence, data science, engineering, economics, management and other disciplines.',
 
-      // UPDATED WORKING IMAGE
+      // SAME IMAGE SOURCE THAT WE KNOW LOADS
       img:
-        'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=85'
+        'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80'
     },
 
 
@@ -566,9 +685,8 @@ export const italyData = {
       notes:
         'Historic public university offering a broad portfolio of Bachelor’s and Master’s programmes. Tuition depends on the programme and financial circumstances.',
 
-      // UPDATED WORKING IMAGE
       img:
-        'https://images.unsplash.com/photo-1562774053-701939374585?w=1200&q=85'
+        'https://images.unsplash.com/photo-1562774053-701939374585?w=800&q=80'
     },
 
 
@@ -670,9 +788,9 @@ export const italyData = {
   ],
 
 
-  /* ======================================================
-     DOCUMENTS
-  ====================================================== */
+  // ======================================================
+  // DOCUMENTS
+  // ======================================================
 
   documents: [
 
@@ -707,9 +825,9 @@ export const italyData = {
   ],
 
 
-  /* ======================================================
-     FAQ
-  ====================================================== */
+  // ======================================================
+  // FAQ
+  // ======================================================
 
   faqs: [
 
