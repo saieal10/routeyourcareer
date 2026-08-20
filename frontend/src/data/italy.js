@@ -1,74 +1,964 @@
-// Italy deep-page data
+// =========================================================
+// ROUTE YOUR CAREER
+// ITALY — BACHELOR'S + MASTER'S STUDY HUB
+// =========================================================
+//
+// IMPORTANT:
+// Italy should NOT be marketed as universally "zero tuition".
+//
+// Public-university tuition varies according to:
+// - university
+// - programme
+// - family financial situation
+// - ISEE / equivalent foreign-income documentation
+// - scholarship / fee-waiver eligibility
+//
+// Some eligible students may receive major reductions,
+// exemptions and regional right-to-study benefits.
+//
+// Always verify the final fee directly with the university
+// for the relevant academic year.
+// =========================================================
+
+
 export const italyData = {
+
+  /* ======================================================
+     BASIC
+  ====================================================== */
+
   code: 'it',
+
   name: 'Italy',
-  flag: 'https://flagcdn.com/w80/it.png',
-  tagline: 'UG + PG in Italy with ZERO tuition fees.',
-  intro: "Italy's public universities are among Europe's best kept secrets. World-class Bachelor's and Master's programmes in English — taught at institutions like Bologna, Sapienza and Politecnico di Milano — at a symbolic annual admin fee. You budget only for living, not tuition.",
-  hero: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=1800&q=85',
-  gallery: [
-    'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&q=85',
-    'https://images.unsplash.com/photo-1522093007474-d86e9bf7ba6f?w=1200&q=85',
-    'https://images.unsplash.com/photo-1527142879-95b61a0b8226?w=1200&q=85',
-  ],
-  quickFacts: [
-    { k: 'Tuition', v: '€0–€800 / yr' },
-    { k: 'Duration', v: 'UG 3 yr · PG 2 yr' },
-    { k: 'Medium', v: 'English' },
-    { k: 'Living', v: '₹6–8L / yr' },
-    { k: 'Intake', v: 'Sep 2026' },
-    { k: 'Visa', v: 'Schengen D-visa' },
-  ],
-  eligibility: [
-    { k: 'Class XII', v: 'For UG: minimum 60% aggregate from a recognised board (no PCB restriction).' },
-    { k: 'Undergraduate', v: 'For PG (MSc / MBA / MIM): a recognised UG degree in a related field with 55%+.' },
-    { k: 'English', v: 'IELTS 6.0/6.5 (or equivalent) OR a Medium-of-Instruction letter for many programmes.' },
-    { k: 'Age', v: '18 years or above; no upper age limit for most PG programmes.' },
-    { k: 'Passport', v: 'Valid passport with 18+ months of validity.' },
-  ],
-  fees: {
-    tuition: '₹0 (admin fee €150–€800/yr)',
-    livingByCity: [
-      { city: 'Milan', housing: '₹3.2L', food: '₹1.6L', transport: '₹0.4L', misc: '₹1.0L', total: '₹6.2–8.0L / yr' },
-      { city: 'Rome', housing: '₹2.8L', food: '₹1.4L', transport: '₹0.4L', misc: '₹1.0L', total: '₹5.6–7.2L / yr' },
-      { city: 'Bologna', housing: '₹2.4L', food: '₹1.2L', transport: '₹0.3L', misc: '₹0.8L', total: '₹4.7–6.4L / yr' },
-      { city: 'Padua', housing: '₹2.2L', food: '₹1.2L', transport: '₹0.3L', misc: '₹0.8L', total: '₹4.5–6.2L / yr' },
-      { city: 'Naples', housing: '₹2.0L', food: '₹1.0L', transport: '₹0.3L', misc: '₹0.7L', total: '₹4.0–5.6L / yr' },
-    ],
+
+  flag:
+    'https://flagcdn.com/w80/it.png',
+
+
+  /* ======================================================
+     SEO
+  ====================================================== */
+
+  seo: {
+
+    title:
+      'Study in Italy for Indian Students 2026 | Bachelor’s & Master’s',
+
+    description:
+      'Explore Bachelor’s and Master’s programmes in Italy for Indian students. Compare public universities, tuition fees, scholarships, eligibility, courses, visa process and living costs.',
+
+    keywords: [
+      'study in Italy for Indian students',
+      'Bachelor in Italy',
+      'Masters in Italy',
+      'Italy public universities',
+      'Italy scholarships for Indian students',
+      'Italy university fees',
+      'study abroad Italy',
+      'English taught courses Italy',
+      'Italy admission 2026'
+    ]
+
   },
+
+
+  /* ======================================================
+     HERO
+  ====================================================== */
+
+  tagline:
+    'Bachelor’s + Master’s in Italy — world-class public universities at accessible fees.',
+
+  intro:
+    'Italy offers Indian students a wide range of English-taught Bachelor’s and Master’s programmes across business, economics, artificial intelligence, data science, engineering, architecture, law, biotechnology and other fields. Public-university tuition can be significantly lower than many other international destinations, with fee reductions and scholarships available to eligible students.',
+
+
+  hero:
+    'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=1800&q=85',
+
+
+  gallery: [
+
+    'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&q=85',
+
+    'https://images.unsplash.com/photo-1522093007474-d86e9bf7ba6f?w=1200&q=85',
+
+    'https://images.unsplash.com/photo-1527142879-95b61a0b8226?w=1200&q=85',
+
+  ],
+
+
+  /* ======================================================
+     QUICK FACTS
+  ====================================================== */
+
+  quickFacts: [
+
+    {
+      k: 'Study levels',
+      v: 'Bachelor + Master'
+    },
+
+    {
+      k: 'Typical duration',
+      v: 'UG 3 yr · PG 2 yr'
+    },
+
+    {
+      k: 'Medium',
+      v: 'English options'
+    },
+
+    {
+      k: 'Public tuition',
+      v: 'Varies by university'
+    },
+
+    {
+      k: 'Main intake',
+      v: '2026 / 27'
+    },
+
+    {
+      k: 'Visa',
+      v: 'Type D Study'
+    },
+
+  ],
+
+
+  /* ======================================================
+     PROGRAMME AREAS
+  ====================================================== */
+
+  programmeAreas: [
+
+    {
+      name:
+        'Business & Management',
+
+      examples:
+        'Business, Management, Economics, Finance, Marketing, International Business'
+    },
+
+    {
+      name:
+        'Computer Science & AI',
+
+      examples:
+        'Artificial Intelligence, Computer Science, Data Science, Robotics, Cybersecurity'
+    },
+
+    {
+      name:
+        'Engineering',
+
+      examples:
+        'Mechanical, Automotive, Computer, Electronics, Civil, Sustainable Engineering'
+    },
+
+    {
+      name:
+        'Economics & Finance',
+
+      examples:
+        'Economics, Finance, Business Economics, Economics & Management'
+    },
+
+    {
+      name:
+        'Architecture & Design',
+
+      examples:
+        'Architecture, Urban Planning, Sustainable Building, Design'
+    },
+
+    {
+      name:
+        'Law & International Studies',
+
+      examples:
+        'Global Law, European Studies, International Relations, Governance'
+    },
+
+    {
+      name:
+        'Life Sciences',
+
+      examples:
+        'Biotechnology, Biosciences, Health Economics and related fields'
+    },
+
+  ],
+
+
+  /* ======================================================
+     FEATURED BACHELOR'S PROGRAMMES
+
+     Selected examples from the RYC Italy course database.
+     Final availability must be verified for each intake.
+  ====================================================== */
+
+  featuredBachelors: [
+
+    {
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Applied Computer Science and Artificial Intelligence',
+
+      field:
+        'Computer Science & AI'
+    },
+
+    {
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Sustainable Building Engineering',
+
+      field:
+        'Engineering'
+    },
+
+    {
+      university:
+        'University of Pavia',
+
+      course:
+        'Artificial Intelligence',
+
+      field:
+        'Artificial Intelligence'
+    },
+
+    {
+      university:
+        'University of Turin',
+
+      course:
+        'Business & Management',
+
+      field:
+        'Business'
+    },
+
+    {
+      university:
+        'University of Turin',
+
+      course:
+        'Global Law and Transnational Legal Studies',
+
+      field:
+        'Law'
+    },
+
+    {
+      university:
+        'University of Pisa',
+
+      course:
+        'Management for Business and Economics',
+
+      field:
+        'Management'
+    },
+
+    {
+      university:
+        'University of Rome Tor Vergata',
+
+      course:
+        'Business Administration & Economics',
+
+      field:
+        'Business & Economics'
+    },
+
+    {
+      university:
+        'Politecnico di Torino',
+
+      course:
+        'Computer Engineering',
+
+      field:
+        'Engineering'
+    },
+
+    {
+      university:
+        'Politecnico di Torino',
+
+      course:
+        'Automotive Engineering',
+
+      field:
+        'Engineering'
+    },
+
+    {
+      university:
+        'University of Camerino',
+
+      course:
+        'Biosciences and Biotechnology',
+
+      field:
+        'Life Sciences'
+    },
+
+  ],
+
+
+  /* ======================================================
+     FEATURED MASTER'S PROGRAMMES
+  ====================================================== */
+
+  featuredMasters: [
+
+    {
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Artificial Intelligence and Robotics',
+
+      field:
+        'Artificial Intelligence'
+    },
+
+    {
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Business Management',
+
+      field:
+        'Management'
+    },
+
+    {
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Data Science',
+
+      field:
+        'Data Science'
+    },
+
+    {
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Finance and Insurance',
+
+      field:
+        'Finance'
+    },
+
+    {
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Management Engineering',
+
+      field:
+        'Engineering & Management'
+    },
+
+    {
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Health Economics',
+
+      field:
+        'Economics'
+    },
+
+    {
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Economics and Communication for Management and Innovation',
+
+      field:
+        'Economics & Management'
+    },
+
+    {
+      university:
+        'Sapienza University of Rome',
+
+      course:
+        'Electrical Engineering',
+
+      field:
+        'Engineering'
+    },
+
+  ],
+
+
+  /* ======================================================
+     ELIGIBILITY
+  ====================================================== */
+
+  eligibility: [
+
+    {
+      k: 'Bachelor’s',
+
+      v:
+        'Applicants generally need a recognised Class XII qualification. Subject prerequisites, minimum marks and entrance-test requirements depend on the individual programme.'
+    },
+
+    {
+      k: 'Master’s',
+
+      v:
+        'Applicants generally require a recognised Bachelor’s degree in a relevant academic field. Universities may assess previous subjects, credits and academic background.'
+    },
+
+    {
+      k: 'English',
+
+      v:
+        'English-taught programmes may require IELTS, TOEFL or another accepted proof of English. Some universities or programmes may accept alternative evidence, subject to their rules.'
+    },
+
+    {
+      k: 'Programme test',
+
+      v:
+        'Some Bachelor’s and Master’s programmes have entrance tests, interviews, portfolio requirements or additional selection criteria.'
+    },
+
+    {
+      k: 'Passport',
+
+      v:
+        'A valid passport is required for university pre-enrolment and the student visa process.'
+    },
+
+  ],
+
+
+  /* ======================================================
+     TUITION & LIVING COST
+  ====================================================== */
+
+  fees: {
+
+    tuition:
+      'Public-university tuition varies by university, programme and financial eligibility.',
+
+
+    tuitionNote:
+      'Students may qualify for reduced tuition, partial exemptions or other benefits after submitting the required family-income and asset documentation. Do not assume that every public university or every student automatically pays zero tuition.',
+
+
+    livingByCity: [
+
+      {
+        city:
+          'Milan',
+
+        housing:
+          'Higher',
+
+        food:
+          'Moderate',
+
+        transport:
+          'Student rates',
+
+        misc:
+          'Higher',
+
+        total:
+          '₹7–11L / yr approx.'
+      },
+
+      {
+        city:
+          'Rome',
+
+        housing:
+          'Med–High',
+
+        food:
+          'Moderate',
+
+        transport:
+          'Student rates',
+
+        misc:
+          'Moderate',
+
+        total:
+          '₹6–10L / yr approx.'
+      },
+
+      {
+        city:
+          'Bologna',
+
+        housing:
+          'Med–High',
+
+        food:
+          'Moderate',
+
+        transport:
+          'Student rates',
+
+        misc:
+          'Moderate',
+
+        total:
+          '₹6–9L / yr approx.'
+      },
+
+      {
+        city:
+          'Padua',
+
+        housing:
+          'Moderate',
+
+        food:
+          'Moderate',
+
+        transport:
+          'Student rates',
+
+        misc:
+          'Moderate',
+
+        total:
+          '₹5–8L / yr approx.'
+      },
+
+      {
+        city:
+          'Turin',
+
+        housing:
+          'Moderate',
+
+        food:
+          'Moderate',
+
+        transport:
+          'Student rates',
+
+        misc:
+          'Moderate',
+
+        total:
+          '₹5–8L / yr approx.'
+      },
+
+    ],
+
+  },
+
+
+  /* ======================================================
+     SCHOLARSHIPS / FEE SUPPORT
+  ====================================================== */
+
   scholarships: [
-    { name: 'DSU (Diritto allo Studio Universitario)', body: 'Regional need-based scholarship — covers tuition (already ₹0), free hostel, free mess, and a cash stipend of €2,000–€5,000/yr. Awarded on family income (ISEE certificate).', tag: 'NEED-BASED' },
-    { name: 'Invest Your Talent in Italy', body: 'Government of Italy scholarship for select MSc and MBA programmes — stipend + tuition waiver + internship placement.', tag: 'MERIT' },
-    { name: 'University Merit Scholarships', body: 'Most partner universities (Bologna, Sapienza, Politecnico) publish annual merit scholarships for Indian students — partial to full waivers of tuition and living.', tag: 'MERIT' },
-    { name: 'MAECI Scholarships', body: 'Italian Ministry of Foreign Affairs scholarships for graduate and PhD students — monthly stipend and health insurance.', tag: 'GOVT' },
+
+    {
+      name:
+        'Regional Right-to-Study Benefits',
+
+      body:
+        'Italian regions operate financial-support schemes for eligible university students. Depending on the region and the student’s financial situation, support may include scholarships, accommodation, meals or other student benefits. Eligibility and award amounts vary each year.',
+
+      tag:
+        'NEED-BASED'
+    },
+
+    {
+      name:
+        'University Tuition Reductions',
+
+      body:
+        'Public universities may calculate tuition according to family financial circumstances or offer reduced fixed fees and exemptions to eligible international students. Rules vary by institution.',
+
+      tag:
+        'FEE REDUCTION'
+    },
+
+    {
+      name:
+        'University Merit Scholarships',
+
+      body:
+        'Individual universities may offer scholarships or tuition waivers based on academic merit, programme and yearly funding. Each scholarship has its own application requirements and deadlines.',
+
+      tag:
+        'MERIT'
+    },
+
+    {
+      name:
+        'MAECI Scholarships',
+
+      body:
+        'The Italian Ministry of Foreign Affairs and International Cooperation publishes scholarship calls for eligible international students, particularly for selected postgraduate and higher-education pathways. Students should check the current annual call.',
+
+      tag:
+        'GOVERNMENT'
+    },
+
   ],
+
+
+  /* ======================================================
+     APPLICATION PROCESS
+  ====================================================== */
+
   visaSteps: [
-    { m: 'W0', title: 'Universitaly pre-application', body: 'Register on the government Universitaly portal and pre-apply to your shortlisted universities.' },
-    { m: 'W2', title: 'Admission / conditional letter', body: 'Receive an admission letter from your top-choice Italian university.' },
-    { m: 'W4', title: 'Declaration of Value (DoV) & translations', body: 'Submit your Class-X, XII (and UG) documents to the Italian embassy for the Declaration of Value.' },
-    { m: 'W6', title: 'Study visa (Type D) application', body: 'File the Type-D long-stay student visa with the Italian embassy in Delhi or the closest VFS.' },
-    { m: 'W8', title: 'Fly, permesso di soggiorno & enrolment', body: 'Land in Italy, apply for the permesso di soggiorno within 8 days, complete enrolment and start classes.' },
+
+    {
+      m:
+        'Step 1',
+
+      title:
+        'Course and university shortlist',
+
+      body:
+        'Choose programmes according to your previous education, academic subjects, career goal, tuition budget and admission requirements.'
+    },
+
+    {
+      m:
+        'Step 2',
+
+      title:
+        'University application',
+
+      body:
+        'Submit the university application with academic documents and any programme-specific requirements such as English scores, CV, SOP, portfolio or entrance tests.'
+    },
+
+    {
+      m:
+        'Step 3',
+
+      title:
+        'Admission decision',
+
+      body:
+        'If successful, the university issues the relevant admission or conditional admission documentation.'
+    },
+
+    {
+      m:
+        'Step 4',
+
+      title:
+        'Universitaly pre-enrolment',
+
+      body:
+        'Non-EU students requiring a study visa generally complete the applicable pre-enrolment procedure through the official Universitaly system.'
+    },
+
+    {
+      m:
+        'Step 5',
+
+      title:
+        'Student visa and arrival',
+
+      body:
+        'Complete the Type D study-visa process, travel to Italy and follow the required residence-permit and university-enrolment procedures after arrival.'
+    },
+
   ],
+
+
+  /* ======================================================
+     UNIVERSITIES
+  ====================================================== */
+
   universities: [
-    { name: 'University of Bologna', short: 'UniBo', est: 1088, city: 'Bologna', fee: '₹0 tuition', notes: 'The oldest continuously operating university in the world. Ranked top-200 QS. Wide range of English-medium UG and PG programmes.', img: 'https://images.unsplash.com/photo-1591636947042-58a0ea1e8ff9?w=800&q=80' },
-    { name: 'Sapienza University of Rome', short: 'Sapienza', est: 1303, city: 'Rome', fee: '₹0–₹0.5L admin', notes: 'Largest university in Europe. Strong management, engineering and design departments. English-taught MSc and BBA options.', img: 'https://images.unsplash.com/photo-1622883083920-9de1f28cf664?w=800&q=80' },
-    { name: 'Politecnico di Milano', short: 'PoliMi', est: 1863, city: 'Milan', fee: '₹1–2L / yr', notes: "Italy's top technical university, ranked top-140 QS. Powerhouse for engineering, design and computer science.", img: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80' },
-    { name: 'University of Milan (Statale)', short: 'UniMi', est: 1924, city: 'Milan', fee: '₹0–₹1L admin', notes: 'A large public research university with strong programmes in economics, humanities and life sciences.', img: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&q=80' },
-    { name: 'University of Padua', short: 'UniPd', est: 1222, city: 'Padua', fee: '₹0 tuition', notes: 'One of the oldest universities in the world, Galileo taught here. Excellent English-medium science and business courses.', img: 'https://images.unsplash.com/photo-1568322445389-f64ac2515020?w=800&q=80' },
-    { name: 'Bocconi University', short: 'Bocconi', est: 1902, city: 'Milan', fee: 'private ₹15–25L', notes: 'Italy’s top private business school — for students who want a Bocconi MBA / MIM stamp; scholarships available.', img: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80' },
+
+    {
+      name:
+        'Sapienza University of Rome',
+
+      short:
+        'Sapienza',
+
+      est:
+        1303,
+
+      city:
+        'Rome',
+
+      fee:
+        'Public · fees vary',
+
+      notes:
+        'Large public research university offering English-taught options across artificial intelligence, data science, engineering, economics, management and other disciplines.',
+
+      img:
+        'https://images.unsplash.com/photo-1622883083920-9de1f28cf664?w=800&q=80'
+    },
+
+
+    {
+      name:
+        'University of Bologna',
+
+      short:
+        'UniBo',
+
+      est:
+        1088,
+
+      city:
+        'Bologna',
+
+      fee:
+        'Public · income-based options',
+
+      notes:
+        'Historic public university offering a broad portfolio of Bachelor’s and Master’s programmes. Tuition depends on the programme and financial circumstances.',
+
+      img:
+        'https://images.unsplash.com/photo-1591636947042-58a0ea1e8ff9?w=800&q=80'
+    },
+
+
+    {
+      name:
+        'Politecnico di Milano',
+
+      short:
+        'PoliMi',
+
+      est:
+        1863,
+
+      city:
+        'Milan',
+
+      fee:
+        'Public · fees vary',
+
+      notes:
+        'Major technical university with strong programmes in engineering, architecture, design and technology. Tuition and exemptions depend on student circumstances.',
+
+      img:
+        'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80'
+    },
+
+
+    {
+      name:
+        'University of Padua',
+
+      short:
+        'UniPd',
+
+      est:
+        1222,
+
+      city:
+        'Padua',
+
+      fee:
+        'Public · fees vary',
+
+      notes:
+        'Established public research university offering programmes across science, engineering, economics, psychology and other academic fields.',
+
+      img:
+        'https://images.unsplash.com/photo-1568322445389-f64ac2515020?w=800&q=80'
+    },
+
+
+    {
+      name:
+        'University of Turin',
+
+      short:
+        'UniTo',
+
+      est:
+        1404,
+
+      city:
+        'Turin',
+
+      fee:
+        'Public · fees vary',
+
+      notes:
+        'Public university offering English-taught options including Business & Management, law and postgraduate programmes across multiple disciplines.',
+
+      img:
+        'https://images.unsplash.com/photo-1562774053-701939374585?w=800&q=80'
+    },
+
+
+    {
+      name:
+        'Politecnico di Torino',
+
+      short:
+        'PoliTo',
+
+      est:
+        1859,
+
+      city:
+        'Turin',
+
+      fee:
+        'Public · fees vary',
+
+      notes:
+        'Technical university with English-taught engineering and architecture options including Computer, Automotive and Electronic Engineering.',
+
+      img:
+        'https://images.unsplash.com/photo-1564981797816-1043664bf78d?w=800&q=80'
+    },
+
   ],
+
+
+  /* ======================================================
+     DOCUMENTS
+  ====================================================== */
+
   documents: [
-    'Passport (front & back scanned copies)', 'Class X & XII marksheets and certificates',
-    'Undergraduate marksheet (for PG applicants)', 'IELTS / Duolingo score OR Medium-of-Instruction letter',
-    'Statement of Purpose (SOP) & CV', 'Two letters of recommendation (for PG)',
-    'Passport-size photographs (white background)', 'Bank statement (funds proof for visa)',
-    'Declaration of Value (DoV) from Italian embassy',
+
+    'Valid passport',
+
+    'Class X certificate and marksheet',
+
+    'Class XII certificate and marksheet',
+
+    'Bachelor’s degree documents for Master’s applicants',
+
+    'Academic transcripts',
+
+    'English-language proof where required',
+
+    'Statement of Purpose / motivation letter when required',
+
+    'CV / résumé for relevant programmes',
+
+    'Letters of recommendation where required',
+
+    'Portfolio for architecture / design programmes where applicable',
+
+    'Financial documentation for tuition-benefit or scholarship applications',
+
+    'Financial evidence required for the study visa',
+
+    'Universitaly / pre-enrolment documentation where applicable',
+
+    'Translated, legalised, apostilled or CIMEA / Declaration-of-Value documentation where required'
+
   ],
+
+
+  /* ======================================================
+     FAQ
+  ====================================================== */
+
   faqs: [
-    { q: 'Is UG in Italy really tuition-free?', a: 'Yes. Italian public universities charge only an annual admin fee of €150–€800 (₹15,000–70,000). Indian students eligible for the DSU regional scholarship often pay ZERO admin fee AND receive free hostel, mess and a cash stipend.' },
-    { q: 'Do I need to know Italian?', a: 'No, not for the many English-medium UG and PG programmes we shortlist. You will pick up conversational Italian naturally in your first year while living there.' },
-    { q: 'Can I work while studying?', a: 'Yes. Italian student visas allow part-time work up to 20 hours/week during term and full-time during vacations — which typically covers a big chunk of living costs.' },
-    { q: 'What happens after graduation?', a: 'Italy offers a 12-month post-study “job search” permit. You can also apply for the EU Blue Card once you get a job offer above the salary threshold.' },
-    { q: 'Is Italy safe for Indian students?', a: 'Yes. Italy has a growing Indian community, and university student services are excellent. Cities like Milan, Bologna, Padua and Turin have dedicated Indian student associations.' },
+
+    {
+      q:
+        'Is university education in Italy free for Indian students?',
+
+      a:
+        'Not automatically. Public universities in Italy can be comparatively affordable, and eligible students may obtain fee reductions, exemptions or scholarships. The actual tuition depends on the university, programme and financial documentation.'
+    },
+
+
+    {
+      q:
+        'Can I study a Bachelor’s programme in English in Italy?',
+
+      a:
+        'Yes. English-taught Bachelor’s programmes are available in fields such as business, economics, artificial intelligence, engineering, law and other areas. The number of English options varies by university.'
+    },
+
+
+    {
+      q:
+        'Are Master’s programmes available in English?',
+
+      a:
+        'Yes. Italy offers a large selection of English-taught Master’s programmes across management, finance, data science, artificial intelligence, engineering, economics and many other disciplines.'
+    },
+
+
+    {
+      q:
+        'Do I need IELTS to study in Italy?',
+
+      a:
+        'It depends on the university and programme. Some programmes require IELTS, TOEFL or another recognised English qualification, while others may accept alternative evidence. Always check the exact programme requirement.'
+    },
+
+
+    {
+      q:
+        'What scholarships are available in Italy?',
+
+      a:
+        'Depending on eligibility, students may explore regional right-to-study benefits, university merit scholarships, tuition reductions and government scholarship programmes. Requirements and deadlines vary each year.'
+    },
+
+
+    {
+      q:
+        'How much does it cost to live in Italy?',
+
+      a:
+        'Living expenses vary significantly by city and accommodation type. Milan and Rome are generally more expensive, while several smaller university cities may offer lower student living costs.'
+    },
+
+
+    {
+      q:
+        'Which Italian university is best for me?',
+
+      a:
+        'The best option depends on your chosen course, previous academic background, budget, scholarship eligibility, city preference and career goal. Course-level matching is more useful than choosing only by university name.'
+    },
+
+
+    {
+      q:
+        'When should I start applying for the 2026/27 intake?',
+
+      a:
+        'Start researching programmes several months before deadlines because university applications, scholarship documents, Universitaly pre-enrolment and visa preparation can each have separate timelines.'
+    },
+
   ],
+
 };
