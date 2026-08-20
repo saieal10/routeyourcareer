@@ -20,9 +20,12 @@ const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL ||
   'https://routeyourcareer.onrender.com';
 
-
 const DEFAULT_BLOG_IMAGE = '/blog-default.png';
 
+
+/* =========================================================
+   CTA
+========================================================= */
 
 function ctaFor(cta) {
   if (cta === 'italy') {
@@ -67,23 +70,62 @@ function ctaFor(cta) {
 }
 
 
+/* =========================================================
+   DATE
+========================================================= */
+
 function formatDate(dateValue) {
   if (!dateValue) return '';
 
   try {
-    return new Date(dateValue).toLocaleDateString(
-      'en-IN',
-      {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      }
-    );
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+
   } catch {
     return '';
   }
 }
 
+
+/* =========================================================
+   META TAG HELPER
+========================================================= */
+
+function setMeta(selector, attribute, value) {
+  let element = document.querySelector(selector);
+
+  if (!element) {
+    element = document.createElement('meta');
+
+    const match = selector.match(
+      /meta\[(name|property)="([^"]+)"\]/
+    );
+
+    if (match) {
+      element.setAttribute(match[1], match[2]);
+    }
+
+    document.head.appendChild(element);
+  }
+
+  element.setAttribute(attribute, value);
+
+  return element;
+}
+
+
+/* =========================================================
+   BLOG POST
+========================================================= */
 
 export default function BlogPost() {
   const { slug } = useParams();
@@ -95,11 +137,16 @@ export default function BlogPost() {
   const [error, setError] = useState('');
 
 
+  /* =======================================================
+     LOAD BLOG
+  ======================================================= */
+
   useEffect(() => {
     const loadPost = async () => {
       try {
         setLoading(true);
         setError('');
+        setPost(null);
 
         const response = await fetch(
           `${BACKEND_URL}/api/blogs/${encodeURIComponent(slug)}`
@@ -119,7 +166,10 @@ export default function BlogPost() {
         setPost(data);
 
 
-        // Load related articles
+        /* ===============================================
+           RELATED ARTICLES
+        =============================================== */
+
         try {
           const relatedResponse = await fetch(
             `${BACKEND_URL}/api/blogs`
@@ -162,15 +212,309 @@ export default function BlogPost() {
       }
     };
 
-
     loadPost();
 
   }, [slug]);
 
 
-  // ==========================================
-  // LOADING
-  // ==========================================
+  /* =======================================================
+     BLOG SEO
+  ======================================================= */
+
+  useEffect(() => {
+    if (!post) return;
+
+
+    /* ===============================================
+       SEO TITLE
+
+       Priority:
+       1. seo_title from admin
+       2. blog title
+    =============================================== */
+
+    const seoTitle =
+      post.seo_title ||
+      `${post.title} | Route Your Career`;
+
+
+    /* ===============================================
+       META DESCRIPTION
+
+       Priority:
+       1. meta_description from admin
+       2. excerpt
+    =============================================== */
+
+    const seoDescription =
+      post.meta_description ||
+      post.excerpt ||
+      'Read the latest study abroad guidance from Route Your Career.';
+
+
+    const pageUrl =
+      `https://routeyourcareer.in/blog/${post.slug}`;
+
+
+    const imageUrl =
+      'https://routeyourcareer.in/blog-default.png';
+
+
+    /* ===============================================
+       PAGE TITLE
+    =============================================== */
+
+    document.title = seoTitle;
+
+
+    /* ===============================================
+       DESCRIPTION
+    =============================================== */
+
+    setMeta(
+      'meta[name="description"]',
+      'content',
+      seoDescription
+    );
+
+
+    /* ===============================================
+       ROBOTS
+    =============================================== */
+
+    setMeta(
+      'meta[name="robots"]',
+      'content',
+      'index, follow'
+    );
+
+
+    /* ===============================================
+       OPEN GRAPH
+    =============================================== */
+
+    setMeta(
+      'meta[property="og:type"]',
+      'content',
+      'article'
+    );
+
+    setMeta(
+      'meta[property="og:title"]',
+      'content',
+      seoTitle
+    );
+
+    setMeta(
+      'meta[property="og:description"]',
+      'content',
+      seoDescription
+    );
+
+    setMeta(
+      'meta[property="og:url"]',
+      'content',
+      pageUrl
+    );
+
+    setMeta(
+      'meta[property="og:image"]',
+      'content',
+      imageUrl
+    );
+
+
+    /* ===============================================
+       TWITTER
+    =============================================== */
+
+    setMeta(
+      'meta[name="twitter:card"]',
+      'content',
+      'summary_large_image'
+    );
+
+    setMeta(
+      'meta[name="twitter:title"]',
+      'content',
+      seoTitle
+    );
+
+    setMeta(
+      'meta[name="twitter:description"]',
+      'content',
+      seoDescription
+    );
+
+    setMeta(
+      'meta[name="twitter:image"]',
+      'content',
+      imageUrl
+    );
+
+
+    /* ===============================================
+       CANONICAL URL
+    =============================================== */
+
+    let canonical =
+      document.querySelector(
+        'link[rel="canonical"]'
+      );
+
+    if (!canonical) {
+      canonical =
+        document.createElement('link');
+
+      canonical.setAttribute(
+        'rel',
+        'canonical'
+      );
+
+      document.head.appendChild(
+        canonical
+      );
+    }
+
+    canonical.setAttribute(
+      'href',
+      pageUrl
+    );
+
+
+    /* ===============================================
+       ARTICLE STRUCTURED DATA
+    =============================================== */
+
+    const oldSchema =
+      document.getElementById(
+        'ryc-blog-schema'
+      );
+
+    if (oldSchema) {
+      oldSchema.remove();
+    }
+
+
+    const schema =
+      document.createElement('script');
+
+    schema.type =
+      'application/ld+json';
+
+    schema.id =
+      'ryc-blog-schema';
+
+
+    schema.textContent =
+      JSON.stringify({
+        '@context':
+          'https://schema.org',
+
+        '@type':
+          'Article',
+
+        headline:
+          post.title,
+
+        description:
+          seoDescription,
+
+        image: [
+          imageUrl
+        ],
+
+        datePublished:
+          post.published_at ||
+          undefined,
+
+        dateModified:
+          post.updated_at ||
+          post.published_at ||
+          undefined,
+
+        author: {
+          '@type':
+            'Organization',
+
+          name:
+            post.author ||
+            'Route Your Career'
+        },
+
+        publisher: {
+          '@type':
+            'Organization',
+
+          name:
+            'Route Your Career',
+
+          url:
+            'https://routeyourcareer.in/'
+        },
+
+        mainEntityOfPage: {
+          '@type':
+            'WebPage',
+
+          '@id':
+            pageUrl
+        }
+      });
+
+
+    document.head.appendChild(
+      schema
+    );
+
+
+    /* ===============================================
+       RESET WHEN LEAVING BLOG
+    =============================================== */
+
+    return () => {
+
+      document.title =
+        'Route Your Career | MBBS Abroad & Career Counselling';
+
+
+      setMeta(
+        'meta[name="description"]',
+        'content',
+        'Route Your Career provides guidance for MBBS abroad, medical university admissions, management courses and career counselling for Indian students.'
+      );
+
+
+      const canonicalTag =
+        document.querySelector(
+          'link[rel="canonical"]'
+        );
+
+      if (canonicalTag) {
+        canonicalTag.setAttribute(
+          'href',
+          'https://routeyourcareer.in/'
+        );
+      }
+
+
+      const blogSchema =
+        document.getElementById(
+          'ryc-blog-schema'
+        );
+
+      if (blogSchema) {
+        blogSchema.remove();
+      }
+
+    };
+
+  }, [post]);
+
+
+  /* =======================================================
+     LOADING
+  ======================================================= */
 
   if (loading) {
     return (
@@ -200,9 +544,9 @@ export default function BlogPost() {
   }
 
 
-  // ==========================================
-  // NOT FOUND
-  // ==========================================
+  /* =======================================================
+     NOT FOUND
+  ======================================================= */
 
   if (error === 'not-found' || !post) {
     return (
@@ -239,9 +583,9 @@ export default function BlogPost() {
   }
 
 
-  // ==========================================
-  // LOAD ERROR
-  // ==========================================
+  /* =======================================================
+     LOAD ERROR
+  ======================================================= */
 
   if (error === 'load-error') {
     return (
@@ -269,8 +613,13 @@ export default function BlogPost() {
   }
 
 
-  const cta = ctaFor(post.cta);
+  const cta =
+    ctaFor(post.cta);
 
+
+  /* =======================================================
+     ARTICLE
+  ======================================================= */
 
   return (
     <div className="min-h-screen bg-cream text-ink">
@@ -281,9 +630,10 @@ export default function BlogPost() {
 
       <article>
 
-        {/* ========================================== */}
-        {/* ARTICLE HEADER */}
-        {/* ========================================== */}
+
+        {/* ================================================
+            HEADER
+        ================================================= */}
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-10">
 
@@ -291,8 +641,11 @@ export default function BlogPost() {
             onClick={() => nav(-1)}
             className="inline-flex items-center gap-1 text-[12px] mono uppercase tracking-widest text-ink/60 hover:text-ink"
           >
+
             <ArrowLeft className="h-3.5 w-3.5" />
+
             Back
+
           </button>
 
 
@@ -318,7 +671,9 @@ export default function BlogPost() {
 
               <span className="text-[11px] mono uppercase tracking-widest text-ink/50">
 
-                {formatDate(post.published_at)}
+                {formatDate(
+                  post.published_at
+                )}
 
               </span>
 
@@ -343,16 +698,19 @@ export default function BlogPost() {
 
           <div className="mt-4 text-[12px] mono uppercase tracking-widest text-ink/50">
 
-            By {post.author || 'RYC Editorial'}
+            By {
+              post.author ||
+              'RYC Editorial'
+            }
 
           </div>
 
         </div>
 
 
-        {/* ========================================== */}
-        {/* DEFAULT BLOG IMAGE */}
-        {/* ========================================== */}
+        {/* ================================================
+            DEFAULT IMAGE
+        ================================================= */}
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-10">
 
@@ -365,54 +723,87 @@ export default function BlogPost() {
         </div>
 
 
-        {/* ========================================== */}
-        {/* ARTICLE BODY */}
-        {/* ========================================== */}
+        {/* ================================================
+            BODY
+        ================================================= */}
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-12 pb-4">
+
 
           {(post.body || []).map(
             (block, index) => {
 
-              // HEADING
-              if (block.type === 'heading') {
+
+              /* HEADING */
+
+              if (
+                block.type ===
+                'heading'
+              ) {
+
                 return (
+
                   <h2
                     key={index}
                     className="serif text-3xl font-medium text-ink mt-10 mb-3 leading-tight"
                   >
+
                     {block.text}
+
                   </h2>
+
                 );
+
               }
 
 
-              // PARAGRAPH
-              if (block.type === 'paragraph') {
+              /* PARAGRAPH */
+
+              if (
+                block.type ===
+                'paragraph'
+              ) {
+
                 return (
+
                   <p
                     key={index}
                     className="text-ink/80 text-[16px] leading-[1.7] mt-3"
                   >
+
                     {block.text}
+
                   </p>
+
                 );
+
               }
 
 
-              // BULLET LIST
-              if (block.type === 'list') {
+              /* LIST */
+
+              if (
+                block.type ===
+                'list'
+              ) {
+
                 return (
+
                   <ul
                     key={index}
                     className="mt-4 space-y-2 pl-1"
                   >
 
                     {(block.items || []).map(
-                      (item, itemIndex) => (
+                      (
+                        item,
+                        itemIndex
+                      ) => (
 
                         <li
-                          key={itemIndex}
+                          key={
+                            itemIndex
+                          }
                           className="flex items-start gap-2 text-ink/80 text-[15px]"
                         >
 
@@ -426,43 +817,48 @@ export default function BlogPost() {
                     )}
 
                   </ul>
+
                 );
+
               }
 
 
-              /*
-                Old image blocks are intentionally ignored.
-
-                We are using one default image for
-                every blog article.
-              */
-
               return null;
+
             }
           )}
 
 
-          {/* ========================================== */}
-          {/* CTA */}
-          {/* ========================================== */}
+          {/* ==============================================
+              CTA
+          =============================================== */}
 
           <div className="mt-14 rounded-3xl bg-ink text-cream p-8">
 
             <div className="text-[11px] mono uppercase tracking-widest text-coral">
+
               One next step
+
             </div>
 
+
             <h3 className="serif text-2xl mt-2">
+
               Ready to route the rest?
+
             </h3>
 
+
             <p className="mt-2 text-cream/70 text-[14px]">
+
               Free consultation on request.
               Two clicks and we’re on it.
+
             </p>
 
 
             <div className="mt-5 flex flex-wrap gap-3">
+
 
               <Link
                 to={cta.to}
@@ -506,9 +902,9 @@ export default function BlogPost() {
         </div>
 
 
-        {/* ========================================== */}
-        {/* RELATED POSTS */}
-        {/* ========================================== */}
+        {/* ================================================
+            RELATED ARTICLES
+        ================================================= */}
 
         {related.length > 0 && (
 
@@ -530,6 +926,7 @@ export default function BlogPost() {
 
             <div className="mt-6 grid sm:grid-cols-3 gap-5">
 
+
               {related.map(
                 (item) => (
 
@@ -542,8 +939,6 @@ export default function BlogPost() {
                     className="group rounded-3xl overflow-hidden bg-white border border-ink/10 card-lift block"
                   >
 
-
-                    {/* SAME DEFAULT IMAGE */}
 
                     <div className="aspect-[16/10] overflow-hidden bg-ink/5">
 
@@ -559,6 +954,7 @@ export default function BlogPost() {
 
                     <div className="p-5">
 
+
                       <div className="flex items-center justify-between gap-3">
 
                         <span className="inline-flex items-center rounded-full bg-cream border border-ink/10 text-ink text-[10px] font-bold uppercase tracking-widest px-2 py-0.5">
@@ -572,7 +968,7 @@ export default function BlogPost() {
 
                           <Clock className="h-3 w-3" />
 
-                          {item.read_time || 5} min
+                          {item.read_time || 5} min read
 
                         </span>
 
@@ -584,6 +980,7 @@ export default function BlogPost() {
                         {item.title}
 
                       </h4>
+
 
                     </div>
 
@@ -602,6 +999,7 @@ export default function BlogPost() {
 
 
       <Footer />
+
       <AiChatWidget />
 
     </div>
