@@ -79,6 +79,7 @@ export default function CountryItaly() {
       document.head.appendChild(
         descriptionTag
       );
+
     }
 
     descriptionTag.setAttribute(
@@ -107,6 +108,7 @@ export default function CountryItaly() {
       document.head.appendChild(
         robotsTag
       );
+
     }
 
     robotsTag.setAttribute(
@@ -135,6 +137,7 @@ export default function CountryItaly() {
       document.head.appendChild(
         canonicalTag
       );
+
     }
 
     canonicalTag.setAttribute(
@@ -168,6 +171,7 @@ export default function CountryItaly() {
         document.head.appendChild(
           tag
         );
+
       }
 
       tag.setAttribute(
@@ -469,18 +473,16 @@ export default function CountryItaly() {
           <div className="mt-8 flex flex-wrap gap-3">
 
 
-            <a
-              href={brand.applyLink}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/countries/italy/courses"
               className="group inline-flex items-center gap-2 rounded-full bg-coral hover:bg-[#d94a26] text-white px-6 py-3.5 text-[14px] font-bold"
             >
 
-              Find My Italy Course
+              Explore 402 Italy Courses
 
-              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
+              <Search className="h-4 w-4" />
 
-            </a>
+            </Link>
 
 
             <a
@@ -508,6 +510,114 @@ export default function CountryItaly() {
 
           </div>
 
+
+        </div>
+
+      </section>
+
+
+      {/* ==================================================
+          COURSE FINDER FEATURE
+      ================================================== */}
+
+      <section className="py-12 bg-cream">
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+
+
+          <div className="relative overflow-hidden rounded-[32px] bg-ink text-cream px-7 py-8 sm:px-10 sm:py-10">
+
+
+            <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-coral/20 blur-3xl" />
+
+
+            <div className="relative grid lg:grid-cols-12 gap-7 items-center">
+
+
+              <div className="lg:col-span-8">
+
+
+                <div className="text-[11px] mono uppercase tracking-widest text-coral flex items-center gap-2">
+
+                  <Search className="h-4 w-4" />
+
+                  Italy Course & University Finder
+
+                </div>
+
+
+                <h2 className="serif mt-3 text-3xl sm:text-4xl font-normal leading-tight">
+
+                  Search 402 programmes
+
+                  <br />
+
+                  <em className="font-light text-coral">
+
+                    across Italian universities.
+
+                  </em>
+
+                </h2>
+
+
+                <p className="mt-4 max-w-2xl text-[14px] text-cream/70 leading-relaxed">
+
+                  Explore 94 Bachelor’s and 308 Master’s programmes.
+                  Search by course name, degree level and university
+                  to build your Italy shortlist.
+
+                </p>
+
+
+                <div className="mt-5 flex flex-wrap gap-2">
+
+
+                  <span className="rounded-full border border-cream/15 bg-white/5 px-4 py-2 text-[12px]">
+
+                    94 Bachelor’s
+
+                  </span>
+
+
+                  <span className="rounded-full border border-cream/15 bg-white/5 px-4 py-2 text-[12px]">
+
+                    308 Master’s
+
+                  </span>
+
+
+                  <span className="rounded-full border border-cream/15 bg-white/5 px-4 py-2 text-[12px]">
+
+                    402 Programmes
+
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div className="lg:col-span-4 lg:flex lg:justify-end">
+
+
+                <Link
+                  to="/countries/italy/courses"
+                  className="group inline-flex w-full lg:w-auto items-center justify-center gap-2 rounded-full bg-coral hover:bg-[#d94a26] text-white px-7 py-4 text-[14px] font-bold"
+                >
+
+                  Open Course Finder
+
+                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
+
+                </Link>
+
+              </div>
+
+
+            </div>
+
+          </div>
 
         </div>
 
@@ -683,18 +793,16 @@ export default function CountryItaly() {
             </div>
 
 
-            <a
-              href={brand.callbackLink}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/countries/italy/courses"
               className="inline-flex items-center gap-2 text-[14px] font-semibold link-uline"
             >
 
-              Get a personalised shortlist
+              Browse all Bachelor’s programmes
 
               <ArrowUpRight className="h-4 w-4" />
 
-            </a>
+            </Link>
 
           </div>
 
@@ -759,33 +867,31 @@ export default function CountryItaly() {
 
               <div className="text-[11px] mono uppercase tracking-widest text-coral">
 
-                Need more options?
+                94 Bachelor’s programmes
 
               </div>
 
 
               <p className="mt-1 text-[14px] text-ink/70">
 
-                Route Your Career can shortlist programmes based on
-                your Class XII background, preferred field and budget.
+                Search the complete Italy database by programme,
+                university and study level.
 
               </p>
 
             </div>
 
 
-            <a
-              href={brand.applyLink}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/countries/italy/courses"
               className="inline-flex items-center gap-2 rounded-full bg-ink text-cream px-5 py-3 text-[13px] font-semibold"
             >
 
-              Find Bachelor’s Courses
+              Explore Bachelor’s Courses
 
               <Search className="h-4 w-4" />
 
-            </a>
+            </Link>
 
           </div>
 
@@ -803,31 +909,48 @@ export default function CountryItaly() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
 
-          <div className="max-w-3xl">
+          <div className="flex flex-wrap items-end justify-between gap-5">
 
 
-            <div className="text-[11px] mono uppercase tracking-widest text-coral flex items-center gap-2">
+            <div className="max-w-3xl">
 
-              <BookOpen className="h-4 w-4" />
 
-              Master’s programmes
+              <div className="text-[11px] mono uppercase tracking-widest text-coral flex items-center gap-2">
+
+                <BookOpen className="h-4 w-4" />
+
+                Master’s programmes
+
+              </div>
+
+
+              <h2 className="serif mt-3 text-4xl sm:text-5xl font-normal">
+
+                Build your Master’s shortlist
+
+                <br />
+
+                <em className="font-light text-coral">
+
+                  by career goal.
+
+                </em>
+
+              </h2>
 
             </div>
 
 
-            <h2 className="serif mt-3 text-4xl sm:text-5xl font-normal">
+            <Link
+              to="/countries/italy/courses"
+              className="inline-flex items-center gap-2 text-[14px] font-semibold text-cream hover:text-coral"
+            >
 
-              Build your Master’s shortlist
+              Browse 308 Master’s programmes
 
-              <br />
+              <ArrowUpRight className="h-4 w-4" />
 
-              <em className="font-light text-coral">
-
-                by career goal.
-
-              </em>
-
-            </h2>
+            </Link>
 
           </div>
 
@@ -885,17 +1008,29 @@ export default function CountryItaly() {
           </div>
 
 
-          <div className="mt-8 flex justify-start">
+          <div className="mt-8 flex flex-wrap gap-3">
 
 
-            <a
-              href={brand.applyLink}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/countries/italy/courses"
               className="inline-flex items-center gap-2 rounded-full bg-coral text-white px-6 py-3.5 text-[14px] font-bold"
             >
 
-              Find Master’s Courses
+              Explore Master’s Courses
+
+              <Search className="h-4 w-4" />
+
+            </Link>
+
+
+            <a
+              href={brand.callbackLink}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-cream/25 text-cream px-6 py-3.5 text-[14px] font-semibold hover:bg-white/5"
+            >
+
+              Get a personalised shortlist
 
               <ArrowUpRight className="h-4 w-4" />
 
@@ -1330,16 +1465,16 @@ export default function CountryItaly() {
             </div>
 
 
-            <a
-              href={brand.callbackLink}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[14px] font-semibold link-uline"
+            <Link
+              to="/countries/italy/courses"
+              className="inline-flex items-center gap-2 text-[14px] font-semibold link-uline"
             >
 
-              Which university fits me? →
+              Search courses & universities
 
-            </a>
+              <Search className="h-4 w-4" />
+
+            </Link>
 
           </div>
 
@@ -1428,18 +1563,16 @@ export default function CountryItaly() {
                       </div>
 
 
-                      <a
-                        href={brand.applyLink}
-                        target="_blank"
-                        rel="noreferrer"
+                      <Link
+                        to="/countries/italy/courses"
                         className="inline-flex items-center gap-1 rounded-full bg-ink text-cream px-4 py-2 text-[12px] font-semibold hover:bg-forest"
                       >
 
-                        Shortlist
+                        View Courses
 
                         <ArrowUpRight className="h-3.5 w-3.5" />
 
-                      </a>
+                      </Link>
 
                     </div>
 
@@ -1449,6 +1582,23 @@ export default function CountryItaly() {
 
               )
             )}
+
+          </div>
+
+
+          <div className="mt-8 flex justify-center">
+
+
+            <Link
+              to="/countries/italy/courses"
+              className="group inline-flex items-center gap-2 rounded-full bg-coral text-white px-7 py-3.5 text-[14px] font-bold"
+            >
+
+              Explore All Italy Courses & Universities
+
+              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
+
+            </Link>
 
           </div>
 
@@ -1725,9 +1875,9 @@ export default function CountryItaly() {
 
             <p className="mt-5 text-[15px] text-cream/70 leading-relaxed max-w-2xl">
 
-              Tell us your academic background, preferred subject,
-              budget and career goal. We’ll help you build an Italy
-              programme shortlist.
+              Search our Italy programme database yourself or tell us
+              your academic background, preferred subject, budget and
+              career goal for personalised guidance.
 
             </p>
 
@@ -1735,18 +1885,16 @@ export default function CountryItaly() {
             <div className="mt-7 flex flex-wrap gap-3">
 
 
-              <a
-                href={brand.applyLink}
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                to="/countries/italy/courses"
                 className="inline-flex items-center gap-2 rounded-full bg-coral text-white px-6 py-3.5 text-[14px] font-bold"
               >
 
-                Find My Italy Course
+                Search 402 Italy Courses
 
-                <ArrowUpRight className="h-4 w-4" />
+                <Search className="h-4 w-4" />
 
-              </a>
+              </Link>
 
 
               <a
