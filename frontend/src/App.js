@@ -10,8 +10,11 @@ import {
 } from 'react-router-dom';
 
 import Home from './pages/Home';
+
 import CountryGeorgia from './pages/CountryGeorgia';
 import CountryItaly from './pages/CountryItaly';
+import CountryUzbekistan from './pages/CountryUzbekistan';
+
 import ItalyCourses from './pages/ItalyCourses';
 
 import AdminLogin from './pages/AdminLogin';
@@ -29,17 +32,10 @@ import { Toaster } from './components/ui/toaster';
 =========================================================
 COUNTRY ROUTER
 
-Georgia and Italy already have dedicated deep pages.
-
-Instead of showing duplicate content:
-
-/country/ge
-/country/it
-
-we redirect them to:
-
-/countries/georgia
-/countries/italy
+Dedicated deep pages:
+- Georgia
+- Italy
+- Uzbekistan
 
 All other countries continue using CountryDetail.
 =========================================================
@@ -79,6 +75,18 @@ function DynamicCountryRoute() {
   }
 
 
+  if (code === 'uz') {
+
+    return (
+      <Navigate
+        to="/countries/uzbekistan"
+        replace
+      />
+    );
+
+  }
+
+
   return <CountryDetail />;
 
 }
@@ -98,9 +106,6 @@ function AppRouter() {
   /*
   ---------------------------------------------------------
   GOOGLE AUTH CALLBACK
-
-  Keep this exactly because your authentication system
-  uses session_id inside the URL hash.
   ---------------------------------------------------------
   */
 
@@ -145,6 +150,12 @@ function AppRouter() {
       />
 
 
+      <Route
+        path="/countries/uzbekistan"
+        element={<CountryUzbekistan />}
+      />
+
+
       {/* =========================
           ITALY COURSE FINDER
       ========================= */}
@@ -157,13 +168,6 @@ function AppRouter() {
 
       {/* =========================
           DYNAMIC COUNTRY PAGES
-
-          Examples:
-          /country/uz
-          /country/ie
-          /country/eg
-          /country/de
-          /country/au
       ========================= */}
 
       <Route
