@@ -2,15 +2,23 @@
 // ROUTE YOUR CAREER
 // GEORGIA — MBBS / MEDICAL STUDY HUB
 // =========================================================
+//
+// University tuition figures are approximate and may change.
+// Always confirm the current academic-year fee before admission.
+//
+// =========================================================
 
 export const georgiaData = {
+
+  // ======================================================
+  // BASIC
+  // ======================================================
 
   code: 'ge',
 
   name: 'Georgia',
 
-  flag:
-    'https://flagcdn.com/w80/ge.png',
+  flag: 'https://flagcdn.com/w80/ge.png',
 
 
   // ======================================================
@@ -20,10 +28,10 @@ export const georgiaData = {
   seo: {
 
     title:
-      'MBBS in Georgia for Indian Students 2026 | Universities, Fees & Admission',
+      'MBBS in Georgia for Indian Students | Universities, Fees & Admission',
 
     description:
-      'Explore MBBS in Georgia for Indian students. Compare Georgian medical universities, tuition fees, eligibility, admission process, living costs and student support.'
+      'Explore MBBS in Georgia for Indian students. Compare Georgian medical universities, tuition fees, eligibility, admission process, living costs and student support.',
 
   },
 
@@ -38,12 +46,13 @@ export const georgiaData = {
   intro:
     'Georgia is a popular MBBS-abroad destination for Indian students looking for English-medium medical education, an international student environment and multiple university options. Medical programmes are generally around six years, while tuition and total cost depend on the university and student lifestyle.',
 
-
-  // Uses your uploaded REAL university photo
-
   hero:
     '/universities/georgia/tsmu.jpg',
 
+
+  // ======================================================
+  // GALLERY
+  // ======================================================
 
   gallery: [
 
@@ -89,8 +98,8 @@ export const georgiaData = {
 
     {
       k: 'Cities',
-      v: 'Tbilisi + Batumi'
-    }
+      v: 'Tbilisi · Batumi · Kutaisi'
+    },
 
   ],
 
@@ -134,96 +143,85 @@ export const georgiaData = {
 
       v:
         'A valid passport is required for admission, invitation and immigration processing.'
-    }
+    },
 
   ],
 
 
   // ======================================================
   // UNIVERSITIES
+  // 13 UNIVERSITIES
   // ======================================================
 
   universities: [
 
 
+    // ====================================================
     // 01 — ALTE UNIVERSITY
+    // ====================================================
 
     {
-      name:
-        'ALTE University',
+      name: 'ALTE University',
 
-      short:
-        'ALTE',
+      short: 'ALTE',
 
-      city:
-        'Tbilisi',
+      city: 'Tbilisi',
 
-      fee:
-        '$5,950 / year approx.',
+      fee: '$5,950 / year approx.',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
-        'Private university in Tbilisi offering an English-medium medical programme for international students. ALTE is one of the priority Georgia options represented by Route Your Career.',
+        'Private university in Tbilisi offering an English-medium medical programme for international students.',
 
       img:
         '/universities/georgia/alte.jpg'
     },
 
 
+    // ====================================================
     // 02 — AVICENNA BATUMI MEDICAL UNIVERSITY
+    // ====================================================
 
     {
-      name:
-        'Avicenna - Batumi Medical University',
+      name: 'Avicenna - Batumi Medical University',
 
-      short:
-        'Avicenna BMU',
+      short: 'Avicenna BMU',
 
-      city:
-        'Batumi',
+      city: 'Batumi',
 
-      fee:
-        'Approx. $5,500–$7,000 / year',
+      fee: 'Approx. $5,500–$7,000 / year',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
-        'Medical university in Batumi providing an international medical education environment on Georgia’s Black Sea coast. Final tuition should be confirmed for the relevant intake.',
+        'Medical university located in Batumi offering an international medical education environment on Georgia’s Black Sea coast. Current tuition should be confirmed for the relevant intake.',
 
       img:
         '/universities/georgia/avicenna-batumi.jpg'
     },
 
 
+    // ====================================================
     // 03 — CAUCASUS INTERNATIONAL UNIVERSITY
+    // ====================================================
 
     {
-      name:
-        'Caucasus International University',
+      name: 'Caucasus International University',
 
-      short:
-        'CIU',
+      short: 'CIU',
 
-      city:
-        'Tbilisi',
+      city: 'Tbilisi',
 
-      fee:
-        '$6,000 / year approx.',
+      fee: '$6,000 / year approx.',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
         'Popular Tbilisi university among international medical students, offering an English-medium medical programme and access to clinical learning environments in the capital.',
@@ -233,26 +231,22 @@ export const georgiaData = {
     },
 
 
+    // ====================================================
     // 04 — CAUCASUS UNIVERSITY
+    // ====================================================
 
     {
-      name:
-        'Caucasus University',
+      name: 'Caucasus University',
 
-      short:
-        'CU',
+      short: 'CU',
 
-      city:
-        'Tbilisi',
+      city: 'Tbilisi',
 
-      fee:
-        'Approx. $5,500–$7,000 / year',
+      fee: 'Approx. $5,500–$7,000 / year',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
         'Established Georgian university with an international academic environment and an English-taught medical programme.',
@@ -262,84 +256,72 @@ export const georgiaData = {
     },
 
 
+    // ====================================================
     // 05 — DAVID TVILDIANI MEDICAL UNIVERSITY
+    // ====================================================
 
     {
-      name:
-        'David Tvildiani Medical University',
+      name: 'David Tvildiani Medical University',
 
-      short:
-        'DTMU',
+      short: 'DTMU',
 
-      city:
-        'Tbilisi',
+      city: 'Tbilisi',
 
-      fee:
-        'University-specific fee',
+      fee: 'University-specific fee',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
-        'Specialised medical university with a strong focus on medical education. Students should confirm current tuition directly for the relevant intake.',
+        'Specialised medical university with a strong focus on medical education. Current tuition should be confirmed for the relevant academic year.',
 
       img:
         '/universities/georgia/dtmu.jpg'
     },
 
 
+    // ====================================================
     // 06 — EAST EUROPEAN UNIVERSITY
+    // ====================================================
 
     {
-      name:
-        'East European University',
+      name: 'East European University',
 
-      short:
-        'EEU',
+      short: 'EEU',
 
-      city:
-        'Tbilisi',
+      city: 'Tbilisi',
 
-      fee:
-        '$5,500 / year approx.',
+      fee: '$5,500 / year approx.',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
-        'Tbilisi-based university offering medical education to international students and positioned among the comparatively accessible Georgia options.',
+        'Tbilisi-based university offering medical education to international students and an English-medium medical programme.',
 
       img:
         '/universities/georgia/eeu.jpg'
     },
 
 
+    // ====================================================
     // 07 — EUROPEAN UNIVERSITY
+    // ====================================================
 
     {
-      name:
-        'European University',
+      name: 'European University',
 
-      short:
-        'EU',
+      short: 'EU',
 
-      city:
-        'Tbilisi',
+      city: 'Tbilisi',
 
-      fee:
-        '$6,500 / year approx.',
+      fee: '$6,500 / year approx.',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
         'Private university in Tbilisi with an established international medical student population and English-medium medical programme.',
@@ -349,55 +331,47 @@ export const georgiaData = {
     },
 
 
+    // ====================================================
     // 08 — GEORGIAN NATIONAL UNIVERSITY SEU
+    // ====================================================
 
     {
-      name:
-        'Georgian National University - SEU',
+      name: 'Georgian National University - SEU',
 
-      short:
-        'SEU',
+      short: 'SEU',
 
-      city:
-        'Tbilisi',
+      city: 'Tbilisi',
 
-      fee:
-        'Approx. $5,500–$7,000 / year',
+      fee: 'Approx. $5,500–$7,000 / year',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
-        'Modern university in Tbilisi with a sizeable international student environment. Current medical tuition should be confirmed for the admission year.',
+        'Modern university in Tbilisi with a sizeable international student environment and medical education for international students.',
 
       img:
         '/universities/georgia/seu.jpg'
     },
 
 
+    // ====================================================
     // 09 — NEW VISION UNIVERSITY
+    // ====================================================
 
     {
-      name:
-        'New Vision University',
+      name: 'New Vision University',
 
-      short:
-        'NVU',
+      short: 'NVU',
 
-      city:
-        'Tbilisi',
+      city: 'Tbilisi',
 
-      fee:
-        '$7,000 / year approx.',
+      fee: '$7,000 / year approx.',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
         'Internationally oriented private university offering English-medium medical education in Tbilisi.',
@@ -407,26 +381,22 @@ export const georgiaData = {
     },
 
 
+    // ====================================================
     // 10 — PETRE SHOTADZE TMA
+    // ====================================================
 
     {
-      name:
-        'Petre Shotadze Tbilisi Medical Academy',
+      name: 'Petre Shotadze Tbilisi Medical Academy',
 
-      short:
-        'TMA',
+      short: 'TMA',
 
-      city:
-        'Tbilisi',
+      city: 'Tbilisi',
 
-      fee:
-        '$7,000 / year approx.',
+      fee: '$7,000 / year approx.',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
         'Specialised medical institution in Tbilisi with a long-standing focus on medical education and an international English-medium programme.',
@@ -436,33 +406,79 @@ export const georgiaData = {
     },
 
 
-    // 11 — TSMU
+    // ====================================================
+    // 11 — TBILISI STATE MEDICAL UNIVERSITY
+    // ====================================================
 
     {
-      name:
-        'Tbilisi State Medical University',
+      name: 'Tbilisi State Medical University',
 
-      short:
-        'TSMU',
+      short: 'TSMU',
 
-      city:
-        'Tbilisi',
+      city: 'Tbilisi',
 
-      fee:
-        'University-specific fee',
+      fee: 'University-specific fee',
 
-      duration:
-        '6 years',
+      duration: '6 years',
 
-      medium:
-        'English',
+      medium: 'English',
 
       notes:
-        'One of Georgia’s major state medical universities and a dedicated medical institution in Tbilisi. Current tuition should be verified for the relevant academic year.',
+        'One of Georgia’s major state medical universities and a dedicated medical institution located in Tbilisi.',
 
       img:
         '/universities/georgia/tsmu.jpg'
-    }
+    },
+
+
+    // ====================================================
+    // 12 — UNIVERSITY OF GEORGIA
+    // ====================================================
+
+    {
+      name: 'University of Georgia',
+
+      short: 'UG',
+
+      city: 'Tbilisi',
+
+      fee: '$6,500 / year approx.',
+
+      duration: '6 years',
+
+      medium: 'English',
+
+      notes:
+        'Major private university in Tbilisi with a large international student community and an English-medium medical programme for international students.',
+
+      img:
+        '/universities/georgia/ug.jpg'
+    },
+
+
+    // ====================================================
+    // 13 — AKAKI TSERETELI STATE UNIVERSITY
+    // ====================================================
+
+    {
+      name: 'Akaki Tsereteli State University',
+
+      short: 'ATSU',
+
+      city: 'Kutaisi',
+
+      fee: 'University-specific fee',
+
+      duration: '6 years',
+
+      medium: 'English',
+
+      notes:
+        'Public university located in Kutaisi with a long academic history and medical education opportunities for international students. Current English medical programme tuition should be confirmed for the relevant intake.',
+
+      img:
+        '/universities/georgia/atsu.jpg'
+    },
 
   ],
 
@@ -474,50 +490,45 @@ export const georgiaData = {
   feeBreakdown: [
 
     {
-      head:
-        'Tuition',
+      head: 'Tuition',
 
       value:
         'Approx. $5,500–$7,000 / year at many selected universities'
     },
 
     {
-      head:
-        'Accommodation',
+      head: 'Accommodation',
 
       value:
-        'Depends on hostel, apartment and sharing arrangement'
+        'Depends on hostel, private apartment and sharing arrangement'
     },
 
     {
-      head:
-        'Food',
+      head: 'Food',
 
       value:
-        'Depends on mess, self-cooking and lifestyle'
+        'Depends on mess plan, self-cooking and lifestyle'
     },
 
     {
-      head:
-        'Insurance & registration',
+      head: 'Insurance & registration',
 
       value:
         'Additional yearly and administrative charges may apply'
     },
 
     {
-      head:
-        'Total 6-year planning range',
+      head: 'Total 6-year planning range',
 
       value:
         'Approximately ₹35–50 lakh depending on university and lifestyle'
-    }
+    },
 
   ],
 
 
   // ======================================================
-  // DOCUMENTS
+  // DOCUMENT CHECKLIST
   // ======================================================
 
   documents: [
@@ -542,20 +553,19 @@ export const georgiaData = {
 
     'Financial documents where required',
 
-    'Admission and invitation documents'
+    'Admission and invitation documents',
 
   ],
 
 
   // ======================================================
-  // ADMISSION TIMELINE
+  // ADMISSION PROCESS
   // ======================================================
 
   timeline: [
 
     {
-      m:
-        'Step 1',
+      m: 'Step 1',
 
       title:
         'Student profile review',
@@ -565,8 +575,7 @@ export const georgiaData = {
     },
 
     {
-      m:
-        'Step 2',
+      m: 'Step 2',
 
       title:
         'University shortlist',
@@ -576,8 +585,7 @@ export const georgiaData = {
     },
 
     {
-      m:
-        'Step 3',
+      m: 'Step 3',
 
       title:
         'Application and documents',
@@ -587,8 +595,7 @@ export const georgiaData = {
     },
 
     {
-      m:
-        'Step 4',
+      m: 'Step 4',
 
       title:
         'Admission and invitation',
@@ -598,26 +605,24 @@ export const georgiaData = {
     },
 
     {
-      m:
-        'Step 5',
+      m: 'Step 5',
 
       title:
         'Travel preparation',
 
       body:
-        'Complete immigration requirements, plan accommodation and arrange travel to Georgia.'
+        'Complete applicable immigration requirements, plan accommodation and arrange travel to Georgia.'
     },
 
     {
-      m:
-        'Step 6',
+      m: 'Step 6',
 
       title:
         'Arrival in Georgia',
 
       body:
         'Complete university registration, accommodation check-in and required post-arrival procedures.'
-    }
+    },
 
   ],
 
@@ -633,7 +638,7 @@ export const georgiaData = {
         'How much is MBBS tuition in Georgia?',
 
       a:
-        'Many Georgian medical universities commonly considered by Route Your Career fall around approximately USD 5,500–7,000 per year. Some institutions may charge outside this range, so current tuition should always be confirmed.'
+        'Many Georgian medical universities commonly considered by Route Your Career fall around approximately USD 5,500–7,000 per year. Some institutions may charge outside this range, so current tuition should always be confirmed before admission.'
     },
 
     {
@@ -641,7 +646,7 @@ export const georgiaData = {
         'How much does the complete MBBS in Georgia cost?',
 
       a:
-        'A practical six-year planning range can be approximately ₹35–50 lakh after considering tuition, accommodation, food and other costs. The final amount depends on the university and lifestyle.'
+        'A practical six-year planning range can be approximately ₹35–50 lakh after considering tuition, accommodation, food and other expenses. The final amount depends on the university and student lifestyle.'
     },
 
     {
@@ -649,7 +654,7 @@ export const georgiaData = {
         'Is MBBS in Georgia taught in English?',
 
       a:
-        'The international medical programmes listed here are offered in English. Students may nevertheless need local-language communication skills for daily life and clinical interaction.'
+        'The international medical programmes listed on this page are offered in English. Students may still need local-language communication skills for everyday life and clinical interaction.'
     },
 
     {
@@ -665,7 +670,15 @@ export const georgiaData = {
         'Are Georgian universities NMC approved?',
 
       a:
-        'Students should not rely on the phrase “NMC-approved foreign university.” The key issue is whether the programme and training meet the Foreign Medical Graduate requirements applicable to the student’s admission year and future registration in India.'
+        'Students should not rely only on the phrase “NMC-approved foreign university.” The important issue is whether the programme and training meet the Foreign Medical Graduate requirements applicable to the student’s admission year and future registration in India.'
+    },
+
+    {
+      q:
+        'Which cities can I study medicine in Georgia?',
+
+      a:
+        'Most universities on this page are located in Tbilisi. Students can also explore Avicenna - Batumi Medical University in Batumi and Akaki Tsereteli State University in Kutaisi.'
     },
 
     {
@@ -673,7 +686,7 @@ export const georgiaData = {
         'Which Georgian medical university should I choose?',
 
       a:
-        'University selection should consider tuition, location, programme structure, academic environment, clinical exposure, accommodation and long-term licensing plans rather than price alone.'
+        'University selection should consider tuition, location, programme structure, academic environment, clinical exposure, accommodation and long-term licensing plans rather than choosing based on price alone.'
     },
 
     {
@@ -681,9 +694,9 @@ export const georgiaData = {
         'When should I apply?',
 
       a:
-        'Students should begin several months before the intended intake to allow sufficient time for university admission, document processing, immigration procedures, travel and accommodation.'
-    }
+        'Students should begin several months before their intended intake to allow sufficient time for university admission, document processing, immigration procedures, travel and accommodation.'
+    },
 
-  ]
+  ],
 
 };
