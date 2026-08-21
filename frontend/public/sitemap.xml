@@ -1,16 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
-  <!-- HOME -->
+  <!-- =====================================================
+       HOME
+  ====================================================== -->
+
   <url>
     <loc>https://routeyourcareer.in/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- FEATURED COUNTRY PAGES -->
+
+  <!-- =====================================================
+       FEATURED / DETAILED COUNTRY PAGES
+  ====================================================== -->
+
   <url>
     <loc>https://routeyourcareer.in/countries/georgia</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://routeyourcareer.in/countries/uzbekistan</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -21,7 +35,11 @@
     <priority>0.9</priority>
   </url>
 
-  <!-- MBBS COUNTRY PAGES -->
+
+  <!-- =====================================================
+       MBBS COUNTRY PAGES
+  ====================================================== -->
+
   <url>
     <loc>https://routeyourcareer.in/country/ge</loc>
     <changefreq>weekly</changefreq>
@@ -76,7 +94,11 @@
     <priority>0.8</priority>
   </url>
 
-  <!-- MANAGEMENT COUNTRY PAGES -->
+
+  <!-- =====================================================
+       MANAGEMENT COUNTRY PAGES
+  ====================================================== -->
+
   <url>
     <loc>https://routeyourcareer.in/country/it</loc>
     <changefreq>weekly</changefreq>
@@ -125,7 +147,11 @@
     <priority>0.8</priority>
   </url>
 
-  <!-- QUIZ -->
+
+  <!-- =====================================================
+       QUIZ
+  ====================================================== -->
+
   <url>
     <loc>https://routeyourcareer.in/quiz</loc>
     <changefreq>monthly</changefreq>
