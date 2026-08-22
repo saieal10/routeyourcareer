@@ -2975,7 +2975,7 @@ async def admin_create_university(
         else None
     )
 
-    doc = payload.model_dump()
+    doc = derive_course_costs(payload.model_dump())
 
     doc.update(
         {
@@ -3199,6 +3199,33 @@ async def admin_delete_university(
 # =========================================================
 # V2 ADMIN COURSES
 # =========================================================
+
+
+
+def derive_course_costs(doc: dict) -> dict:
+    """Derive totals from source facts; avoids duplicate manual maintenance."""
+    out = dict(doc or {})
+    match = re.search(r"(\d+(?:\.\d+)?)", str(out.get("duration") or ""))
+    years = float(match.group(1)) if match else None
+
+    tuition = out.get("tuition_fee_year")
+    hostel = out.get("hostel_fee_year")
+    living = out.get("living_cost_year")
+    other = out.get("other_costs_total")
+
+    if years is not None and tuition is not None:
+        out["total_course_cost"] = round(float(tuition) * years, 2)
+        out["estimated_study_cost"] = round(
+            (
+                float(tuition)
+                + float(hostel or 0)
+                + float(living or 0)
+            ) * years
+            + float(other or 0),
+            2,
+        )
+
+    return out
 
 
 @api_router.get(
@@ -3461,6 +3488,16 @@ async def admin_update_course(
 
         if new_status == "draft":
             updates["published_at"] = None
+
+    merged_for_costs = dict(current)
+    merged_for_costs.update(updates)
+    derived = derive_course_costs(merged_for_costs)
+
+    if derived.get("total_course_cost") is not None:
+        updates["total_course_cost"] = derived["total_course_cost"]
+
+    if derived.get("estimated_study_cost") is not None:
+        updates["estimated_study_cost"] = derived["estimated_study_cost"]
 
     updates["updated_at"] = datetime.now(
         timezone.utc
