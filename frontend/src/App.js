@@ -15,6 +15,8 @@ import CountryGeorgia from './pages/CountryGeorgia';
 import CountryItaly from './pages/CountryItaly';
 import CountryUzbekistan from './pages/CountryUzbekistan';
 
+import DynamicCountryPage from './pages/DynamicCountryPage';
+
 import ItalyCourses from './pages/ItalyCourses';
 
 import AdminLogin from './pages/AdminLogin';
@@ -36,6 +38,16 @@ import { Toaster } from './components/ui/toaster';
 /*
 =========================================================
 COUNTRY ROUTER
+
+Legacy /country/:code support.
+
+Dedicated pages:
+- Georgia
+- Italy
+- Uzbekistan
+
+Everything else can continue through CountryDetail
+for old links.
 =========================================================
 */
 
@@ -50,32 +62,50 @@ function DynamicCountryRoute() {
 
 
   if (code === 'ge') {
+
     return (
       <Navigate
         to="/countries/georgia"
         replace
       />
     );
+
   }
 
 
   if (code === 'it') {
+
     return (
       <Navigate
         to="/countries/italy"
         replace
       />
     );
+
   }
 
 
   if (code === 'uz') {
+
     return (
       <Navigate
         to="/countries/uzbekistan"
         replace
       />
     );
+
+  }
+
+
+  if (code === 'ru') {
+
+    return (
+      <Navigate
+        to="/countries/russia"
+        replace
+      />
+    );
+
   }
 
 
@@ -105,7 +135,9 @@ function AppRouter() {
     location.hash &&
     location.hash.includes('session_id=')
   ) {
+
     return <AuthCallback />;
+
   }
 
 
@@ -114,9 +146,9 @@ function AppRouter() {
     <Routes>
 
 
-      {/* =========================
+      {/* ===================================================
           HOME
-      ========================= */}
+      =================================================== */}
 
       <Route
         path="/"
@@ -124,9 +156,9 @@ function AppRouter() {
       />
 
 
-      {/* =========================
+      {/* ===================================================
           PRIMARY STUDY TRACKS
-      ========================= */}
+      =================================================== */}
 
       <Route
         path="/mbbs"
@@ -150,9 +182,9 @@ function AppRouter() {
       />
 
 
-      {/* =========================
+      {/* ===================================================
           START APPLICATION
-      ========================= */}
+      =================================================== */}
 
       <Route
         path="/start-application"
@@ -160,9 +192,9 @@ function AppRouter() {
       />
 
 
-      {/* =========================
-          BUILD MY ROUTE V2
-      ========================= */}
+      {/* ===================================================
+          BUILD MY ROUTE
+      =================================================== */}
 
       <Route
         path="/build-my-route"
@@ -170,9 +202,9 @@ function AppRouter() {
       />
 
 
-      {/* =========================
+      {/* ===================================================
           TRACK APPLICATION
-      ========================= */}
+      =================================================== */}
 
       <Route
         path="/track-application"
@@ -180,9 +212,11 @@ function AppRouter() {
       />
 
 
-      {/* =========================
+      {/* ===================================================
           DEDICATED COUNTRY PAGES
-      ========================= */}
+
+          These keep your existing custom-designed pages.
+      =================================================== */}
 
       <Route
         path="/countries/georgia"
@@ -202,9 +236,12 @@ function AppRouter() {
       />
 
 
-      {/* =========================
+      {/* ===================================================
           ITALY COURSE FINDER
-      ========================= */}
+
+          Must remain before the dynamic /countries/:country
+          route so the course finder keeps its own page.
+      =================================================== */}
 
       <Route
         path="/countries/italy/courses"
@@ -212,9 +249,33 @@ function AppRouter() {
       />
 
 
-      {/* =========================
-          DYNAMIC COUNTRY PAGES
-      ========================= */}
+      {/* ===================================================
+          UNIVERSAL COUNTRY PAGE
+
+          Any country added later through Admin can use this.
+
+          Examples:
+
+          /countries/russia
+          /countries/germany
+          /countries/kazakhstan
+          /countries/australia
+
+          DynamicCountryPage will load published universities
+          and courses from MongoDB.
+      =================================================== */}
+
+      <Route
+        path="/countries/:country"
+        element={<DynamicCountryPage />}
+      />
+
+
+      {/* ===================================================
+          LEGACY COUNTRY ROUTES
+
+          Keeps old /country/xx links working.
+      =================================================== */}
 
       <Route
         path="/country/:code"
@@ -222,9 +283,9 @@ function AppRouter() {
       />
 
 
-      {/* =========================
+      {/* ===================================================
           BLOG
-      ========================= */}
+      =================================================== */}
 
       <Route
         path="/blog/:slug"
@@ -232,9 +293,9 @@ function AppRouter() {
       />
 
 
-      {/* =========================
+      {/* ===================================================
           QUIZ
-      ========================= */}
+      =================================================== */}
 
       <Route
         path="/quiz"
@@ -242,9 +303,9 @@ function AppRouter() {
       />
 
 
-      {/* =========================
+      {/* ===================================================
           ADMIN
-      ========================= */}
+      =================================================== */}
 
       <Route
         path="/admin"
@@ -264,13 +325,18 @@ function AppRouter() {
       />
 
 
-      {/* =========================
+      {/* ===================================================
           FALLBACK
-      ========================= */}
+      =================================================== */}
 
       <Route
         path="*"
-        element={<Navigate to="/" replace />}
+        element={
+          <Navigate
+            to="/"
+            replace
+          />
+        }
       />
 
 
