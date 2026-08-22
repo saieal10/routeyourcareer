@@ -1,93 +1,482 @@
-import React from 'react';
-import { Search, ArrowUpRight } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Check,
+  Circle,
+  Loader2,
+  Search,
+  ShieldCheck,
+  MapPin,
+  GraduationCap
+} from 'lucide-react';
 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { brand } from '../mock';
 
+const BACKEND_URL =
+  process.env.REACT_APP_BACKEND_URL ||
+  'https://routeyourcareer.onrender.com';
+
+const STAGES = [
+  'started',
+  'route_built',
+  'university_selected',
+  'contacted',
+  'documents',
+  'applied',
+  'offer_received',
+  'visa',
+  'enrolled'
+];
+
+function formatDate(value) {
+  if (!value) return '';
+
+  try {
+    return new Date(value).toLocaleDateString(
+      'en-IN',
+      {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }
+    );
+  }
+  catch {
+    return '';
+  }
+}
+
+function stageLabel(value) {
+  const labels = {
+    started: 'Application Started',
+    route_built: 'Route Built',
+    university_selected: 'University Selected',
+    contacted: 'Contacted',
+    documents: 'Documents',
+    applied: 'Applied',
+    offer_received: 'Offer Received',
+    visa: 'Visa',
+    enrolled: 'Enrolled'
+  };
+
+  return labels[value] || value;
+}
 
 export default function TrackApplication() {
+  const [applicationId, setApplicationId] =
+    useState('');
+
+  const [data, setData] =
+    useState(null);
+
+  const [error, setError] =
+    useState('');
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const track = async e => {
+    e.preventDefault();
+
+    setError('');
+    setData(null);
+
+    const id =
+      applicationId
+        .trim()
+        .toUpperCase();
+
+    if (!id) {
+      setError(
+        'Enter your Route Your Career application ID.'
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response =
+        await fetch(
+          `${BACKEND_URL}/api/applications/${encodeURIComponent(
+            id
+          )}/track`
+        );
+
+      let body = null;
+
+      try {
+        body =
+          await response.json();
+      }
+      catch {
+        body = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          typeof body?.detail === 'string'
+            ? body.detail
+            : 'Could not find this application.'
+        );
+      }
+
+      setData(body);
+
+      setApplicationId(
+        body.application_id ||
+        id
+      );
+    }
+    catch (err) {
+      setError(
+        err.message ||
+        'Could not track this application.'
+      );
+    }
+    finally {
+      setLoading(false);
+    }
+  };
+
+  const timeline =
+    Array.isArray(data?.timeline)
+      ? data.timeline
+      : STAGES.map(key => ({
+          key,
+          label:
+            stageLabel(key),
+          status:
+            'upcoming',
+          completed:
+            false,
+          current:
+            false,
+          date:
+            null
+        }));
 
   return (
-
     <div className="min-h-screen bg-cream text-ink">
 
       <Navbar />
 
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-20">
+        {/* HERO */}
+        <section className="max-w-3xl mx-auto text-center">
 
-        <div className="max-w-2xl">
-
-          <div className="text-[10px] mono uppercase tracking-widest text-coral">
-            Student Services
+          <div className="inline-flex items-center gap-2 text-[10px] mono uppercase tracking-[0.2em] text-coral">
+            <ShieldCheck className="h-4 w-4" />
+            Application tracking
           </div>
 
-
-          <h1 className="serif text-5xl sm:text-7xl leading-[0.95] mt-3">
-            Track your
-            <br />
-            <em className="font-light">
-              application.
-            </em>
+          <h1 className="serif text-5xl sm:text-6xl mt-5">
+            Track your application.
           </h1>
 
-
-          <p className="mt-6 text-[15px] text-ink/60 leading-relaxed">
-
-            Online application tracking is being connected
-            to the Route Your Career admissions system.
-
+          <p className="mt-4 text-[14px] leading-relaxed text-ink/60">
+            Enter the RYC application ID you received when you started your application.
           </p>
 
-        </div>
+        </section>
 
 
-        <div className="mt-10 max-w-2xl rounded-3xl bg-white border border-ink/10 p-6 sm:p-8">
+        {/* SEARCH */}
+        <section className="max-w-2xl mx-auto mt-8">
 
-          <div className="h-12 w-12 rounded-2xl bg-ink text-cream grid place-items-center">
-
-            <Search className="h-5 w-5" />
-
-          </div>
-
-
-          <h2 className="serif text-3xl mt-5">
-            Already applied?
-          </h2>
-
-
-          <p className="mt-3 text-[13px] text-ink/55 leading-relaxed">
-
-            Until self-service tracking goes live,
-            contact the RYC admissions team for the
-            latest status of your application.
-
-          </p>
-
-
-          <a
-            href={brand.applyLink}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-ink text-cream px-5 py-3 text-[13px] font-semibold"
+          <form
+            onSubmit={track}
+            className="rounded-3xl bg-white border border-ink/10 p-4 sm:p-5"
           >
 
-            Contact admissions
+            <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-2">
+              Application ID
+            </div>
 
-            <ArrowUpRight className="h-4 w-4" />
+            <div className="flex flex-col sm:flex-row gap-2">
 
-          </a>
+              <div className="relative flex-1">
 
-        </div>
+                <Search className="absolute left-4 top-4 h-4 w-4 text-ink/30" />
+
+                <input
+                  value={applicationId}
+                  onChange={e =>
+                    setApplicationId(
+                      e.target.value
+                    )
+                  }
+                  placeholder="RYC-20260822-AB12CD34"
+                  className="w-full rounded-2xl border border-ink/15 bg-cream pl-11 pr-4 py-3.5 outline-none focus:border-coral uppercase"
+                />
+
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ink text-cream px-6 py-3.5 text-[12px] font-bold disabled:opacity-50"
+              >
+
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Checking…
+                  </>
+                ) : (
+                  <>
+                    Track Application
+                  </>
+                )}
+
+              </button>
+
+            </div>
+
+            {error && (
+              <div className="mt-3 rounded-2xl bg-red-50 border border-red-200 p-3 text-[12px] text-red-700">
+                {error}
+              </div>
+            )}
+
+          </form>
+
+        </section>
+
+
+        {/* RESULT */}
+        {data && (
+          <section className="mt-10">
+
+            <div className="rounded-[30px] bg-ink text-cream overflow-hidden">
+
+              <div className="px-6 sm:px-8 py-7">
+
+                <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                  {data.application_id}
+                </div>
+
+                <div className="flex flex-wrap items-end justify-between gap-4 mt-2">
+
+                  <div>
+
+                    <h2 className="serif text-3xl sm:text-4xl">
+                      {data.student_name
+                        ? `${data.student_name}'s application`
+                        : 'Your application'}
+                    </h2>
+
+                    <div className="mt-2 text-[12px] text-cream/55">
+                      Current stage:{' '}
+                      <strong className="text-cream">
+                        {data.stage_label ||
+                          stageLabel(
+                            data.stage
+                          )}
+                      </strong>
+                    </div>
+
+                  </div>
+
+                  {data.updated_at && (
+                    <div className="text-[10px] text-cream/45">
+                      Updated{' '}
+                      {formatDate(
+                        data.updated_at
+                      )}
+                    </div>
+                  )}
+
+                </div>
+
+              </div>
+
+
+              {/* SELECTED ROUTE */}
+              <div className="bg-cream text-ink px-6 sm:px-8 py-6">
+
+                <div className="grid sm:grid-cols-3 gap-4">
+
+                  <div className="rounded-2xl bg-white border border-ink/10 p-4">
+
+                    <div className="flex items-center gap-2 text-[9px] mono uppercase tracking-widest text-ink/40">
+                      <GraduationCap className="h-4 w-4" />
+                      Study track
+                    </div>
+
+                    <div className="font-semibold mt-2">
+                      {data.stream || '—'}
+                    </div>
+
+                  </div>
+
+                  <div className="rounded-2xl bg-white border border-ink/10 p-4 sm:col-span-2">
+
+                    <div className="flex items-center gap-2 text-[9px] mono uppercase tracking-widest text-ink/40">
+                      <MapPin className="h-4 w-4" />
+                      Selected university
+                    </div>
+
+                    <div className="serif text-xl mt-2">
+                      {data.selected_route?.university_name ||
+                        'University not selected yet'}
+                    </div>
+
+                    {(data.selected_route?.course_name ||
+                      data.selected_route?.country) && (
+                      <div className="text-[11px] text-ink/50 mt-1">
+                        {data.selected_route?.course_name || ''}
+                        {data.selected_route?.country
+                          ? `${data.selected_route?.course_name ? ' · ' : ''}${data.selected_route.country}`
+                          : ''}
+                        {data.selected_route?.city
+                          ? ` · ${data.selected_route.city}`
+                          : ''}
+                      </div>
+                    )}
+
+                  </div>
+
+                </div>
+
+
+                {/* TIMELINE */}
+                <div className="mt-8">
+
+                  <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                    Application progress
+                  </div>
+
+                  <div className="mt-5">
+
+                    {timeline.map(
+                      (
+                        item,
+                        index
+                      ) => {
+
+                        const completed =
+                          item.status ===
+                            'completed' ||
+                          item.completed;
+
+                        const current =
+                          item.status ===
+                            'current' ||
+                          item.current;
+
+                        return (
+                          <div
+                            key={item.key}
+                            className="relative flex gap-4"
+                          >
+
+                            {/* LINE */}
+                            {index <
+                              timeline.length -
+                                1 && (
+                              <div
+                                className={`absolute left-[17px] top-9 w-px h-[calc(100%-8px)] ${
+                                  completed
+                                    ? 'bg-forest'
+                                    : 'bg-ink/10'
+                                }`}
+                              />
+                            )}
+
+                            {/* ICON */}
+                            <div
+                              className={`
+                                relative z-10 h-9 w-9 rounded-full border grid place-items-center shrink-0
+                                ${
+                                  completed
+                                    ? 'bg-forest border-forest text-cream'
+                                    : current
+                                    ? 'bg-coral border-coral text-white'
+                                    : 'bg-white border-ink/15 text-ink/30'
+                                }
+                              `}
+                            >
+
+                              {completed ? (
+                                <Check className="h-4 w-4" />
+                              ) : current ? (
+                                <Circle className="h-3.5 w-3.5 fill-current" />
+                              ) : (
+                                <Circle className="h-3.5 w-3.5" />
+                              )}
+
+                            </div>
+
+                            {/* CONTENT */}
+                            <div className="pb-6 flex-1">
+
+                              <div className="flex flex-wrap items-center gap-2">
+
+                                <div
+                                  className={`font-semibold text-[13px] ${
+                                    current
+                                      ? 'text-coral'
+                                      : ''
+                                  }`}
+                                >
+                                  {item.label ||
+                                    stageLabel(
+                                      item.key
+                                    )}
+                                </div>
+
+                                {current && (
+                                  <span className="rounded-full bg-coral/10 text-coral px-2 py-1 text-[9px] font-semibold">
+                                    Current stage
+                                  </span>
+                                )}
+
+                              </div>
+
+                              <div className="mt-1 text-[10px] text-ink/40">
+
+                                {item.date
+                                  ? formatDate(
+                                      item.date
+                                    )
+                                  : completed
+                                  ? 'Completed'
+                                  : current
+                                  ? 'In progress'
+                                  : 'Upcoming'}
+
+                              </div>
+
+                            </div>
+
+                          </div>
+                        );
+
+                      }
+                    )}
+
+                  </div>
+
+                </div>
+
+
+                <div className="mt-3 rounded-2xl bg-white border border-ink/10 p-4 text-[11px] leading-relaxed text-ink/50">
+                  Tracking reflects the current Route Your Career application workflow. University admission, visa approval and other external decisions remain subject to the relevant institution and authorities.
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+        )}
 
       </main>
-
 
       <Footer />
 
     </div>
-
   );
-
 }
