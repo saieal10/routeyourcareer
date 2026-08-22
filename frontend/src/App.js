@@ -25,9 +25,10 @@ import CountryDetail from './pages/CountryDetail';
 import BlogPost from './pages/BlogPost';
 import CourseFinderQuiz from './pages/CourseFinderQuiz';
 
-/* NEW V2 PAGES */
+/* V2 PAGES */
 import BuildMyRoute from './pages/BuildMyRoute';
 import TrackApplication from './pages/TrackApplication';
+import StartApplication from './pages/StartApplication';
 
 import { Toaster } from './components/ui/toaster';
 
@@ -146,6 +147,16 @@ function AppRouter() {
             replace
           />
         }
+      />
+
+
+      {/* =========================
+          START APPLICATION
+      ========================= */}
+
+      <Route
+        path="/start-application"
+        element={<StartApplication />}
       />
 
 
