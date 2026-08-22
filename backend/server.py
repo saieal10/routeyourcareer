@@ -661,6 +661,162 @@ class University(BaseModel):
     published_at: Optional[datetime] = None
 
 
+
+# =========================================================
+# V2 COURSE MASTER MODELS
+# =========================================================
+
+
+class CourseCreate(BaseModel):
+
+    university_id: str
+
+    stream: Literal[
+        "MBBS",
+        "Management",
+        "Other",
+    ]
+
+    name: str
+    slug: Optional[str] = None
+    level: Optional[str] = None
+    duration: Optional[str] = None
+    medium: Optional[str] = "English"
+
+    currency: str = "USD"
+    tuition_fee_year: Optional[float] = None
+    total_course_cost: Optional[float] = None
+
+    intake: Optional[str] = None
+    application_deadline: Optional[str] = None
+
+    eligibility: Optional[str] = None
+
+    # MBBS matching
+    neet_requirement: Optional[str] = None
+    pcb_requirement: Optional[str] = None
+
+    # Management / other matching
+    academic_requirement: Optional[str] = None
+    english_requirement: Optional[str] = None
+    ielts_requirement: Optional[str] = None
+    gmat_gre_requirement: Optional[str] = None
+    work_experience: Optional[str] = None
+
+    featured: bool = False
+    recommended: bool = False
+    budget_option: bool = False
+
+    last_verified: Optional[datetime] = None
+    source_url: Optional[str] = None
+
+    status: Literal[
+        "draft",
+        "published",
+    ] = "draft"
+
+
+class CourseUpdate(BaseModel):
+
+    university_id: Optional[str] = None
+
+    stream: Optional[
+        Literal[
+            "MBBS",
+            "Management",
+            "Other",
+        ]
+    ] = None
+
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    level: Optional[str] = None
+    duration: Optional[str] = None
+    medium: Optional[str] = None
+
+    currency: Optional[str] = None
+    tuition_fee_year: Optional[float] = None
+    total_course_cost: Optional[float] = None
+
+    intake: Optional[str] = None
+    application_deadline: Optional[str] = None
+
+    eligibility: Optional[str] = None
+
+    neet_requirement: Optional[str] = None
+    pcb_requirement: Optional[str] = None
+
+    academic_requirement: Optional[str] = None
+    english_requirement: Optional[str] = None
+    ielts_requirement: Optional[str] = None
+    gmat_gre_requirement: Optional[str] = None
+    work_experience: Optional[str] = None
+
+    featured: Optional[bool] = None
+    recommended: Optional[bool] = None
+    budget_option: Optional[bool] = None
+
+    last_verified: Optional[datetime] = None
+    source_url: Optional[str] = None
+
+    status: Optional[
+        Literal[
+            "draft",
+            "published",
+        ]
+    ] = None
+
+
+class Course(BaseModel):
+
+    id: str
+    university_id: str
+
+    # Snapshot fields copied from university master so course
+    # search remains fast and easy to render.
+    university_name: str
+    country: str
+    city: Optional[str] = None
+
+    stream: str
+    name: str
+    slug: str
+    level: Optional[str] = None
+    duration: Optional[str] = None
+    medium: Optional[str] = None
+
+    currency: str = "USD"
+    tuition_fee_year: Optional[float] = None
+    total_course_cost: Optional[float] = None
+
+    intake: Optional[str] = None
+    application_deadline: Optional[str] = None
+
+    eligibility: Optional[str] = None
+
+    neet_requirement: Optional[str] = None
+    pcb_requirement: Optional[str] = None
+
+    academic_requirement: Optional[str] = None
+    english_requirement: Optional[str] = None
+    ielts_requirement: Optional[str] = None
+    gmat_gre_requirement: Optional[str] = None
+    work_experience: Optional[str] = None
+
+    featured: bool = False
+    recommended: bool = False
+    budget_option: bool = False
+
+    last_verified: Optional[datetime] = None
+    source_url: Optional[str] = None
+
+    status: str
+
+    created_at: datetime
+    updated_at: datetime
+    published_at: Optional[datetime] = None
+
+
 # =========================================================
 # HELPERS
 # =========================================================
@@ -836,7 +992,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "6.0",
+        "7.0-v2",
 
         "google_auth":
         True,
@@ -845,6 +1001,9 @@ async def root():
         True,
 
         "university_system":
+        True,
+
+        "course_system":
         True,
 
         "ai_chat":
@@ -1619,6 +1778,152 @@ async def public_university(
     return University(
         **doc
     )
+
+
+
+# =========================================================
+# V2 PUBLIC COURSES
+# =========================================================
+
+
+@api_router.get(
+    "/courses",
+    response_model=List[Course]
+)
+async def public_courses(
+    stream: Optional[str] = None,
+    country: Optional[str] = None,
+    university_id: Optional[str] = None,
+    level: Optional[str] = None,
+    featured: Optional[bool] = None,
+    recommended: Optional[bool] = None,
+    budget_option: Optional[bool] = None,
+    q: Optional[str] = None,
+):
+
+    query = {
+        "status":
+        "published"
+    }
+
+    if stream:
+        query["stream"] = {
+            "$regex":
+            f"^{re.escape(stream)}$",
+            "$options":
+            "i"
+        }
+
+    if country:
+        query["country"] = {
+            "$regex":
+            f"^{re.escape(country)}$",
+            "$options":
+            "i"
+        }
+
+    if university_id:
+        query["university_id"] = university_id
+
+    if level:
+        query["level"] = {
+            "$regex":
+            f"^{re.escape(level)}$",
+            "$options":
+            "i"
+        }
+
+    if featured is not None:
+        query["featured"] = featured
+
+    if recommended is not None:
+        query["recommended"] = recommended
+
+    if budget_option is not None:
+        query["budget_option"] = budget_option
+
+    if q:
+        search = re.escape(
+            q.strip()
+        )
+
+        query["$or"] = [
+            {
+                "name": {
+                    "$regex": search,
+                    "$options": "i"
+                }
+            },
+            {
+                "university_name": {
+                    "$regex": search,
+                    "$options": "i"
+                }
+            },
+            {
+                "country": {
+                    "$regex": search,
+                    "$options": "i"
+                }
+            },
+            {
+                "city": {
+                    "$regex": search,
+                    "$options": "i"
+                }
+            },
+        ]
+
+    docs = (
+        await db.courses
+        .find(
+            query,
+            {
+                "_id": 0
+            }
+        )
+        .sort(
+            [
+                ("featured", -1),
+                ("recommended", -1),
+                ("university_name", 1),
+                ("name", 1),
+            ]
+        )
+        .to_list(5000)
+    )
+
+    return [
+        Course(**doc)
+        for doc in docs
+    ]
+
+
+@api_router.get(
+    "/courses/{slug}",
+    response_model=Course
+)
+async def public_course(
+    slug: str
+):
+
+    doc = await db.courses.find_one(
+        {
+            "slug": slug,
+            "status": "published",
+        },
+        {
+            "_id": 0
+        },
+    )
+
+    if not doc:
+        raise HTTPException(
+            status_code=404,
+            detail="Course not found",
+        )
+
+    return Course(**doc)
 
 
 # =========================================================
@@ -2878,6 +3183,325 @@ async def admin_delete_university(
     return {
         "ok":
         True
+    }
+
+
+
+# =========================================================
+# V2 ADMIN COURSES
+# =========================================================
+
+
+@api_router.get(
+    "/admin/courses",
+    response_model=List[Course]
+)
+async def admin_get_courses(
+    stream: Optional[str] = None,
+    country: Optional[str] = None,
+    university_id: Optional[str] = None,
+    status: Optional[str] = None,
+    q: Optional[str] = None,
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    query = {}
+
+    if stream:
+        query["stream"] = {
+            "$regex":
+            f"^{re.escape(stream)}$",
+            "$options":
+            "i"
+        }
+
+    if country:
+        query["country"] = {
+            "$regex":
+            f"^{re.escape(country)}$",
+            "$options":
+            "i"
+        }
+
+    if university_id:
+        query["university_id"] = university_id
+
+    if status:
+        query["status"] = status
+
+    if q:
+        search = re.escape(
+            q.strip()
+        )
+
+        query["$or"] = [
+            {
+                "name": {
+                    "$regex": search,
+                    "$options": "i"
+                }
+            },
+            {
+                "university_name": {
+                    "$regex": search,
+                    "$options": "i"
+                }
+            },
+            {
+                "country": {
+                    "$regex": search,
+                    "$options": "i"
+                }
+            },
+        ]
+
+    docs = (
+        await db.courses
+        .find(
+            query,
+            {
+                "_id": 0
+            }
+        )
+        .sort(
+            "updated_at",
+            -1
+        )
+        .to_list(5000)
+    )
+
+    return [
+        Course(**doc)
+        for doc in docs
+    ]
+
+
+@api_router.post(
+    "/admin/courses",
+    response_model=Course
+)
+async def admin_create_course(
+    payload: CourseCreate,
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    university = await db.universities.find_one(
+        {
+            "id": payload.university_id
+        },
+        {
+            "_id": 0
+        },
+    )
+
+    if not university:
+        raise HTTPException(
+            status_code=404,
+            detail="University not found",
+        )
+
+    now = datetime.now(
+        timezone.utc
+    )
+
+    base_slug = (
+        payload.slug
+        or f"{university.get('name', '')}-{payload.name}"
+    )
+
+    slug = make_slug(base_slug)
+
+    if not slug:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid course slug",
+        )
+
+    existing = await db.courses.find_one(
+        {
+            "slug": slug
+        }
+    )
+
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail="A course with this slug already exists",
+        )
+
+    doc = payload.model_dump()
+
+    doc.update(
+        {
+            "id": str(uuid.uuid4()),
+            "slug": slug,
+            "university_name": university.get("name") or "",
+            "country": university.get("country") or "",
+            "city": university.get("city"),
+            "created_at": now,
+            "updated_at": now,
+            "published_at": (
+                now
+                if payload.status == "published"
+                else None
+            ),
+        }
+    )
+
+    await db.courses.insert_one(doc)
+
+    created = await db.courses.find_one(
+        {
+            "id": doc["id"]
+        },
+        {
+            "_id": 0
+        },
+    )
+
+    return Course(**created)
+
+
+@api_router.put(
+    "/admin/courses/{course_id}",
+    response_model=Course
+)
+async def admin_update_course(
+    course_id: str,
+    payload: CourseUpdate,
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    current = await db.courses.find_one(
+        {
+            "id": course_id
+        },
+        {
+            "_id": 0
+        },
+    )
+
+    if not current:
+        raise HTTPException(
+            status_code=404,
+            detail="Course not found",
+        )
+
+    updates = payload.model_dump(
+        exclude_unset=True
+    )
+
+    if "university_id" in updates:
+
+        university = await db.universities.find_one(
+            {
+                "id": updates["university_id"]
+            },
+            {
+                "_id": 0
+            },
+        )
+
+        if not university:
+            raise HTTPException(
+                status_code=404,
+                detail="University not found",
+            )
+
+        updates["university_name"] = (
+            university.get("name")
+            or ""
+        )
+
+        updates["country"] = (
+            university.get("country")
+            or ""
+        )
+
+        updates["city"] = (
+            university.get("city")
+        )
+
+    if "slug" in updates and updates["slug"]:
+        updates["slug"] = make_slug(
+            updates["slug"]
+        )
+
+    if "name" in updates and not updates.get("slug"):
+        # Keep an existing custom slug stable during normal title edits.
+        pass
+
+    if "status" in updates:
+
+        old_status = current.get("status")
+        new_status = updates["status"]
+
+        if (
+            new_status == "published"
+            and old_status != "published"
+        ):
+            updates["published_at"] = datetime.now(
+                timezone.utc
+            )
+
+        if new_status == "draft":
+            updates["published_at"] = None
+
+    updates["updated_at"] = datetime.now(
+        timezone.utc
+    )
+
+    await db.courses.update_one(
+        {
+            "id": course_id
+        },
+        {
+            "$set": updates
+        },
+    )
+
+    updated = await db.courses.find_one(
+        {
+            "id": course_id
+        },
+        {
+            "_id": 0
+        },
+    )
+
+    return Course(**updated)
+
+
+@api_router.delete(
+    "/admin/courses/{course_id}"
+)
+async def admin_delete_course(
+    course_id: str,
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    result = await db.courses.delete_one(
+        {
+            "id": course_id
+        }
+    )
+
+    if result.deleted_count == 0:
+        raise HTTPException(
+            status_code=404,
+            detail="Course not found",
+        )
+
+    return {
+        "ok": True
     }
 
 
