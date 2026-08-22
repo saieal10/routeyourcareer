@@ -13,15 +13,6 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from google import genai
 
-# Russia bulk fee migration helpers.
-# This module does NOT run its main() function when imported.
-from migrate_russia import (
-    FEE_DATA as RUSSIA_FEE_DATA,
-    upsert_university as upsert_russia_university,
-    upsert_course as upsert_russia_course,
-    can_auto_publish as can_auto_publish_russia_fee,
-)
-
 
 import os
 import logging
@@ -2519,7 +2510,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.8-russia-fee-import",
+        "7.8.1-russia-import-fixed",
 
         "google_auth":
         True,
@@ -5734,6 +5725,795 @@ async def admin_list_leads(
         )
         for doc in docs
     ]
+
+
+
+
+# =========================================================
+# EMBEDDED RUSSIA FEE DATA + IMPORT HELPERS
+# =========================================================
+#
+# Kept inside server.py so Render startup does not depend on
+# importing migrate_russia.py. This avoids deployment failure
+# if the standalone migration file is stale.
+# =========================================================
+
+RUSSIA_FEE_DATA = [{'name': 'Altai State University',
+  'city': 'Barnaul',
+  'tuition': [380000, 380000, 380000, 380000, 380000, 380000],
+  'currency': 'RUB',
+  'hostel': [90000, 90000, 90000, 90000, 90000, 90000],
+  'admin_usd': 1200,
+  'academic_year': '2026-27',
+  'source_document': 'ALTAI STATE UNIVERSITY.pdf'},
+ {'name': 'Amur State Medical Academy',
+  'city': 'Blagoveshchensk',
+  'tuition': [315000, 315000, 315000, 315000, 315000, 315000],
+  'currency': 'RUB',
+  'hostel': [24000, 24000, 24000, 24000, 24000, 24000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'AMUR STATE MEDICAL UNIVERSITY FEES STRUCTURE.pdf'},
+ {'name': 'Astrakhan State Medical University',
+  'city': 'Astrakhan',
+  'tuition': [5000, 5000, 5000, 5000, 5000, 5000],
+  'currency': 'USD',
+  'hostel': None,
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'Astrakhan State Medical University, RUSSIA.pdf'},
+ {'name': 'Bashkir State Medical University',
+  'city': 'Ufa',
+  'tuition': [405000, 405000, 405000, 405000, 405000, 405000],
+  'currency': 'RUB',
+  'hostel': [30000, 30000, 30000, 30000, 30000, 30000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'BASHKIR STATE MEDICAL UNIVERSITY (2).pdf'},
+ {'name': 'Chechen State University',
+  'city': 'Grozny',
+  'tuition': [325000, 325000, 325000, 325000, 325000, 325000],
+  'currency': 'RUB',
+  'hostel': [81600, 81600, 81600, 81600, 81600, 81600],
+  'admin_usd': 1300,
+  'academic_year': '2026-27',
+  'source_document': 'CHECHEN STATE UNIVERSITY FEES.pdf'},
+ {'name': 'Chita State Medical Academy',
+  'city': 'Chita',
+  'tuition': [320000, 320000, 320000, 320000, 320000, 320000],
+  'currency': 'RUB',
+  'hostel': [100000, 100000, 100000, 100000, 100000, 100000],
+  'admin_usd': 1200,
+  'academic_year': '2026-27',
+  'source_document': 'CHITA STATE MEDICAL UNIVERSITY.pdf'},
+ {'name': 'Chuvash State University',
+  'city': 'Cheboksary',
+  'tuition': [300000, 300000, 300000, 300000, 300000, 300000],
+  'currency': 'RUB',
+  'hostel': [75000, 75000, 75000, 75000, 75000, 75000],
+  'admin_usd': 2300,
+  'academic_year': '2026-27',
+  'source_document': 'CHUVASH STATE MEDICAL UNIVERSITY FEES.pdf'},
+ {'name': 'Crimean Federal University',
+  'city': 'Simferopol',
+  'tuition': [344000, 344000, 344000, 344000, 344000, 344000],
+  'currency': 'RUB',
+  'hostel': None,
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'CRIMEA FEDERAL UNIVERSITY (2).pdf'},
+ {'name': 'Dagestan State Medical University',
+  'city': 'Makhachkala',
+  'tuition': [420000, 420000, 420000, 420000, 420000, 420000],
+  'currency': 'RUB',
+  'hostel': [25000, 25000, 25000, 25000, 25000, 25000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'DAGESTAN STATE MEDICAL UNIVERSITY (3).pdf'},
+ {'name': 'Far Eastern Federal University',
+  'city': 'Vladivostok',
+  'tuition': [500000, 500000, 500000, 500000, 500000, 500000],
+  'currency': 'RUB',
+  'hostel': [54000, 54000, 54000, 54000, 54000, 54000],
+  'admin_usd': 1300,
+  'academic_year': '2026-27',
+  'source_document': 'FAR EASTERN FEDERAL UNIVERSITY (2).pdf'},
+ {'name': 'I.M. Sechenov First Moscow State Medical University',
+  'city': 'Moscow',
+  'tuition': [900000, 900000, 900000, 900000, 900000, 900000],
+  'currency': 'RUB',
+  'hostel': [20000, 20000, 20000, 20000, 20000, 20000],
+  'admin_usd': 2000,
+  'academic_year': '2024-25',
+  'source_document': 'IM SECHENOV 1ST MOSCOW MEDICAL UNIVERSITY (2).pdf'},
+ {'name': 'Immanuel Kant Baltic Federal University',
+  'city': 'Kaliningrad',
+  'tuition': [347000, 347000, 347000, 347000, 347000, 347000],
+  'currency': 'RUB',
+  'hostel': [15000, 15000, 15000, 15000, 15000, 15000],
+  'admin_usd': 1700,
+  'academic_year': '2026-27',
+  'source_document': 'IMMANUEL KANT BALTIC FEDERAL UNIVERSITY (4).pdf'},
+ {'name': 'Ingush State University',
+  'city': 'Magas',
+  'tuition_schedule': [{'year': 1, 'amount': 7000, 'currency': 'USD'},
+                       {'year': 2, 'amount': 200000, 'currency': 'RUB'},
+                       {'year': 3, 'amount': 200000, 'currency': 'RUB'},
+                       {'year': 4, 'amount': 200000, 'currency': 'RUB'},
+                       {'year': 5, 'amount': 200000, 'currency': 'RUB'},
+                       {'year': 6, 'amount': 200000, 'currency': 'RUB'}],
+  'currency': 'MIXED',
+  'hostel': None,
+  'admin_usd': None,
+  'academic_year': '2026-27',
+  'source_document': 'INGUSH STATE MEDICAL UNIVERSITY (2).pdf'},
+ {'name': 'Irkutsk State Medical University',
+  'city': 'Irkutsk',
+  'tuition': [380000, 380000, 380000, 380000, 380000, 380000],
+  'currency': 'RUB',
+  'hostel': [20000, 20000, 20000, 20000, 20000, 20000],
+  'admin_usd': 1300,
+  'academic_year': '2026-27',
+  'source_document': 'IRTUSK STATE MEDICAL UNIVERSITY,RUSSIA (3).pdf'},
+ {'name': 'Ivanovo State Medical University',
+  'city': 'Ivanovo',
+  'tuition': [330000, 330000, 330000, 330000, 330000, 330000],
+  'currency': 'RUB',
+  'hostel': [25000, 25000, 25000, 25000, 25000, 25000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'IVANOVO STATE MEDICAL UNIVERSITY.pdf'},
+ {'name': 'Izhevsk State Medical Academy',
+  'city': 'Izhevsk',
+  'tuition': [4500, 4500, 4500, 4500, 4500, 4500],
+  'currency': 'USD',
+  'hostel': [500, 500, 500, 500, 500, 500],
+  'admin_usd': 5300,
+  'academic_year': '2026-27',
+  'source_document': 'IZHEVSK STATE MEDICAL ACADEMY.pdf'},
+ {'name': 'Kabardino-Balkarian State University',
+  'city': 'Nalchik',
+  'tuition': [395000, 395000, 395000, 395000, 395000, 395000],
+  'currency': 'RUB',
+  'hostel': None,
+  'hostel_note': '10,000-18,000 RUB/year',
+  'admin_usd': 1300,
+  'academic_year': '2026-27',
+  'source_document': 'kabardino fees structure 2026-2027 (1).pdf'},
+ {'name': 'Kalmyk State University',
+  'city': 'Elista',
+  'tuition': [5000, 3500, 3500, 3500, 3500, 3500],
+  'currency': 'USD',
+  'hostel': None,
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'KALMYK STATE UNIVERSITY ,RUSSIA.pdf'},
+ {'name': 'Kazan Federal University',
+  'city': 'Kazan',
+  'tuition': [653400, 653400, 653400, 653400, 653400, 653400],
+  'currency': 'RUB',
+  'hostel': [16000, 16000, 16000, 16000, 16000, 16000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'KAZAN FEDERAL UNIVERSITY, RUSSIA (2).pdf'},
+ {'name': 'Kazan State Medical University',
+  'city': 'Kazan',
+  'tuition': [636000, 636000, 636000, 636000, 636000, 636000],
+  'currency': 'RUB',
+  'hostel': None,
+  'admin_usd': 1000,
+  'academic_year': '2026-27',
+  'source_document': 'KAZAN STATE MEDICAL UNIVERSITY (3).pdf'},
+ {'name': 'Kemerovo State Medical University',
+  'city': 'Kemerovo',
+  'tuition': [335000, 335000, 335000, 335000, 335000, 335000],
+  'currency': 'RUB',
+  'hostel': None,
+  'admin_usd': 1300,
+  'academic_year': '2026-27',
+  'source_document': 'KEMEROVO STATE MEDICAL UNIVERSITY.pdf'},
+ {'name': 'Kemerovo State University',
+  'city': 'Kemerovo',
+  'tuition': [299000, 299000, 299000, 299000, 299000, 299000],
+  'currency': 'RUB',
+  'hostel': [37500, 37500, 37500, 37500, 37500, 37500],
+  'admin_usd': 2000,
+  'academic_year': '2026-27',
+  'source_document': 'KEMEROVO STATE UNIVERSITY 1.pdf'},
+ {'name': 'Kirov State Medical University',
+  'city': 'Kirov',
+  'tuition': [360000, 360000, 360000, 360000, 360000, 360000],
+  'currency': 'RUB',
+  'hostel': [85000, 70000, 70000, 70000, 70000, 70000],
+  'admin_usd': 1400,
+  'academic_year': '2026-27',
+  'source_document': 'KIROV STATE MEDICAL UNIVERSITY (2).pdf'},
+ {'name': 'Krasnoyarsk State Medical University',
+  'city': 'Krasnoyarsk',
+  'tuition': [440000, 440000, 440000, 440000, 440000, 440000],
+  'currency': 'RUB',
+  'hostel': [12000, 12000, 12000, 12000, 12000, 12000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'KRASNOYARSK STATE MEDICAL UNIVERSITY.pdf'},
+ {'name': 'Kuban State Medical University',
+  'city': 'Krasnodar',
+  'tuition': [510000, 510000, 510000, 510000, 510000, 510000],
+  'currency': 'RUB',
+  'hostel': [20000, 20000, 20000, 20000, 20000, 20000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'KUBAN STATE MEDICAL UNIVERSITY (5).pdf'},
+ {'name': 'Kursk State Medical University',
+  'city': 'Kursk',
+  'tuition': [6900, 6900, 6900, 6900, 6900, 6900],
+  'currency': 'USD',
+  'hostel': None,
+  'admin_usd': None,
+  'academic_year': '2026-27',
+  'source_document': 'KURSK STATE MEDICAL UNIVERSITY.pdf'},
+ {'name': 'Maikop State Technological University',
+  'city': 'Maykop',
+  'tuition': [340000, 340000, 340000, 340000, 340000, 340000],
+  'currency': 'RUB',
+  'hostel': [16000, 16000, 16000, 16000, 16000, 70000],
+  'admin_usd': 1000,
+  'academic_year': '2025-26',
+  'source_document': 'MAIKOP STATE MEDICAL UNIVERSITY (3).pdf'},
+ {'name': 'Mari State University',
+  'city': 'Yoshkar-Ola',
+  'tuition': [6500, 5500, 5500, 5500, 5500, 5500],
+  'currency': 'USD',
+  'hostel': None,
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'MARI STATE UNIVERSITY.pdf'},
+ {'name': 'N.I. Lobachevsky State University of Nizhny Novgorod',
+  'city': 'Nizhny Novgorod',
+  'tuition': [410000, 410000, 410000, 410000, 410000, 410000],
+  'currency': 'RUB',
+  'hostel': None,
+  'admin_usd': None,
+  'academic_year': '2025-26',
+  'source_document': 'N. I. LOBACHEVSKY STATE UNIVERSITY OF NIZHNY NOVGOROD,RUSSIA.pdf'},
+ {'name': 'National Research Ogarev Mordovia State University',
+  'city': 'Saransk',
+  'tuition': [426000, 426000, 426000, 426000, 426000, 426000],
+  'currency': 'RUB',
+  'hostel': [75000, 40000, 40000, 40000, 40000, 40000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'N.P. Ogarev Mordovia State UNIVERSITY.pdf'},
+ {'name': 'National Research Nuclear University MEPhI - Moscow',
+  'city': 'Moscow',
+  'tuition': [760000, 760000, 760000, 760000, 760000, 760000],
+  'currency': 'RUB',
+  'hostel': [18000, 18000, 18000, 18000, 18000, 18000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'NATIONAL RESEARCH NUCLEAR UNIVERSITY MEPHI MOSCOW, RUSSIA.pdf'},
+ {'name': 'National Research Nuclear University MEPhI - Obninsk',
+  'city': 'Obninsk',
+  'tuition': [544000, 544000, 544000, 544000, 544000, 544000],
+  'currency': 'RUB',
+  'hostel': [12000, 12000, 12000, 12000, 12000, 12000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'NATIONAL RESEARCH NUCLEAR UNIVERSITYMEPHI OBNINSHK.pdf'},
+ {'name': 'North Caucasian State Academy',
+  'city': 'Cherkessk',
+  'tuition': [350000, 350000, 350000, 350000, 350000, 350000],
+  'currency': 'RUB',
+  'hostel': [30000, 20000, 20000, 20000, 20000, 20000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'NORTH CAUCASIAN STATE ACADEMY 2026-27 FEES STRUCTURE.pdf'},
+ {'name': 'North Caucasus Federal University',
+  'city': 'Stavropol',
+  'tuition': [320000, 320000, 320000, 320000, 320000, 320000],
+  'currency': 'RUB',
+  'hostel': None,
+  'hostel_note': '25,000-42,000 RUB/year',
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'NORTH CAUCASUS FEDERAL UNIVERSITY.pdf'},
+ {'name': 'North Ossetian State Medical Academy',
+  'city': 'Vladikavkaz',
+  'tuition': [360000, 360000, 360000, 360000, 360000, 360000],
+  'currency': 'RUB',
+  'hostel': [48000, 48000, 48000, 48000, 48000, 48000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'NORTH OSSETIAN STATE MEDICAL UNIVERSITY.pdf'},
+ {'name': 'North-Western State Medical University',
+  'city': 'Saint Petersburg',
+  'tuition': [580000, 580000, 580000, 580000, 580000, 580000],
+  'currency': 'RUB',
+  'hostel': None,
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'NORTH WESTERN STATE MEDICAL UNIVERSITY (2).pdf'},
+ {'name': 'Northern State Medical University',
+  'city': 'Arkhangelsk',
+  'tuition': [350000, 350000, 350000, 350000, 350000, 350000],
+  'currency': 'RUB',
+  'hostel': [25000, 25000, 25000, 25000, 25000, 25000],
+  'admin_usd': 1000,
+  'academic_year': '2026-27',
+  'source_document': 'NORTHERN STATE MEDCIAL UNIVERSITY (2) (1).pdf'},
+ {'name': 'Novosibirsk State University',
+  'city': 'Novosibirsk',
+  'tuition': [6500, 6500, 6500, 6500, 6500, 6500],
+  'currency': 'USD',
+  'hostel': [200, 200, 200, 200, 200, 200],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'NOVOSIBIRSK STATE UNIVERSITY 2026-27 FEES STRUCTURE.pdf'},
+ {'name': 'Omsk State Medical University',
+  'city': 'Omsk',
+  'tuition': [303000, 303000, 303000, 303000, 303000, 303000],
+  'currency': 'RUB',
+  'hostel': [120000, 120000, 120000, 120000, 120000, 120000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'OMSK STATE MEDICAL UNIVERSITY (2).pdf'},
+ {'name': 'Orel State University',
+  'city': 'Oryol',
+  'tuition': [325100, 325100, 325100, 325100, 325100, 325100],
+  'currency': 'RUB',
+  'hostel': [70000, 70000, 70000, 70000, 70000, 70000],
+  'admin_usd': 1200,
+  'academic_year': '2025-26',
+  'source_document': 'OREL STATE UNIVERSITY (2).pdf'},
+ {'name': 'Orenburg State Medical University',
+  'city': 'Orenburg',
+  'tuition': [6500, 6500, 6500, 6500, 6500, 6500],
+  'currency': 'USD',
+  'hostel': None,
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'ORENBURG STATE MEDCIAL UNIVERSITY.pdf'},
+ {'name': 'Perm State Medical University',
+  'city': 'Perm',
+  'tuition': [6500, 6500, 6500, 6500, 6500, 6500],
+  'currency': 'USD',
+  'hostel': None,
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'PERM STATE MEDICAL UNIVERSITY (2).pdf'},
+ {'name': 'Saint Petersburg State Pediatric Medical University',
+  'city': 'Saint Petersburg',
+  'tuition': [350000, 350000, 350000, 350000, 350000, 350000],
+  'currency': 'RUB',
+  'hostel': [60000, 60000, 60000, 60000, 60000, 60000],
+  'admin_usd': 1500,
+  'academic_year': '2024-25',
+  'source_document': 'PETERSBURG STATE PEDIATRIC MEDICAL UNIVERSITY (2).pdf'},
+ {'name': 'Petrozavodsk State University',
+  'city': 'Petrozavodsk',
+  'tuition': [344000, 344000, 344000, 344000, 344000, 344000],
+  'currency': 'RUB',
+  'hostel': [20000, 20000, 20000, 20000, 20000, 20000],
+  'admin_usd': None,
+  'academic_year': '2026-27',
+  'source_document': 'PETROZAVODSK STATE MEDICAL UNIVERSITY (2).pdf'},
+ {'name': 'Pitirim Sorokin Syktyvkar State University',
+  'city': 'Syktyvkar',
+  'tuition': [300150, 300150, 300150, 300150, 300150, 300150],
+  'currency': 'RUB',
+  'hostel': [15000, 15000, 15000, 15000, 15000, 15000],
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'PITIRIM SOROKIN SYKTYVKAR STATE UNIVERSITY.pdf'},
+ {'name': 'Privolzhsky Research Medical University',
+  'city': 'Nizhny Novgorod',
+  'tuition': [470000, 470000, 470000, 470000, 470000, 470000],
+  'currency': 'RUB',
+  'hostel': None,
+  'admin_usd': 1400,
+  'academic_year': '2026-27',
+  'source_document': 'PRIVOLZHSKY RESEARCH MEDICAL UNIVERSITY (2).pdf'},
+ {'name': 'Pskov State University',
+  'city': 'Pskov',
+  'tuition': [4500, 4500, 4500, 4500, 4500, 4500],
+  'currency': 'USD',
+  'hostel': None,
+  'admin_usd': 1500,
+  'academic_year': '2026-27',
+  'source_document': 'PSKOV STATE UNIVERSITY (5).pdf'},
+ {'name': 'Rostov State Medical University',
+  'city': 'Rostov-on-Don',
+  'tuition': [375000, 375000, 375000, 375000, 375000, 375000],
+  'currency': 'RUB',
+  'hostel': [35000, 35000, 35000, 35000, 35000, 35000],
+  'admin_usd': None,
+  'academic_year': '2026-27',
+  'source_document': 'ROSTOV STATE MEDICAL UNIVERSITY (3).pdf'},
+ {'name': 'Ryazan State Medical University',
+  'city': 'Ryazan',
+  'tuition': [414000, 360520, 349440, 358590, 358590, 358590],
+  'currency': 'RUB',
+  'hostel': [20000, 20000, 20000, 20000, 20000, 20000],
+  'admin_usd': 1800,
+  'academic_year': '2025-26',
+  'source_document': 'RYAZAN STATE MEDICAL UNIVERSITY.pdf'}]
+
+RUSSIA_FEE_ALIASES = {'Altai State University': ['Altai State Medical University'],
+ 'Amur State Medical Academy': ['Amur State Medical University'],
+ 'Chita State Medical Academy': ['Chita State Medical University'],
+ 'Chuvash State University': ['Chuvash State Medical University'],
+ 'Ingush State University': ['Ingush State Medical University'],
+ 'North Ossetian State Medical Academy': ['North Ossetian State Medical University'],
+ 'North-Western State Medical University': ['North Western State Medical University'],
+ 'Petrozavodsk State University': ['Petrozavodsk State Medical University'],
+ 'I.M. Sechenov First Moscow State Medical University': ['IM Sechenov 1st Moscow Medical University',
+                                                         'Sechenov University'],
+ 'National Research Ogarev Mordovia State University': ['N.P. Ogarev Mordovia State University']}
+
+
+def slugify(value):
+    value = str(value or "").strip().lower()
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    return value.strip("-")
+
+
+def russia_name_candidates(name):
+    return [name] + RUSSIA_FEE_ALIASES.get(name, [])
+
+
+def can_auto_publish_russia_fee(record):
+    return (
+        record.get("academic_year") == "2026-27"
+        and record.get("currency") in {"RUB", "USD"}
+        and isinstance(record.get("tuition"), list)
+        and len(record.get("tuition")) == 6
+    )
+
+
+def russia_total_if_single_currency(record):
+    tuition = record.get("tuition")
+    currency = record.get("currency")
+
+    if (
+        currency not in {"RUB", "USD", "EUR", "GBP", "AUD", "INR"}
+        or not isinstance(tuition, list)
+        or len(tuition) != 6
+    ):
+        return None
+
+    return float(sum(tuition))
+
+
+def russia_hostel_year_one(record):
+    hostel = record.get("hostel")
+
+    if isinstance(hostel, list) and hostel:
+        return float(hostel[0])
+
+    return None
+
+
+def russia_university_defaults(record):
+    now = datetime.now(timezone.utc)
+    name = record["name"]
+    published = can_auto_publish_russia_fee(record)
+
+    return {
+        "id": str(uuid.uuid4()),
+        "stream": "MBBS",
+        "name": name,
+        "slug": slugify(name),
+        "country": "Russia",
+        "city": record.get("city"),
+
+        "course": "MBBS",
+        "course_level": "Medical",
+        "duration": "6 years",
+        "medium": "English",
+        "intake": None,
+        "application_deadline": None,
+
+        "currency": (
+            record.get("currency")
+            if record.get("currency") != "MIXED"
+            else "USD"
+        ),
+        "tuition_fee_year": (
+            float(record["tuition"][0])
+            if isinstance(record.get("tuition"), list)
+            and record.get("tuition")
+            else None
+        ),
+        "hostel_fee_year": russia_hostel_year_one(record),
+        "food_fee_year": None,
+        "first_year_total": None,
+        "total_course_cost": russia_total_if_single_currency(record),
+        "application_fee": None,
+        "scholarship_info": None,
+
+        "eligibility":
+            "Physics, Chemistry and Biology in Class XII; university-specific requirements apply.",
+        "neet_requirement":
+            "Required for Indian students subject to applicable regulations.",
+        "pcb_requirement":
+            "University-specific requirement.",
+        "internship": None,
+        "recognition": None,
+        "nmc_notes":
+            "Students should verify the programme against the Foreign Medical Graduate requirements applicable to their admission year.",
+        "fmge_next_notes": None,
+
+        "academic_requirement": None,
+        "english_requirement": None,
+        "ielts_requirement": None,
+        "toefl_requirement": None,
+        "gmat_gre_requirement": None,
+        "work_experience": None,
+
+        "specializations": [],
+        "internship_opportunities": None,
+        "placement_info": None,
+        "post_study_opportunities": None,
+
+        "overview":
+            f"General Medicine option in {record.get('city') or 'Russia'}. Fee data currently uses the RYC-supplied {record.get('academic_year') or 'fee'} sheet.",
+        "accreditation": None,
+        "ranking": None,
+        "established_year": None,
+        "campus": None,
+
+        "hostel": (
+            record.get("hostel_note")
+            or (
+                f"Approx. {russia_hostel_year_one(record):,.0f} {record.get('currency')} / year in the supplied fee sheet."
+                if russia_hostel_year_one(record) is not None
+                else None
+            )
+        ),
+        "indian_food": None,
+        "student_life": None,
+        "climate": None,
+        "airport_distance": None,
+
+        "pros": [],
+        "cons": [],
+        "documents_required": [],
+        "admission_process": [],
+        "faqs": [],
+
+        "website": None,
+        "apply_link": None,
+
+        "featured": False,
+        "popular": False,
+        "budget_option": False,
+        "recommended": False,
+
+        "status": "published" if published else "draft",
+
+        "seo_title": f"{name} | MBBS in Russia",
+        "meta_description":
+            f"Explore General Medicine at {name}, Russia, including tuition and admission guidance.",
+        "keywords": ["MBBS Russia", name, "General Medicine Russia"],
+
+        # Extra fee-audit fields. MongoDB safely stores these
+        # even if older frontend models do not display them yet.
+        "fee_academic_year": record.get("academic_year"),
+        "tuition_schedule": record.get("tuition"),
+        "tuition_schedule_currency": record.get("currency"),
+        "hostel_schedule": record.get("hostel"),
+        "hostel_note": record.get("hostel_note"),
+        "administration_charge_usd": record.get("admin_usd"),
+        "fee_source_type": "RYC admin supplied fee sheet",
+        "fee_source_document": record.get("source_document"),
+        "fee_officially_verified": False,
+
+        "created_at": now,
+        "updated_at": now,
+        "published_at": now if published else None,
+    }
+
+
+async def find_existing_russia_university(db, record):
+    names = russia_name_candidates(record["name"])
+
+    for candidate in names:
+        doc = await db.universities.find_one(
+            {
+                "name": {
+                    "$regex": f"^{re.escape(candidate)}$",
+                    "$options": "i",
+                },
+                "country": {
+                    "$regex": "^Russia$",
+                    "$options": "i",
+                },
+            },
+            {"_id": 0},
+        )
+
+        if doc:
+            return doc
+
+    return None
+
+
+async def upsert_russia_university(db, record):
+    existing = await find_existing_russia_university(db, record)
+    defaults = russia_university_defaults(record)
+    now = datetime.now(timezone.utc)
+
+    if not existing:
+        await db.universities.insert_one(defaults)
+        return defaults["id"], True
+
+    university_id = existing["id"]
+
+    update_fields = {
+        "stream": "MBBS",
+        "country": "Russia",
+        "city": record.get("city") or existing.get("city"),
+        "course": "MBBS",
+        "course_level": "Medical",
+        "duration": existing.get("duration") or "6 years",
+        "medium": existing.get("medium") or "English",
+
+        "currency": defaults["currency"],
+        "tuition_fee_year": defaults["tuition_fee_year"],
+        "hostel_fee_year": defaults["hostel_fee_year"],
+        "total_course_cost": defaults["total_course_cost"],
+
+        "eligibility": existing.get("eligibility") or defaults["eligibility"],
+        "neet_requirement":
+            existing.get("neet_requirement") or defaults["neet_requirement"],
+        "pcb_requirement":
+            existing.get("pcb_requirement") or defaults["pcb_requirement"],
+
+        "fee_academic_year": record.get("academic_year"),
+        "tuition_schedule": record.get("tuition"),
+        "tuition_schedule_currency": record.get("currency"),
+        "hostel_schedule": record.get("hostel"),
+        "hostel_note": record.get("hostel_note"),
+        "administration_charge_usd": record.get("admin_usd"),
+        "fee_source_type": "RYC admin supplied fee sheet",
+        "fee_source_document": record.get("source_document"),
+        "fee_officially_verified": False,
+
+        "updated_at": now,
+    }
+
+    # Do not downgrade an already published/curated university.
+    if can_auto_publish_russia_fee(record) and existing.get("status") != "published":
+        update_fields["status"] = "published"
+        update_fields["published_at"] = now
+
+    await db.universities.update_one(
+        {"id": university_id},
+        {"$set": update_fields},
+    )
+
+    return university_id, False
+
+
+async def upsert_russia_course(db, university_id, record):
+    name = record["name"]
+    now = datetime.now(timezone.utc)
+    published = can_auto_publish_russia_fee(record)
+
+    existing = await db.courses.find_one(
+        {
+            "university_id": university_id,
+            "name": {
+                "$regex": "^General Medicine$",
+                "$options": "i",
+            },
+            "level": {
+                "$regex": "^Medical$",
+                "$options": "i",
+            },
+        },
+        {"_id": 0},
+    )
+
+    currency = (
+        record.get("currency")
+        if record.get("currency") != "MIXED"
+        else "USD"
+    )
+
+    annual = (
+        float(record["tuition"][0])
+        if isinstance(record.get("tuition"), list)
+        and record.get("tuition")
+        else None
+    )
+
+    total = russia_total_if_single_currency(record)
+
+    common = {
+        "university_id": university_id,
+        "university_name": name,
+        "country": "Russia",
+        "city": record.get("city"),
+
+        "stream": "MBBS",
+        "name": "General Medicine",
+        "level": "Medical",
+        "duration": "6 years",
+        "medium": "English",
+
+        "currency": currency,
+        "tuition_fee_year": annual,
+        "hostel_fee_year": russia_hostel_year_one(record),
+        "total_course_cost": total,
+
+        "intake": None,
+        "application_deadline": None,
+
+        "eligibility":
+            "Physics, Chemistry and Biology in Class XII; university-specific requirements apply.",
+        "neet_requirement":
+            "Required for Indian students subject to applicable regulations.",
+        "pcb_requirement":
+            "University-specific requirement.",
+
+        "academic_requirement": None,
+        "english_requirement": None,
+        "ielts_requirement": None,
+        "gmat_gre_requirement": None,
+        "work_experience": None,
+
+        "featured": False,
+        "recommended": False,
+        "budget_option": False,
+
+        "last_verified": now,
+        "source_url": None,
+
+        "status": "published" if published else "draft",
+
+        # Fee audit / year-by-year data.
+        "fee_academic_year": record.get("academic_year"),
+        "tuition_schedule": record.get("tuition"),
+        "tuition_schedule_currency": record.get("currency"),
+        "tuition_schedule_mixed":
+            record.get("tuition_schedule"),
+        "hostel_schedule": record.get("hostel"),
+        "hostel_note": record.get("hostel_note"),
+        "administration_charge_usd": record.get("admin_usd"),
+        "fee_source_type": "RYC admin supplied fee sheet",
+        "fee_source_document": record.get("source_document"),
+        "fee_officially_verified": False,
+
+        "updated_at": now,
+    }
+
+    if existing:
+        # Preserve any existing admin curation flags instead of resetting them.
+        for key in ["featured", "recommended", "budget_option"]:
+            common.pop(key, None)
+
+        # Do not downgrade a previously published course because an older sheet exists.
+        if not published and existing.get("status") == "published":
+            common.pop("status", None)
+
+        await db.courses.update_one(
+            {"id": existing["id"]},
+            {"$set": common},
+        )
+
+        return False
+
+    doc = {
+        "id": str(uuid.uuid4()),
+        "slug": slugify(f"{name}-general-medicine-medical"),
+        "created_at": now,
+        "published_at": now if published else None,
+        **common,
+    }
+
+    await db.courses.insert_one(doc)
+    return True
 
 
 
