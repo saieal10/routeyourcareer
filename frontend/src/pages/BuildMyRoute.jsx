@@ -67,7 +67,7 @@ const INITIAL_FORM = {
   ielts_score: '',
   work_experience_years: '',
   budget_total: '',
-  budget_currency: 'USD',
+  budget_currency: 'INR',
   preferred_countries: []
 };
 
@@ -87,6 +87,26 @@ function money(value, currency) {
   }
 
   return `${currency || 'USD'} ${number.toLocaleString()}`;
+}
+
+function inrMoney(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ''
+  ) {
+    return null;
+  }
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return null;
+  }
+
+  return `₹ ${number.toLocaleString('en-IN', {
+    maximumFractionDigits: 0
+  })}`;
 }
 
 function ChoiceCard({
@@ -296,18 +316,40 @@ function ResultCard({
 
           <StatBox
             label="Tuition / year"
-            value={money(
-              item.tuition_fee_year,
-              item.currency
-            )}
+            value={
+              item.tuition_fee_year != null
+                ? `${money(
+                    item.tuition_fee_year,
+                    item.currency
+                  )}${
+                    item.tuition_fee_inr != null &&
+                    item.currency !== 'INR'
+                      ? ` · ≈ ${inrMoney(
+                          item.tuition_fee_inr
+                        )}`
+                      : ''
+                  }`
+                : 'Needs verification'
+            }
           />
 
           <StatBox
             label="Estimated total"
-            value={money(
-              totalCost,
-              item.currency
-            )}
+            value={
+              totalCost != null
+                ? `${money(
+                    totalCost,
+                    item.currency
+                  )}${
+                    item.estimated_total_cost_inr != null &&
+                    item.currency !== 'INR'
+                      ? ` · ≈ ${inrMoney(
+                          item.estimated_total_cost_inr
+                        )}`
+                      : ''
+                  }`
+                : 'Needs verification'
+            }
           />
 
           <StatBox
@@ -594,7 +636,7 @@ export default function BuildMyRoute() {
 
             budget_currency:
               contact.stream === 'MBBS'
-                ? 'USD'
+                ? 'INR'
                 : 'EUR',
 
             preferred_countries:
@@ -665,7 +707,7 @@ export default function BuildMyRoute() {
       stream,
       budget_currency:
         stream === 'MBBS'
-          ? 'USD'
+          ? 'INR'
           : 'EUR'
     });
 
@@ -1019,7 +1061,7 @@ export default function BuildMyRoute() {
         budget_currency:
           preApplicationContact.stream === 'Management'
             ? 'EUR'
-            : 'USD',
+            : 'INR',
         preferred_countries:
           preApplicationContact.preferred_country
             ? [
@@ -1992,10 +2034,12 @@ export default function BuildMyRoute() {
                 className="rounded-2xl border border-ink/15 bg-white px-4 py-3.5 outline-none focus:border-coral"
               >
 
-                <option>USD</option>
-                <option>EUR</option>
-                <option>GBP</option>
-                <option>AUD</option>
+                <option value="INR">INR — Indian Rupee (₹)</option>
+                <option value="USD">USD — US Dollar ($)</option>
+                <option value="EUR">EUR — Euro (€)</option>
+                <option value="GBP">GBP — British Pound (£)</option>
+                <option value="AUD">AUD — Australian Dollar (A$)</option>
+                <option value="RUB">RUB — Russian Ruble (₽)</option>
 
               </select>
 
@@ -2298,6 +2342,15 @@ export default function BuildMyRoute() {
                   <p className="mt-4 max-w-2xl text-[13px] sm:text-[14px] leading-relaxed text-cream/65">
                     Ranked from the published course information currently stored by Route Your Career. Compare the options, review what still needs verification, and choose what to explore next.
                   </p>
+
+                  {result.fx_updated_at && (
+                    <div className="mt-3 text-[10px] text-cream/45">
+                      Currency conversion active · rates updated{' '}
+                      {new Date(
+                        result.fx_updated_at
+                      ).toLocaleString('en-IN')}
+                    </div>
+                  )}
 
                 </div>
 
@@ -2751,19 +2804,41 @@ export default function BuildMyRoute() {
                   [
                     'Tuition / year',
                     item =>
-                      money(
-                        item.tuition_fee_year,
-                        item.currency
-                      )
+                      item.tuition_fee_year != null
+                        ? `${money(
+                            item.tuition_fee_year,
+                            item.currency
+                          )}${
+                            item.tuition_fee_inr != null &&
+                            item.currency !== 'INR'
+                              ? ` · ≈ ${inrMoney(
+                                  item.tuition_fee_inr
+                                )}`
+                              : ''
+                          }`
+                        : 'Needs verification'
                   ],
                   [
                     'Estimated total',
-                    item =>
-                      money(
+                    item => {
+                      const total =
                         item.estimated_total_cost ??
-                        item.total_course_cost,
-                        item.currency
-                      )
+                        item.total_course_cost;
+
+                      return total != null
+                        ? `${money(
+                            total,
+                            item.currency
+                          )}${
+                            item.estimated_total_cost_inr != null &&
+                            item.currency !== 'INR'
+                              ? ` · ≈ ${inrMoney(
+                                  item.estimated_total_cost_inr
+                                )}`
+                              : ''
+                          }`
+                        : 'Needs verification';
+                    }
                   ],
                   [
                     'Duration',
