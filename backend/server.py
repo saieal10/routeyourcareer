@@ -167,6 +167,7 @@ class LeadCreate(BaseModel):
             "quick",
             "newsletter",
             "chat_lead",
+            "build_route",
         ]
     ] = "quick"
 
@@ -924,6 +925,57 @@ class BuildMyRouteResponse(BaseModel):
     ]
 
     note: str
+
+
+
+class BuildRouteLeadCreate(BaseModel):
+
+    name: str
+    phone: str
+    email: Optional[str] = None
+    state: Optional[str] = None
+    preferred_contact: Optional[str] = "WhatsApp"
+
+    stream: Literal[
+        "MBBS",
+        "Management",
+        "Other",
+    ]
+
+    preferred_countries: List[str] = Field(default_factory=list)
+    budget_total: Optional[float] = None
+    budget_currency: str = "USD"
+    intake: Optional[str] = None
+
+    neet_status: Optional[str] = None
+    neet_score: Optional[float] = None
+    pcb_percentage: Optional[float] = None
+
+    desired_level: Optional[str] = None
+    academic_percentage: Optional[float] = None
+    english_test: Optional[str] = None
+    ielts_score: Optional[float] = None
+    work_experience_years: Optional[float] = None
+
+    selected_course_id: str
+    selected_course_name: str
+    selected_course_slug: Optional[str] = None
+    selected_university_id: str
+    selected_university_name: str
+    selected_country: str
+    selected_city: Optional[str] = None
+
+    route_score: Optional[int] = Field(default=None, ge=0, le=100)
+    match_type: Optional[str] = None
+
+    shortlisted_routes: List[dict] = Field(default_factory=list)
+
+
+class BuildRouteLeadResponse(BaseModel):
+
+    ok: bool = True
+    lead_id: str
+    message: str
 
 
 # =========================================================
@@ -1968,7 +2020,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.1-build-route",
+        "7.2-build-route-leads",
 
         "google_auth":
         True,
@@ -1983,6 +2035,9 @@ async def root():
         True,
 
         "build_my_route":
+        True,
+
+        "build_route_leads":
         True,
 
         "ai_chat":
@@ -3019,6 +3074,143 @@ async def build_my_route(
     )
 
 
+
+# =========================================================
+# BUILD MY ROUTE LEAD CAPTURE
+# =========================================================
+
+
+@api_router.post(
+    "/build-my-route/lead",
+    response_model=BuildRouteLeadResponse
+)
+async def capture_build_route_lead(
+    payload: BuildRouteLeadCreate,
+    background: BackgroundTasks,
+):
+
+    name = payload.name.strip()
+    phone = payload.phone.strip()
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Name is required")
+
+    if not phone:
+        raise HTTPException(status_code=400, detail="Phone number is required")
+
+    course = await db.courses.find_one(
+        {"id": payload.selected_course_id},
+        {"_id": 0},
+    )
+
+    if not course:
+        raise HTTPException(
+            status_code=404,
+            detail="Selected course was not found",
+        )
+
+    now = datetime.now(timezone.utc)
+    lead_id = str(uuid.uuid4())
+
+    selected_route = {
+        "course_id": course.get("id"),
+        "course_name": course.get("name") or payload.selected_course_name,
+        "course_slug": course.get("slug") or payload.selected_course_slug,
+        "university_id": course.get("university_id") or payload.selected_university_id,
+        "university_name": course.get("university_name") or payload.selected_university_name,
+        "country": course.get("country") or payload.selected_country,
+        "city": course.get("city") or payload.selected_city,
+        "currency": course.get("currency") or payload.budget_currency,
+        "tuition_fee_year": course.get("tuition_fee_year"),
+        "total_course_cost": course.get("total_course_cost"),
+        "route_score": payload.route_score,
+        "match_type": payload.match_type,
+    }
+
+    route_profile = {
+        "stream": payload.stream,
+        "preferred_countries": payload.preferred_countries,
+        "budget_total": payload.budget_total,
+        "budget_currency": payload.budget_currency,
+        "intake": payload.intake,
+        "neet_status": payload.neet_status,
+        "neet_score": payload.neet_score,
+        "pcb_percentage": payload.pcb_percentage,
+        "desired_level": payload.desired_level,
+        "academic_percentage": payload.academic_percentage,
+        "english_test": payload.english_test,
+        "ielts_score": payload.ielts_score,
+        "work_experience_years": payload.work_experience_years,
+    }
+
+    message_parts = [
+        "Build My Route application",
+        f"Selected: {selected_route['university_name']} — {selected_route['course_name']}",
+        f"Destination: {selected_route['country']}",
+    ]
+
+    if payload.route_score is not None:
+        message_parts.append(f"Route score: {payload.route_score}/100")
+
+    if payload.state:
+        message_parts.append(f"State: {payload.state}")
+
+    if payload.preferred_contact:
+        message_parts.append(f"Preferred contact: {payload.preferred_contact}")
+
+    doc = {
+        "id": lead_id,
+        "name": name,
+        "phone": phone,
+        "email": payload.email.strip() if payload.email else None,
+        "country": selected_route["country"],
+        "neet_score": (
+            str(payload.neet_score)
+            if payload.neet_score is not None
+            else None
+        ),
+        "message": " | ".join(message_parts),
+        "source": "build_my_route",
+        "type": "build_route",
+        "created_at": now,
+
+        "state": payload.state.strip() if payload.state else None,
+        "preferred_contact": payload.preferred_contact,
+        "route_profile": route_profile,
+        "selected_route": selected_route,
+        "shortlisted_routes": payload.shortlisted_routes[:3],
+        "lead_status": "new",
+        "updated_at": now,
+    }
+
+    await db.leads.insert_one(doc)
+
+    background.add_task(
+        notify_new_lead,
+        {
+            "id": lead_id,
+            "name": name,
+            "phone": phone,
+            "email": doc["email"],
+            "country": selected_route["country"],
+            "neet_score": doc["neet_score"],
+            "message": doc["message"],
+            "source": "build_my_route",
+            "type": "build_route",
+            "created_at": now.isoformat(),
+        },
+    )
+
+    return BuildRouteLeadResponse(
+        ok=True,
+        lead_id=lead_id,
+        message=(
+            "Application interest saved successfully. "
+            "A Route Your Career counsellor can now follow up."
+        ),
+    )
+
+
 # =========================================================
 # GOOGLE LOGIN
 # =========================================================
@@ -3531,6 +3723,7 @@ async def admin_stats(
         "quick",
         "chat_lead",
         "newsletter",
+        "build_route",
     ]:
 
         by_type[
