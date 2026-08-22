@@ -24,7 +24,11 @@ import {
   Trash2,
   Users,
   X,
-  FileText
+  FileText,
+  ShieldCheck,
+  AlertTriangle,
+  Link2,
+  CheckCircle2
 } from 'lucide-react';
 
 const BACKEND_URL =
@@ -160,6 +164,115 @@ function toIsoOrNull(value) {
   }
 }
 
+
+function isRecentVerification(value) {
+  if (!value) return false;
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return false;
+  return Date.now() - dt.getTime() <= 90 * 24 * 60 * 60 * 1000;
+}
+
+function courseVerification(item) {
+  const missing = [];
+
+  if (item.tuition_fee_year == null || item.tuition_fee_year === '') {
+    missing.push('tuition');
+  }
+
+  if (!String(item.duration || '').trim()) {
+    missing.push('duration');
+  }
+
+  if (!String(item.medium || '').trim()) {
+    missing.push('medium');
+  }
+
+  if (!String(item.intake || '').trim()) {
+    missing.push('intake');
+  }
+
+  if (!String(item.source_url || '').trim()) {
+    missing.push('source');
+  }
+
+  if (!item.last_verified) {
+    missing.push('verification_date');
+  } else if (!isRecentVerification(item.last_verified)) {
+    missing.push('stale');
+  }
+
+  if (item.stream === 'MBBS') {
+    if (!String(item.neet_requirement || '').trim()) {
+      missing.push('neet');
+    }
+
+    if (!String(item.pcb_requirement || '').trim()) {
+      missing.push('pcb');
+    }
+
+    if (!String(item.eligibility || '').trim()) {
+      missing.push('eligibility');
+    }
+  } else {
+    if (
+      !String(item.academic_requirement || '').trim() &&
+      !String(item.eligibility || '').trim()
+    ) {
+      missing.push('academic_eligibility');
+    }
+  }
+
+  const critical = [
+    'tuition',
+    'duration',
+    'medium',
+    'intake',
+    'source',
+    'verification_date',
+    'stale',
+    'neet',
+    'pcb',
+    'eligibility',
+    'academic_eligibility'
+  ];
+
+  const verified = !missing.some(x => critical.includes(x));
+
+  return {
+    verified,
+    missing,
+    missingFees: missing.includes('tuition'),
+    missingEligibility:
+      missing.includes('neet') ||
+      missing.includes('pcb') ||
+      missing.includes('eligibility') ||
+      missing.includes('academic_eligibility'),
+    missingSource: missing.includes('source'),
+    missingVerificationDate:
+      missing.includes('verification_date') ||
+      missing.includes('stale'),
+    missingIntake: missing.includes('intake')
+  };
+}
+
+function verificationLabel(key) {
+  const labels = {
+    tuition: 'Tuition',
+    duration: 'Duration',
+    medium: 'Medium',
+    intake: 'Intake',
+    source: 'Source URL',
+    verification_date: 'Last verified',
+    stale: 'Verification older than 90 days',
+    neet: 'NEET requirement',
+    pcb: 'PCB requirement',
+    eligibility: 'General eligibility',
+    academic_eligibility: 'Academic eligibility'
+  };
+
+  return labels[key] || key;
+}
+
 async function adminFetch(path, options = {}) {
   const response = await fetch(`${BACKEND_URL}${path}`, {
     credentials: 'include',
@@ -284,6 +397,34 @@ export default function AdminDashboard() {
   const [courseSearch, setCourseSearch] = useState('');
   const [courseStreamFilter, setCourseStreamFilter] = useState('All');
   const [courseCountryFilter, setCourseCountryFilter] = useState('All');
+  const [courseUniversityFilter, setCourseUniversityFilter] = useState('All');
+  const [courseVerificationFilter, setCourseVerificationFilter] =
+    useState('All');
+
+  const [quickVerifyOpen, setQuickVerifyOpen] = useState(false);
+  const [quickVerifyItem, setQuickVerifyItem] = useState(null);
+  const [quickVerifyForm, setQuickVerifyForm] = useState({
+    currency: 'USD',
+    tuition_fee_year: '',
+    hostel_fee_year: '',
+    living_cost_year: '',
+    other_costs_total: '',
+    duration: '',
+    medium: 'English',
+    intake: '',
+    eligibility: '',
+    neet_requirement: '',
+    pcb_requirement: '',
+    academic_requirement: '',
+    source_url: '',
+    last_verified: '',
+    recommended: false,
+    budget_option: false,
+    status: 'draft'
+  });
+  const [quickVerifyError, setQuickVerifyError] = useState('');
+  const [savingQuickVerify, setSavingQuickVerify] = useState(false);
+
 
   useEffect(() => {
     if (user) return;
@@ -485,17 +626,27 @@ export default function AdminDashboard() {
   const courseSummary = useMemo(() => {
     const published = courses.filter(x => x.status === 'published').length;
     const draft = courses.filter(x => x.status !== 'published').length;
-    const stale = courses.filter(x => {
-      if (!x.last_verified) return true;
-      const age = Date.now() - new Date(x.last_verified).getTime();
-      return age > 90 * 24 * 60 * 60 * 1000;
-    }).length;
+
+    const checks = courses.map(courseVerification);
+
+    const verified = checks.filter(x => x.verified).length;
+    const needsVerification = checks.filter(x => !x.verified).length;
+    const missingFees = checks.filter(x => x.missingFees).length;
+    const missingEligibility = checks.filter(x => x.missingEligibility).length;
+    const missingSource = checks.filter(x => x.missingSource).length;
+    const missingVerificationDate =
+      checks.filter(x => x.missingVerificationDate).length;
 
     return {
       total: courses.length,
       published,
       draft,
-      stale
+      verified,
+      needsVerification,
+      missingFees,
+      missingEligibility,
+      missingSource,
+      missingVerificationDate
     };
   }, [courses]);
 
@@ -522,6 +673,30 @@ export default function AdminDashboard() {
     ];
   }, [courses]);
 
+  const courseUniversities = useMemo(() => {
+    let rows = [...courses];
+
+    if (courseStreamFilter !== 'All') {
+      rows = rows.filter(x => x.stream === courseStreamFilter);
+    }
+
+    if (courseCountryFilter !== 'All') {
+      rows = rows.filter(x => x.country === courseCountryFilter);
+    }
+
+    const names = [
+      ...new Set(
+        rows
+          .map(x => x.university_name)
+          .filter(Boolean)
+          .sort()
+      )
+    ];
+
+    return ['All', ...names];
+  }, [courses, courseStreamFilter, courseCountryFilter]);
+
+
   const filteredCourses = useMemo(() => {
     let rows = [...courses];
 
@@ -531,6 +706,48 @@ export default function AdminDashboard() {
 
     if (courseCountryFilter !== 'All') {
       rows = rows.filter(x => x.country === courseCountryFilter);
+    }
+
+    if (courseUniversityFilter !== 'All') {
+      rows = rows.filter(
+        x => x.university_name === courseUniversityFilter
+      );
+    }
+
+    if (courseVerificationFilter !== 'All') {
+      rows = rows.filter(item => {
+        const check = courseVerification(item);
+
+        if (courseVerificationFilter === 'Verified') {
+          return check.verified;
+        }
+
+        if (courseVerificationFilter === 'Needs verification') {
+          return !check.verified;
+        }
+
+        if (courseVerificationFilter === 'Missing tuition') {
+          return check.missingFees;
+        }
+
+        if (courseVerificationFilter === 'Missing eligibility') {
+          return check.missingEligibility;
+        }
+
+        if (courseVerificationFilter === 'Missing source') {
+          return check.missingSource;
+        }
+
+        if (courseVerificationFilter === 'Missing / stale verification') {
+          return check.missingVerificationDate;
+        }
+
+        if (courseVerificationFilter === 'Missing intake') {
+          return check.missingIntake;
+        }
+
+        return true;
+      });
     }
 
     if (courseSearch.trim()) {
@@ -543,7 +760,14 @@ export default function AdminDashboard() {
     }
 
     return rows;
-  }, [courses, courseStreamFilter, courseCountryFilter, courseSearch]);
+  }, [
+    courses,
+    courseStreamFilter,
+    courseCountryFilter,
+    courseUniversityFilter,
+    courseVerificationFilter,
+    courseSearch
+  ]);
 
   const signOut = async () => {
     try {
@@ -986,6 +1210,138 @@ export default function AdminDashboard() {
     await loadCourses();
   };
 
+
+  const openQuickVerify = item => {
+    setQuickVerifyItem(item);
+    setQuickVerifyError('');
+
+    setQuickVerifyForm({
+      currency: item.currency || 'USD',
+      tuition_fee_year: item.tuition_fee_year ?? '',
+      hostel_fee_year: item.hostel_fee_year ?? '',
+      living_cost_year: item.living_cost_year ?? '',
+      other_costs_total: item.other_costs_total ?? '',
+      duration: item.duration || '',
+      medium: item.medium || 'English',
+      intake: item.intake || '',
+      eligibility: item.eligibility || '',
+      neet_requirement: item.neet_requirement || '',
+      pcb_requirement: item.pcb_requirement || '',
+      academic_requirement: item.academic_requirement || '',
+      source_url: item.source_url || '',
+      last_verified:
+        dateInputValue(item.last_verified) ||
+        new Date().toISOString().slice(0, 10),
+      recommended: Boolean(item.recommended),
+      budget_option: Boolean(item.budget_option),
+      status: item.status || 'draft'
+    });
+
+    setQuickVerifyOpen(true);
+  };
+
+  const saveQuickVerify = async () => {
+    if (!quickVerifyItem) return;
+
+    setQuickVerifyError('');
+
+    if (!quickVerifyForm.tuition_fee_year) {
+      setQuickVerifyError('Tuition / year is required for verification.');
+      return;
+    }
+
+    if (!quickVerifyForm.duration.trim()) {
+      setQuickVerifyError('Duration is required for verification.');
+      return;
+    }
+
+    if (!quickVerifyForm.source_url.trim()) {
+      setQuickVerifyError('Official source URL is required for verification.');
+      return;
+    }
+
+    if (!quickVerifyForm.last_verified) {
+      setQuickVerifyError('Last verified date is required.');
+      return;
+    }
+
+    if (quickVerifyItem.stream === 'MBBS') {
+      if (!quickVerifyForm.neet_requirement.trim()) {
+        setQuickVerifyError('NEET requirement is required for MBBS verification.');
+        return;
+      }
+
+      if (!quickVerifyForm.pcb_requirement.trim()) {
+        setQuickVerifyError('PCB requirement is required for MBBS verification.');
+        return;
+      }
+
+      if (!quickVerifyForm.eligibility.trim()) {
+        setQuickVerifyError('General eligibility is required for MBBS verification.');
+        return;
+      }
+    }
+
+    setSavingQuickVerify(true);
+
+    try {
+      const payload = {
+        currency: quickVerifyForm.currency || 'USD',
+        tuition_fee_year: optionalNumber(
+          quickVerifyForm.tuition_fee_year
+        ),
+        hostel_fee_year: optionalNumber(
+          quickVerifyForm.hostel_fee_year
+        ),
+        living_cost_year: optionalNumber(
+          quickVerifyForm.living_cost_year
+        ),
+        other_costs_total: optionalNumber(
+          quickVerifyForm.other_costs_total
+        ),
+        duration: quickVerifyForm.duration.trim() || null,
+        medium: quickVerifyForm.medium.trim() || null,
+        intake: quickVerifyForm.intake.trim() || null,
+        eligibility: quickVerifyForm.eligibility.trim() || null,
+        neet_requirement:
+          quickVerifyItem.stream === 'MBBS'
+            ? quickVerifyForm.neet_requirement.trim() || null
+            : null,
+        pcb_requirement:
+          quickVerifyItem.stream === 'MBBS'
+            ? quickVerifyForm.pcb_requirement.trim() || null
+            : null,
+        academic_requirement:
+          quickVerifyItem.stream !== 'MBBS'
+            ? quickVerifyForm.academic_requirement.trim() || null
+            : null,
+        source_url: quickVerifyForm.source_url.trim() || null,
+        last_verified: toIsoOrNull(quickVerifyForm.last_verified),
+        recommended: Boolean(quickVerifyForm.recommended),
+        budget_option: Boolean(quickVerifyForm.budget_option),
+        status: quickVerifyForm.status
+      };
+
+      await adminFetch(
+        `/api/admin/courses/${quickVerifyItem.id}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        }
+      );
+
+      await loadCourses();
+      setQuickVerifyOpen(false);
+      setQuickVerifyItem(null);
+    } catch (e) {
+      setQuickVerifyError(
+        e.message || 'Could not save verification.'
+      );
+    } finally {
+      setSavingQuickVerify(false);
+    }
+  };
+
   const refreshAll = () => {
     loadLeads();
     loadNewsletter();
@@ -1125,9 +1481,9 @@ export default function AdminDashboard() {
                 ['Management', universitySummary.management],
                 ['Courses', courseSummary.total],
                 ['Published courses', courseSummary.published],
-                ['Draft courses', courseSummary.draft],
-                ['Need verification', courseSummary.stale],
-                ['Blogs', blogs.length]
+                ['Verified courses', courseSummary.verified],
+                ['Need verification', courseSummary.needsVerification],
+                ['Missing tuition', courseSummary.missingFees]
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -1631,13 +1987,17 @@ export default function AdminDashboard() {
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <div className="text-[10px] mono uppercase tracking-widest text-coral">
-                  Programme Master
+                  Programme Verification
                 </div>
+
                 <h1 className="serif text-4xl sm:text-5xl mt-1">
                   Courses.
                 </h1>
-                <p className="mt-2 text-[13px] text-ink/60">
-                  This is the database Build My Route will match students against.
+
+                <p className="mt-2 text-[13px] text-ink/60 max-w-3xl">
+                  Build My Route reads these records directly. A course is only marked
+                  verified when the important matching fields are present and the
+                  verification date is current.
                 </p>
               </div>
 
@@ -1657,7 +2017,38 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            <div className="mt-5 grid lg:grid-cols-[1fr_180px_200px] gap-3">
+            {/* COURSE QUALITY COUNTERS */}
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+              {[
+                ['Total courses', courseSummary.total, 'all'],
+                ['Verified', courseSummary.verified, 'verified'],
+                ['Need verification', courseSummary.needsVerification, 'needs'],
+                ['Missing tuition', courseSummary.missingFees, 'fees'],
+                ['Missing eligibility', courseSummary.missingEligibility, 'eligibility'],
+                ['Missing source', courseSummary.missingSource, 'source']
+              ].map(([label, value, kind]) => (
+                <div
+                  key={label}
+                  className={`rounded-2xl border p-4 ${
+                    kind === 'verified'
+                      ? 'bg-green-50 border-green-200'
+                      : kind === 'needs'
+                      ? 'bg-amber-50 border-amber-200'
+                      : 'bg-white border-ink/10'
+                  }`}
+                >
+                  <div className="text-[9px] mono uppercase tracking-widest text-ink/45">
+                    {label}
+                  </div>
+                  <div className="serif text-3xl mt-1">
+                    {value}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* COURSE FILTERS */}
+            <div className="mt-5 grid lg:grid-cols-[1.25fr_150px_180px_1fr_220px] gap-3">
               <div className="relative">
                 <Search className="absolute left-4 top-3.5 h-4 w-4 text-ink/35" />
                 <input
@@ -1670,7 +2061,10 @@ export default function AdminDashboard() {
 
               <select
                 value={courseStreamFilter}
-                onChange={e => setCourseStreamFilter(e.target.value)}
+                onChange={e => {
+                  setCourseStreamFilter(e.target.value);
+                  setCourseUniversityFilter('All');
+                }}
                 className={inputClass}
               >
                 {['All', 'MBBS', 'Management', 'Other'].map(x => (
@@ -1680,10 +2074,44 @@ export default function AdminDashboard() {
 
               <select
                 value={courseCountryFilter}
-                onChange={e => setCourseCountryFilter(e.target.value)}
+                onChange={e => {
+                  setCourseCountryFilter(e.target.value);
+                  setCourseUniversityFilter('All');
+                }}
                 className={inputClass}
               >
                 {courseCountries.map(x => (
+                  <option key={x}>{x}</option>
+                ))}
+              </select>
+
+              <select
+                value={courseUniversityFilter}
+                onChange={e => setCourseUniversityFilter(e.target.value)}
+                className={inputClass}
+              >
+                {courseUniversities.map(x => (
+                  <option key={x} value={x}>
+                    {x === 'All' ? 'All universities' : x}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={courseVerificationFilter}
+                onChange={e => setCourseVerificationFilter(e.target.value)}
+                className={inputClass}
+              >
+                {[
+                  'All',
+                  'Verified',
+                  'Needs verification',
+                  'Missing tuition',
+                  'Missing eligibility',
+                  'Missing source',
+                  'Missing / stale verification',
+                  'Missing intake'
+                ].map(x => (
                   <option key={x}>{x}</option>
                 ))}
               </select>
@@ -1697,85 +2125,164 @@ export default function AdminDashboard() {
 
             <div className="mt-5 rounded-3xl bg-white border border-ink/10 overflow-hidden divide-y divide-ink/5">
               {loadingCourses && (
-                <div className="p-8 text-center text-ink/50">Loading…</div>
+                <div className="p-8 text-center text-ink/50">
+                  Loading…
+                </div>
               )}
 
               {!loadingCourses && filteredCourses.length === 0 && (
                 <div className="p-8 text-center text-ink/50">
-                  No courses yet. Start with your MBBS partner universities.
+                  No courses match these filters.
                 </div>
               )}
 
               {filteredCourses.map(item => {
-                const stale = !item.last_verified ||
-                  Date.now() - new Date(item.last_verified).getTime() >
-                    90 * 24 * 60 * 60 * 1000;
+                const check = courseVerification(item);
 
                 return (
                   <div
                     key={item.id}
-                    className="p-5 flex flex-wrap gap-4 items-center"
+                    className="p-5"
                   >
-                    <div className="flex-1 min-w-[260px]">
-                      <div className="text-[10px] mono uppercase text-coral">
-                        {item.stream} · {item.country}
-                      </div>
-                      <div className="serif text-xl mt-1">{item.name}</div>
-                      <div className="text-[12px] text-ink/55 mt-1">
-                        {item.university_name}
-                      </div>
-                    </div>
+                    <div className="flex flex-wrap gap-4 items-start">
+                      <div className="flex-1 min-w-[260px]">
+                        <div className="text-[10px] mono uppercase text-coral">
+                          {item.stream} · {item.country}
+                        </div>
 
-                    <div className="text-[12px] min-w-[150px]">
-                      <div className="text-[9px] mono uppercase text-ink/35">
-                        Tuition / year
+                        <div className="serif text-xl mt-1">
+                          {item.name}
+                        </div>
+
+                        <div className="text-[12px] text-ink/55 mt-1">
+                          {item.university_name}
+                          {item.city ? ` · ${item.city}` : ''}
+                        </div>
                       </div>
-                      <div className="font-semibold mt-1">
-                        {formatMoney(item.tuition_fee_year, item.currency)}
+
+                      <div className="text-[12px] min-w-[145px]">
+                        <div className="text-[9px] mono uppercase text-ink/35">
+                          Tuition / year
+                        </div>
+
+                        <div className="font-semibold mt-1">
+                          {formatMoney(
+                            item.tuition_fee_year,
+                            item.currency
+                          )}
+                        </div>
+
+                        <div className="text-[10px] text-ink/40 mt-1">
+                          {item.duration || 'Duration missing'}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-ink/40 mt-1">
-                        Total: {formatMoney(
-                          item.total_course_cost ??
-                            (
-                              durationYears(item.duration) != null &&
-                              item.tuition_fee_year != null
-                                ? durationYears(item.duration) *
-                                  Number(item.tuition_fee_year)
-                                : null
-                            ),
-                          item.currency
+
+                      <div
+                        className={`inline-flex items-center gap-1.5 text-[10px] rounded-full px-3 py-1.5 ${
+                          check.verified
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-amber-100 text-amber-900'
+                        }`}
+                      >
+                        {check.verified ? (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        ) : (
+                          <AlertTriangle className="h-3.5 w-3.5" />
                         )}
+
+                        {check.verified
+                          ? 'Verified'
+                          : 'Needs verification'}
                       </div>
+
+                      <div className="text-[10px] uppercase rounded-full bg-cream border border-ink/10 px-3 py-1.5">
+                        {item.status}
+                      </div>
+
+                      <button
+                        onClick={() => openQuickVerify(item)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-ink text-cream px-3 py-2 text-[11px] font-semibold"
+                        title="Quick verify"
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        Quick Verify
+                      </button>
+
+                      <button
+                        onClick={() => openEditCourse(item)}
+                        title="Full edit"
+                        className="h-9 w-9 rounded-full border border-ink/10 bg-white grid place-items-center"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        onClick={() => toggleCourseStatus(item)}
+                        className="text-[11px] font-semibold rounded-full border border-ink/10 bg-white px-3 py-2"
+                      >
+                        {item.status === 'published'
+                          ? 'Unpublish'
+                          : 'Publish'}
+                      </button>
+
+                      <button
+                        onClick={() => deleteCourse(item)}
+                        className="h-9 w-9 rounded-full border border-red-100 bg-white grid place-items-center"
+                        title="Delete course"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </button>
                     </div>
 
-                    <div
-                      className={`text-[10px] rounded-full px-3 py-1.5 ${
-                        stale
-                          ? 'bg-amber-100 text-amber-900'
-                          : 'bg-green-100 text-green-800'
-                      }`}
-                    >
-                      {stale ? 'Needs verification' : 'Verified'}
+                    {/* DATA QUALITY STRIP */}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {[
+                        ['Tuition', item.tuition_fee_year != null && item.tuition_fee_year !== ''],
+                        ['Duration', Boolean(String(item.duration || '').trim())],
+                        ['Medium', Boolean(String(item.medium || '').trim())],
+                        ['Intake', Boolean(String(item.intake || '').trim())],
+                        [
+                          item.stream === 'MBBS' ? 'NEET' : 'Academic',
+                          item.stream === 'MBBS'
+                            ? Boolean(String(item.neet_requirement || '').trim())
+                            : Boolean(
+                                String(
+                                  item.academic_requirement ||
+                                  item.eligibility ||
+                                  ''
+                                ).trim()
+                              )
+                        ],
+                        [
+                          item.stream === 'MBBS' ? 'PCB' : 'Eligibility',
+                          item.stream === 'MBBS'
+                            ? Boolean(String(item.pcb_requirement || '').trim())
+                            : Boolean(String(item.eligibility || '').trim())
+                        ],
+                        ['Source', Boolean(String(item.source_url || '').trim())],
+                        ['Verified date', isRecentVerification(item.last_verified)]
+                      ].map(([label, ok]) => (
+                        <span
+                          key={label}
+                          className={`rounded-full px-2.5 py-1 text-[9px] font-semibold ${
+                            ok
+                              ? 'bg-green-50 text-green-800 border border-green-100'
+                              : 'bg-red-50 text-red-700 border border-red-100'
+                          }`}
+                        >
+                          {ok ? '✓' : '!'} {label}
+                        </span>
+                      ))}
                     </div>
 
-                    <div className="text-[10px] uppercase">
-                      {item.status}
-                    </div>
-
-                    <button onClick={() => openEditCourse(item)}>
-                      <Pencil className="h-4 w-4" />
-                    </button>
-
-                    <button
-                      onClick={() => toggleCourseStatus(item)}
-                      className="text-[11px] font-semibold"
-                    >
-                      {item.status === 'published' ? 'Unpublish' : 'Publish'}
-                    </button>
-
-                    <button onClick={() => deleteCourse(item)}>
-                      <Trash2 className="h-4 w-4 text-red-600" />
-                    </button>
+                    {!check.verified && check.missing.length > 0 && (
+                      <div className="mt-3 text-[10px] text-ink/45">
+                        Missing / stale:{' '}
+                        {check.missing
+                          .map(verificationLabel)
+                          .join(' · ')}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -2133,6 +2640,330 @@ export default function AdminDashboard() {
               className="rounded-full bg-coral text-white px-5 py-3 text-[12px] font-bold"
             >
               {savingUniversity ? 'Saving…' : 'Publish'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+
+      {/* QUICK VERIFY */}
+      {quickVerifyOpen && quickVerifyItem && (
+        <Modal
+          title={`Quick Verify · ${quickVerifyItem.university_name}`}
+          subtitle={`${quickVerifyItem.name} · ${quickVerifyItem.country}`}
+          onClose={() => {
+            setQuickVerifyOpen(false);
+            setQuickVerifyItem(null);
+          }}
+        >
+          {quickVerifyError && (
+            <div className="mb-4 rounded-xl bg-red-50 border border-red-100 text-red-700 p-3 text-[12px]">
+              {quickVerifyError}
+            </div>
+          )}
+
+          <div className="rounded-2xl bg-white border border-ink/10 p-4">
+            <div className="flex items-center gap-2 text-[10px] mono uppercase tracking-widest text-coral mb-4">
+              <ShieldCheck className="h-4 w-4" />
+              Build My Route essentials
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Field label="Currency">
+                <select
+                  value={quickVerifyForm.currency}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      currency: e.target.value
+                    }))
+                  }
+                  className={inputClass}
+                >
+                  {['USD', 'EUR', 'GBP', 'AUD', 'INR'].map(x => (
+                    <option key={x}>{x}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Tuition / year *">
+                <input
+                  type="number"
+                  value={quickVerifyForm.tuition_fee_year}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      tuition_fee_year: e.target.value
+                    }))
+                  }
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Duration *">
+                <input
+                  value={quickVerifyForm.duration}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      duration: e.target.value
+                    }))
+                  }
+                  placeholder="6 years"
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Hostel / year">
+                <input
+                  type="number"
+                  value={quickVerifyForm.hostel_fee_year}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      hostel_fee_year: e.target.value
+                    }))
+                  }
+                  placeholder="Optional"
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Living / year">
+                <input
+                  type="number"
+                  value={quickVerifyForm.living_cost_year}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      living_cost_year: e.target.value
+                    }))
+                  }
+                  placeholder="Optional"
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Other one-time costs">
+                <input
+                  type="number"
+                  value={quickVerifyForm.other_costs_total}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      other_costs_total: e.target.value
+                    }))
+                  }
+                  placeholder="Optional"
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Medium *">
+                <input
+                  value={quickVerifyForm.medium}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      medium: e.target.value
+                    }))
+                  }
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Intake">
+                <input
+                  value={quickVerifyForm.intake}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      intake: e.target.value
+                    }))
+                  }
+                  placeholder="Fall / September"
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Last verified *">
+                <input
+                  type="date"
+                  value={quickVerifyForm.last_verified}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      last_verified: e.target.value
+                    }))
+                  }
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl bg-white border border-ink/10 p-4">
+            <div className="text-[10px] mono uppercase tracking-widest text-coral mb-4">
+              Eligibility
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {quickVerifyItem.stream === 'MBBS' ? (
+                <>
+                  <Field label="NEET requirement *">
+                    <input
+                      value={quickVerifyForm.neet_requirement}
+                      onChange={e =>
+                        setQuickVerifyForm(old => ({
+                          ...old,
+                          neet_requirement: e.target.value
+                        }))
+                      }
+                      placeholder="Required for Indian students subject to applicable regulations."
+                      className={inputClass}
+                    />
+                  </Field>
+
+                  <Field label="PCB requirement *">
+                    <input
+                      value={quickVerifyForm.pcb_requirement}
+                      onChange={e =>
+                        setQuickVerifyForm(old => ({
+                          ...old,
+                          pcb_requirement: e.target.value
+                        }))
+                      }
+                      placeholder="Example: 50% PCB"
+                      className={inputClass}
+                    />
+                  </Field>
+                </>
+              ) : (
+                <Field label="Academic requirement">
+                  <input
+                    value={quickVerifyForm.academic_requirement}
+                    onChange={e =>
+                      setQuickVerifyForm(old => ({
+                        ...old,
+                        academic_requirement: e.target.value
+                      }))
+                    }
+                    className={inputClass}
+                  />
+                </Field>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <Field
+                label={
+                  quickVerifyItem.stream === 'MBBS'
+                    ? 'General eligibility *'
+                    : 'General eligibility'
+                }
+              >
+                <textarea
+                  value={quickVerifyForm.eligibility}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      eligibility: e.target.value
+                    }))
+                  }
+                  className={textareaClass}
+                />
+              </Field>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl bg-white border border-ink/10 p-4">
+            <div className="flex items-center gap-2 text-[10px] mono uppercase tracking-widest text-coral mb-4">
+              <Link2 className="h-4 w-4" />
+              Evidence & publishing
+            </div>
+
+            <Field
+              label="Official source URL *"
+              hint="Use the university programme, tuition or official admissions page used to verify this record."
+            >
+              <input
+                value={quickVerifyForm.source_url}
+                onChange={e =>
+                  setQuickVerifyForm(old => ({
+                    ...old,
+                    source_url: e.target.value
+                  }))
+                }
+                placeholder="https://..."
+                className={inputClass}
+              />
+            </Field>
+
+            <div className="mt-4 grid sm:grid-cols-3 gap-3">
+              <label className="rounded-xl border border-ink/10 bg-cream p-3 flex items-center gap-2 text-[12px] font-semibold">
+                <input
+                  type="checkbox"
+                  checked={quickVerifyForm.recommended}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      recommended: e.target.checked
+                    }))
+                  }
+                />
+                RYC recommended
+              </label>
+
+              <label className="rounded-xl border border-ink/10 bg-cream p-3 flex items-center gap-2 text-[12px] font-semibold">
+                <input
+                  type="checkbox"
+                  checked={quickVerifyForm.budget_option}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      budget_option: e.target.checked
+                    }))
+                  }
+                />
+                Budget option
+              </label>
+
+              <Field label="Public status">
+                <select
+                  value={quickVerifyForm.status}
+                  onChange={e =>
+                    setQuickVerifyForm(old => ({
+                      ...old,
+                      status: e.target.value
+                    }))
+                  }
+                  className={inputClass}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+              </Field>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap justify-end gap-2">
+            <button
+              onClick={() => {
+                setQuickVerifyOpen(false);
+                setQuickVerifyItem(null);
+              }}
+              className="rounded-full border border-ink/15 px-5 py-3 text-[12px] font-semibold"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={saveQuickVerify}
+              disabled={savingQuickVerify}
+              className="inline-flex items-center gap-2 rounded-full bg-coral text-white px-5 py-3 text-[12px] font-bold disabled:opacity-50"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              {savingQuickVerify ? 'Saving…' : 'Save verification'}
             </button>
           </div>
         </Modal>
