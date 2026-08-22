@@ -826,6 +826,106 @@ class Course(BaseModel):
     published_at: Optional[datetime] = None
 
 
+
+# =========================================================
+# BUILD MY ROUTE MODELS
+# =========================================================
+
+
+class BuildMyRouteRequest(BaseModel):
+
+    stream: Literal[
+        "MBBS",
+        "Management",
+        "Other",
+    ]
+
+    preferred_countries: List[str] = Field(
+        default_factory=list
+    )
+
+    budget_total: Optional[float] = None
+    budget_currency: str = "USD"
+
+    # Kept for API compatibility, but not used as a hard filter.
+    intake: Optional[str] = None
+
+    max_results: int = Field(
+        default=12,
+        ge=1,
+        le=30,
+    )
+
+    # MBBS
+    neet_status: Optional[str] = None
+    neet_score: Optional[float] = None
+    pcb_percentage: Optional[float] = None
+
+    # Management / Other
+    desired_level: Optional[str] = None
+    academic_percentage: Optional[float] = None
+    english_test: Optional[str] = None
+    ielts_score: Optional[float] = None
+    work_experience_years: Optional[float] = None
+
+
+class BuildMyRouteMatch(BaseModel):
+
+    course_id: str
+    course_slug: str
+    course_name: str
+
+    university_id: str
+    university_name: str
+    country: str
+    city: Optional[str] = None
+
+    stream: str
+    level: Optional[str] = None
+    duration: Optional[str] = None
+    medium: Optional[str] = None
+
+    currency: str = "USD"
+    tuition_fee_year: Optional[float] = None
+    total_course_cost: Optional[float] = None
+    estimated_total_cost: Optional[float] = None
+    intake: Optional[str] = None
+
+    match_type: Literal[
+        "best_match",
+        "possible_match",
+    ]
+
+    score: int
+
+    reasons: List[str] = Field(
+        default_factory=list
+    )
+
+    cautions: List[str] = Field(
+        default_factory=list
+    )
+
+    featured: bool = False
+    recommended: bool = False
+    budget_option: bool = False
+
+    last_verified: Optional[datetime] = None
+
+
+class BuildMyRouteResponse(BaseModel):
+
+    stream: str
+    matches_found: int
+    returned: int
+
+    results: List[
+        BuildMyRouteMatch
+    ]
+
+    note: str
+
+
 # =========================================================
 # HELPERS
 # =========================================================
@@ -852,6 +952,873 @@ def make_slug(text: str) -> str:
     )
 
     return text.strip("-")
+
+
+
+# =========================================================
+# BUILD MY ROUTE HELPERS
+# =========================================================
+
+
+def _route_text(value) -> str:
+
+    return str(
+        value or ""
+    ).strip().lower()
+
+
+def _route_first_number(
+    value
+) -> Optional[float]:
+
+    if value is None:
+        return None
+
+    if isinstance(
+        value,
+        (int, float)
+    ):
+        return float(value)
+
+    match = re.search(
+        r"(\d+(?:\.\d+)?)",
+        str(value)
+    )
+
+    if not match:
+        return None
+
+    try:
+        return float(
+            match.group(1)
+        )
+
+    except Exception:
+        return None
+
+
+def _route_percentage(
+    value
+) -> Optional[float]:
+
+    if value is None:
+        return None
+
+    match = re.search(
+        r"(\d+(?:\.\d+)?)\s*%",
+        str(value)
+    )
+
+    if not match:
+        return None
+
+    try:
+        return float(
+            match.group(1)
+        )
+
+    except Exception:
+        return None
+
+
+def _route_neet_required(
+    value
+) -> bool:
+
+    text = _route_text(
+        value
+    )
+
+    if not text:
+        return False
+
+    negative = [
+        "not required",
+        "no neet",
+        "neet not required",
+        "not mandatory",
+    ]
+
+    if any(
+        phrase in text
+        for phrase in negative
+    ):
+        return False
+
+    return (
+        "neet" in text
+        or "required for indian" in text
+        or "qualified" in text
+        or "qualification" in text
+        or "mandatory" in text
+    )
+
+
+def _route_recently_verified(
+    value
+) -> bool:
+
+    if not value:
+        return False
+
+    last_verified = value
+
+    if isinstance(
+        last_verified,
+        str
+    ):
+
+        try:
+            last_verified = (
+                datetime.fromisoformat(
+                    last_verified.replace(
+                        "Z",
+                        "+00:00"
+                    )
+                )
+            )
+
+        except Exception:
+            return False
+
+    if not isinstance(
+        last_verified,
+        datetime
+    ):
+        return False
+
+    if (
+        last_verified.tzinfo
+        is None
+    ):
+        last_verified = (
+            last_verified.replace(
+                tzinfo=timezone.utc
+            )
+        )
+
+    return (
+        datetime.now(
+            timezone.utc
+        )
+        - last_verified
+        <= timedelta(
+            days=90
+        )
+    )
+
+
+def _route_total_cost(
+    course: dict
+) -> Optional[float]:
+
+    # Prefer the broader study estimate when present.
+    existing_estimate = course.get(
+        "estimated_study_cost"
+    )
+
+    if existing_estimate is not None:
+
+        try:
+            return float(
+                existing_estimate
+            )
+
+        except Exception:
+            pass
+
+    years = _route_first_number(
+        course.get(
+            "duration"
+        )
+    )
+
+    tuition = course.get(
+        "tuition_fee_year"
+    )
+
+    if (
+        years is not None
+        and tuition is not None
+    ):
+
+        try:
+
+            return round(
+                (
+                    float(tuition)
+                    + float(
+                        course.get(
+                            "hostel_fee_year"
+                        )
+                        or 0
+                    )
+                    + float(
+                        course.get(
+                            "living_cost_year"
+                        )
+                        or 0
+                    )
+                )
+                * float(years)
+                + float(
+                    course.get(
+                        "other_costs_total"
+                    )
+                    or 0
+                ),
+                2
+            )
+
+        except Exception:
+            pass
+
+    total_course_cost = (
+        course.get(
+            "total_course_cost"
+        )
+    )
+
+    if total_course_cost is not None:
+
+        try:
+            return float(
+                total_course_cost
+            )
+
+        except Exception:
+            pass
+
+    return None
+
+
+def _score_route_course(
+    course: dict,
+    payload: BuildMyRouteRequest,
+):
+
+    score = 50
+
+    reasons = []
+    cautions = []
+
+    hard_fail = False
+
+    preferred_countries = {
+        _route_text(country)
+        for country
+        in payload.preferred_countries
+        if _route_text(country)
+    }
+
+    course_country = _route_text(
+        course.get(
+            "country"
+        )
+    )
+
+    # -----------------------------------------------------
+    # COUNTRY PREFERENCE
+    # -----------------------------------------------------
+
+    if preferred_countries:
+
+        if (
+            course_country
+            in preferred_countries
+        ):
+
+            score += 15
+
+            reasons.append(
+                "Matches your preferred country"
+            )
+
+        else:
+
+            score -= 5
+
+            cautions.append(
+                "Outside your selected country preferences"
+            )
+
+    # -----------------------------------------------------
+    # BUDGET
+    # -----------------------------------------------------
+
+    estimated_total = (
+        _route_total_cost(
+            course
+        )
+    )
+
+    if (
+        payload.budget_total
+        is not None
+    ):
+
+        same_currency = (
+            _route_text(
+                course.get(
+                    "currency"
+                )
+                or "USD"
+            )
+            ==
+            _route_text(
+                payload.budget_currency
+                or "USD"
+            )
+        )
+
+        if not same_currency:
+
+            cautions.append(
+                "Budget comparison needs currency conversion"
+            )
+
+        elif estimated_total is None:
+
+            cautions.append(
+                "Complete comparable programme cost is not verified"
+            )
+
+        elif (
+            estimated_total
+            <= payload.budget_total
+        ):
+
+            score += 20
+
+            reasons.append(
+                "Estimated programme cost fits your stated budget"
+            )
+
+        else:
+
+            difference = (
+                estimated_total
+                - payload.budget_total
+            )
+
+            ratio = (
+                difference
+                / payload.budget_total
+                if payload.budget_total
+                else 1
+            )
+
+            if ratio <= 0.10:
+
+                score -= 5
+
+                cautions.append(
+                    "Estimated programme cost is slightly above your budget"
+                )
+
+            else:
+
+                score -= 20
+
+                cautions.append(
+                    "Estimated programme cost is above your budget"
+                )
+
+    # -----------------------------------------------------
+    # MEDIUM
+    # -----------------------------------------------------
+
+    medium = _route_text(
+        course.get(
+            "medium"
+        )
+    )
+
+    if "english" in medium:
+
+        score += 5
+
+        reasons.append(
+            "Recorded as English-medium"
+        )
+
+    elif not medium:
+
+        cautions.append(
+            "Teaching medium needs verification"
+        )
+
+    # -----------------------------------------------------
+    # MBBS
+    # -----------------------------------------------------
+
+    if (
+        payload.stream
+        == "MBBS"
+    ):
+
+        requirement = (
+            course.get(
+                "neet_requirement"
+            )
+        )
+
+        if _route_neet_required(
+            requirement
+        ):
+
+            status = _route_text(
+                payload.neet_status
+            )
+
+            if status in [
+                "qualified",
+                "yes",
+            ]:
+
+                score += 15
+
+                reasons.append(
+                    "Your NEET status appears compatible"
+                )
+
+            elif status in [
+                "not_qualified",
+                "not qualified",
+                "not_taken",
+                "not taken",
+                "no",
+            ]:
+
+                hard_fail = True
+
+        elif requirement:
+
+            cautions.append(
+                "NEET requirement should be reconfirmed"
+            )
+
+        else:
+
+            cautions.append(
+                "NEET requirement needs verification"
+            )
+
+        required_pcb = (
+            _route_percentage(
+                course.get(
+                    "pcb_requirement"
+                )
+            )
+        )
+
+        if (
+            required_pcb
+            is not None
+            and payload.pcb_percentage
+            is not None
+        ):
+
+            if (
+                payload.pcb_percentage
+                >= required_pcb
+            ):
+
+                score += 12
+
+                reasons.append(
+                    "Your PCB percentage meets the recorded requirement"
+                )
+
+            else:
+
+                hard_fail = True
+
+        elif (
+            payload.pcb_percentage
+            is not None
+        ):
+
+            cautions.append(
+                "PCB requirement needs verification"
+            )
+
+    # -----------------------------------------------------
+    # MANAGEMENT / OTHER
+    # -----------------------------------------------------
+
+    if (
+        payload.stream
+        in [
+            "Management",
+            "Other",
+        ]
+    ):
+
+        desired_level = (
+            _route_text(
+                payload.desired_level
+            )
+        )
+
+        course_level = (
+            _route_text(
+                course.get(
+                    "level"
+                )
+            )
+        )
+
+        if desired_level:
+
+            if course_level:
+
+                if (
+                    desired_level
+                    in course_level
+                    or course_level
+                    in desired_level
+                ):
+
+                    score += 15
+
+                    reasons.append(
+                        "Matches your preferred study level"
+                    )
+
+                else:
+
+                    score -= 8
+
+                    cautions.append(
+                        "Course level differs from your preferred level"
+                    )
+
+            else:
+
+                cautions.append(
+                    "Course level needs verification"
+                )
+
+        required_academic = (
+            _route_percentage(
+                course.get(
+                    "academic_requirement"
+                )
+            )
+        )
+
+        if (
+            required_academic
+            is not None
+            and payload.academic_percentage
+            is not None
+        ):
+
+            if (
+                payload.academic_percentage
+                >= required_academic
+            ):
+
+                score += 10
+
+                reasons.append(
+                    "Your academic score meets the recorded requirement"
+                )
+
+            else:
+
+                hard_fail = True
+
+        elif (
+            payload.academic_percentage
+            is not None
+        ):
+
+            cautions.append(
+                "Academic eligibility needs verification"
+            )
+
+        required_ielts = (
+            _route_first_number(
+                course.get(
+                    "ielts_requirement"
+                )
+            )
+        )
+
+        if (
+            required_ielts
+            is not None
+            and payload.ielts_score
+            is not None
+        ):
+
+            if (
+                payload.ielts_score
+                >= required_ielts
+            ):
+
+                score += 8
+
+                reasons.append(
+                    "Your IELTS score meets the recorded requirement"
+                )
+
+            else:
+
+                hard_fail = True
+
+        elif (
+            payload.ielts_score
+            is not None
+        ):
+
+            cautions.append(
+                "IELTS requirement needs verification"
+            )
+
+    # -----------------------------------------------------
+    # EDITORIAL SIGNALS
+    # -----------------------------------------------------
+
+    if course.get(
+        "recommended"
+    ):
+
+        score += 5
+
+        reasons.append(
+            "Marked as recommended by Route Your Career"
+        )
+
+    if course.get(
+        "featured"
+    ):
+
+        score += 2
+
+    if course.get(
+        "budget_option"
+    ):
+
+        score += 3
+
+        reasons.append(
+            "Marked as a budget option"
+        )
+
+    # -----------------------------------------------------
+    # VERIFICATION
+    # -----------------------------------------------------
+
+    if _route_recently_verified(
+        course.get(
+            "last_verified"
+        )
+    ):
+
+        score += 5
+
+        reasons.append(
+            "Course information was recently verified"
+        )
+
+    else:
+
+        cautions.append(
+            "Some current details should be reconfirmed before applying"
+        )
+
+    # -----------------------------------------------------
+    # IMPORTANT: INTAKE DOES NOT FILTER OR PENALISE
+    # -----------------------------------------------------
+
+    if payload.intake:
+
+        stored_intake = _route_text(
+            course.get(
+                "intake"
+            )
+        )
+
+        requested_intake = _route_text(
+            payload.intake
+        )
+
+        if (
+            stored_intake
+            and (
+                requested_intake
+                in stored_intake
+                or stored_intake
+                in requested_intake
+            )
+        ):
+
+            reasons.append(
+                "Requested intake appears to match the recorded intake"
+            )
+
+        elif stored_intake:
+
+            cautions.append(
+                f"Recorded intake: {course.get('intake')}"
+            )
+
+        else:
+
+            cautions.append(
+                "Latest intake needs verification"
+            )
+
+    if hard_fail:
+        return None
+
+    score = max(
+        0,
+        min(
+            100,
+            int(
+                round(score)
+            )
+        )
+    )
+
+    match_type = (
+        "best_match"
+        if (
+            score >= 75
+            and len(cautions) <= 2
+        )
+        else "possible_match"
+    )
+
+    return {
+        "course_id":
+        course.get(
+            "id"
+        )
+        or "",
+
+        "course_slug":
+        course.get(
+            "slug"
+        )
+        or "",
+
+        "course_name":
+        course.get(
+            "name"
+        )
+        or "",
+
+        "university_id":
+        course.get(
+            "university_id"
+        )
+        or "",
+
+        "university_name":
+        course.get(
+            "university_name"
+        )
+        or "",
+
+        "country":
+        course.get(
+            "country"
+        )
+        or "",
+
+        "city":
+        course.get(
+            "city"
+        ),
+
+        "stream":
+        course.get(
+            "stream"
+        )
+        or "",
+
+        "level":
+        course.get(
+            "level"
+        ),
+
+        "duration":
+        course.get(
+            "duration"
+        ),
+
+        "medium":
+        course.get(
+            "medium"
+        ),
+
+        "currency":
+        course.get(
+            "currency"
+        )
+        or "USD",
+
+        "tuition_fee_year":
+        course.get(
+            "tuition_fee_year"
+        ),
+
+        "total_course_cost":
+        course.get(
+            "total_course_cost"
+        ),
+
+        "estimated_total_cost":
+        estimated_total,
+
+        "intake":
+        course.get(
+            "intake"
+        ),
+
+        "match_type":
+        match_type,
+
+        "score":
+        score,
+
+        "reasons":
+        reasons[:6],
+
+        "cautions":
+        cautions[:6],
+
+        "featured":
+        bool(
+            course.get(
+                "featured"
+            )
+        ),
+
+        "recommended":
+        bool(
+            course.get(
+                "recommended"
+            )
+        ),
+
+        "budget_option":
+        bool(
+            course.get(
+                "budget_option"
+            )
+        ),
+
+        "last_verified":
+        course.get(
+            "last_verified"
+        ),
+    }
 
 
 # =========================================================
@@ -1001,7 +1968,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.0-v2",
+        "7.1-build-route",
 
         "google_auth":
         True,
@@ -1013,6 +1980,9 @@ async def root():
         True,
 
         "course_system":
+        True,
+
+        "build_my_route":
         True,
 
         "ai_chat":
@@ -1933,6 +2903,120 @@ async def public_course(
         )
 
     return Course(**doc)
+
+
+
+# =========================================================
+# BUILD MY ROUTE
+# =========================================================
+
+
+@api_router.post(
+    "/build-my-route",
+    response_model=
+    BuildMyRouteResponse
+)
+async def build_my_route(
+    payload:
+    BuildMyRouteRequest
+):
+
+    query = {
+        "status":
+        "published",
+
+        "stream": {
+            "$regex":
+            f"^{re.escape(payload.stream)}$",
+
+            "$options":
+            "i",
+        },
+    }
+
+    docs = (
+        await db.courses
+        .find(
+            query,
+            {
+                "_id": 0
+            }
+        )
+        .to_list(
+            5000
+        )
+    )
+
+    ranked = []
+
+    for course in docs:
+
+        result = (
+            _score_route_course(
+                course,
+                payload
+            )
+        )
+
+        if result is not None:
+
+            ranked.append(
+                result
+            )
+
+    ranked.sort(
+        key=lambda item: (
+            item[
+                "match_type"
+            ]
+            == "best_match",
+
+            item[
+                "score"
+            ],
+
+            item[
+                "recommended"
+            ],
+
+            item[
+                "featured"
+            ],
+        ),
+
+        reverse=True,
+    )
+
+    limited = ranked[
+        :payload.max_results
+    ]
+
+    return BuildMyRouteResponse(
+
+        stream=
+        payload.stream,
+
+        matches_found=
+        len(ranked),
+
+        returned=
+        len(limited),
+
+        results=[
+            BuildMyRouteMatch(
+                **item
+            )
+            for item
+            in limited
+        ],
+
+        note=(
+            "Matches use only published Route Your Career "
+            "course records. Intake is not used as a hard "
+            "filter. Missing or older information is shown "
+            "as needing verification rather than being invented."
+        ),
+    )
 
 
 # =========================================================
@@ -2975,7 +4059,7 @@ async def admin_create_university(
         else None
     )
 
-    doc = derive_course_costs(payload.model_dump())
+    doc = payload.model_dump()
 
     doc.update(
         {
@@ -3369,7 +4453,9 @@ async def admin_create_course(
             detail="A course with this slug already exists",
         )
 
-    doc = payload.model_dump()
+    doc = derive_course_costs(
+        payload.model_dump()
+    )
 
     doc.update(
         {
