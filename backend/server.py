@@ -2092,7 +2092,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.4-applications-crm",
+        "7.5-track-application",
 
         "google_auth":
         True,
@@ -2119,6 +2119,9 @@ async def root():
         True,
 
         "admin_applications_crm":
+        True,
+
+        "public_application_tracking":
         True,
 
         "ai_chat":
@@ -3372,6 +3375,297 @@ async def update_application_route_profile(
             "to the existing application."
         ),
     )
+
+
+
+# =========================================================
+# PUBLIC APPLICATION TRACKING
+# =========================================================
+
+TRACKING_STAGES = [
+    ("started", "Application Started"),
+    ("route_built", "Route Built"),
+    ("university_selected", "University Selected"),
+    ("contacted", "Contacted"),
+    ("documents", "Documents"),
+    ("applied", "Applied"),
+    ("offer_received", "Offer Received"),
+    ("visa", "Visa"),
+    ("enrolled", "Enrolled"),
+]
+
+
+def _public_application_stage(doc: dict) -> str:
+
+    stage = (
+        doc.get("application_status")
+        or doc.get("journey_stage")
+        or "started"
+    )
+
+    aliases = {
+        "contact_captured": "started",
+        "selected": "university_selected",
+        "university selected": "university_selected",
+        "route built": "route_built",
+        "offer received": "offer_received",
+    }
+
+    stage = str(stage).strip().lower()
+
+    stage = aliases.get(
+        stage,
+        stage,
+    )
+
+    valid = {
+        item[0]
+        for item in TRACKING_STAGES
+    }
+
+    if stage not in valid:
+        return "started"
+
+    return stage
+
+
+def _tracking_timeline(
+    doc: dict,
+    current_stage: str,
+):
+
+    stage_keys = [
+        item[0]
+        for item in TRACKING_STAGES
+    ]
+
+    try:
+        current_index = stage_keys.index(
+            current_stage
+        )
+    except ValueError:
+        current_index = 0
+
+    timestamp_fields = {
+        "started":
+        "created_at",
+
+        "route_built":
+        "route_completed_at",
+
+        "university_selected":
+        "selected_at",
+
+        "contacted":
+        "contacted_at",
+
+        "documents":
+        "documents_at",
+
+        "applied":
+        "applied_at",
+
+        "offer_received":
+        "offer_received_at",
+
+        "visa":
+        "visa_at",
+
+        "enrolled":
+        "enrolled_at",
+    }
+
+    timeline = []
+
+    for index, (
+        key,
+        label,
+    ) in enumerate(
+        TRACKING_STAGES
+    ):
+
+        if index < current_index:
+            status = "completed"
+
+        elif index == current_index:
+            status = "current"
+
+        else:
+            status = "upcoming"
+
+        timeline.append(
+            {
+                "key":
+                key,
+
+                "label":
+                label,
+
+                "status":
+                status,
+
+                "completed":
+                index < current_index,
+
+                "current":
+                index == current_index,
+
+                "date":
+                doc.get(
+                    timestamp_fields.get(
+                        key
+                    )
+                ),
+            }
+        )
+
+    return timeline
+
+
+@api_router.get(
+    "/applications/{application_id}/track"
+)
+async def public_track_application(
+    application_id: str
+):
+
+    normalized_id = (
+        application_id
+        .strip()
+        .upper()
+    )
+
+    if not normalized_id:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Application ID is required",
+        )
+
+    doc = await db.leads.find_one(
+        {
+            "application_id":
+            normalized_id
+        },
+        {
+            "_id": 0,
+
+            "application_id": 1,
+            "name": 1,
+            "stream": 1,
+            "country": 1,
+            "application_status": 1,
+            "journey_stage": 1,
+            "created_at": 1,
+            "updated_at": 1,
+
+            "route_completed_at": 1,
+            "selected_at": 1,
+            "contacted_at": 1,
+            "documents_at": 1,
+            "applied_at": 1,
+            "offer_received_at": 1,
+            "visa_at": 1,
+            "enrolled_at": 1,
+
+            "selected_route": 1,
+        },
+    )
+
+    if not doc:
+
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Application not found. "
+                "Please check your Route Your Career "
+                "application ID and try again."
+            ),
+        )
+
+    stage = _public_application_stage(
+        doc
+    )
+
+    selected_route = (
+        doc.get(
+            "selected_route"
+        )
+        or {}
+    )
+
+    # Intentionally return a restricted public payload.
+    # Phone, email, internal message, lead status, admin
+    # fields, route profile and shortlisted routes are not
+    # exposed by this endpoint.
+    return {
+        "ok":
+        True,
+
+        "application_id":
+        doc.get(
+            "application_id"
+        ),
+
+        "student_name":
+        doc.get(
+            "name"
+        ),
+
+        "stream":
+        doc.get(
+            "stream"
+        ),
+
+        "stage":
+        stage,
+
+        "stage_label":
+        dict(
+            TRACKING_STAGES
+        ).get(
+            stage,
+            "Application Started",
+        ),
+
+        "selected_route": {
+            "university_name":
+            selected_route.get(
+                "university_name"
+            ),
+
+            "course_name":
+            selected_route.get(
+                "course_name"
+            ),
+
+            "country":
+            selected_route.get(
+                "country"
+            ),
+
+            "city":
+            selected_route.get(
+                "city"
+            ),
+        },
+
+        "created_at":
+        doc.get(
+            "created_at"
+        ),
+
+        "updated_at":
+        doc.get(
+            "updated_at"
+        ),
+
+        "timeline":
+        _tracking_timeline(
+            doc,
+            stage,
+        ),
+    }
 
 
 # =========================================================
