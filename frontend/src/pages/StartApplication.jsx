@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   Check,
+  Copy,
   GraduationCap,
   Loader2,
   Mail,
@@ -108,6 +109,12 @@ export default function StartApplication() {
     useState('');
 
   const [loading, setLoading] =
+    useState(false);
+
+  const [createdApplicationId, setCreatedApplicationId] =
+    useState('');
+
+  const [copied, setCopied] =
     useState(false);
 
   const countries = useMemo(() => {
@@ -269,20 +276,11 @@ export default function StartApplication() {
         })
       );
 
-      /*
-      =====================================================
-      SEND USER INTO BUILD MY ROUTE
-
-      The query parameter is only for convenience.
-      The persistent value is stored in localStorage.
-      =====================================================
-      */
-
-      navigate(
-        `/build-my-route?application_id=${encodeURIComponent(
-          data.application_id
-        )}`
+      setCreatedApplicationId(
+        data.application_id
       );
+
+      setCopied(false);
     }
     catch (err) {
       setError(
@@ -293,6 +291,36 @@ export default function StartApplication() {
     finally {
       setLoading(false);
     }
+  };
+
+  const copyApplicationId = async () => {
+    if (!createdApplicationId) return;
+
+    try {
+      await navigator.clipboard.writeText(
+        createdApplicationId
+      );
+
+      setCopied(true);
+
+      window.setTimeout(
+        () => setCopied(false),
+        1800
+      );
+    }
+    catch {
+      setCopied(false);
+    }
+  };
+
+  const continueToRoute = () => {
+    if (!createdApplicationId) return;
+
+    navigate(
+      `/build-my-route?application_id=${encodeURIComponent(
+        createdApplicationId
+      )}`
+    );
   };
 
   return (
@@ -412,6 +440,122 @@ export default function StartApplication() {
               </p>
 
             </div>
+
+            {createdApplicationId ? (
+
+              <div className="p-6 sm:p-8">
+
+                <div className="h-12 w-12 rounded-full bg-green-100 text-green-700 grid place-items-center">
+                  <Check className="h-5 w-5" />
+                </div>
+
+                <div className="text-[10px] mono uppercase tracking-widest text-coral mt-5">
+                  Application created
+                </div>
+
+                <h3 className="serif text-3xl sm:text-4xl mt-2">
+                  Save your RYC Application ID.
+                </h3>
+
+                <p className="mt-3 text-[13px] leading-relaxed text-ink/60">
+                  You will use this reference to track your application progress. We have also saved it on this device.
+                </p>
+
+                <div className="mt-6 rounded-3xl bg-ink text-cream p-5 sm:p-6">
+
+                  <div className="text-[9px] mono uppercase tracking-[0.2em] text-coral">
+                    Your Application ID
+                  </div>
+
+                  <div className="mt-2 serif text-2xl sm:text-3xl break-all">
+                    {createdApplicationId}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={copyApplicationId}
+                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-cream text-ink px-4 py-2.5 text-[11px] font-semibold"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        Copy Application ID
+                      </>
+                    )}
+                  </button>
+
+                </div>
+
+                <div className="mt-5 rounded-2xl bg-white border border-ink/10 p-4">
+
+                  <div className="text-[9px] mono uppercase tracking-widest text-ink/40">
+                    What happens next
+                  </div>
+
+                  <div className="mt-3 space-y-3 text-[12px] text-ink/60">
+
+                    <div className="flex gap-3">
+                      <div className="h-6 w-6 rounded-full bg-ink text-cream grid place-items-center text-[9px] font-bold shrink-0">
+                        1
+                      </div>
+                      <div>
+                        Complete Build My Route with your academic profile and budget.
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="h-6 w-6 rounded-full bg-ink text-cream grid place-items-center text-[9px] font-bold shrink-0">
+                        2
+                      </div>
+                      <div>
+                        Compare suitable universities and select your preferred route.
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="h-6 w-6 rounded-full bg-ink text-cream grid place-items-center text-[9px] font-bold shrink-0">
+                        3
+                      </div>
+                      <div>
+                        Track the same application later using this RYC ID.
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={continueToRoute}
+                  className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-full bg-coral text-white px-6 py-4 text-[13px] font-bold"
+                >
+                  Continue to Build My Route
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      `/track-application?application_id=${encodeURIComponent(
+                        createdApplicationId
+                      )}`
+                    )
+                  }
+                  className="mt-3 w-full rounded-full border border-ink/15 bg-white px-6 py-3.5 text-[12px] font-semibold"
+                >
+                  Track this application
+                </button>
+
+              </div>
+
+            ) : (
 
             <form
               onSubmit={submit}
@@ -720,6 +864,8 @@ export default function StartApplication() {
               </p>
 
             </form>
+
+            )}
 
           </section>
 
