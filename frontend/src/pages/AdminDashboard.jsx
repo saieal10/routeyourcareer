@@ -412,6 +412,7 @@ export default function AdminDashboard() {
   const [universityForm, setUniversityForm] = useState(EMPTY_UNIVERSITY);
   const [universityError, setUniversityError] = useState('');
   const [savingUniversity, setSavingUniversity] = useState(false);
+  const [findingUniversityImage, setFindingUniversityImage] = useState(false);
   const [universitySearch, setUniversitySearch] = useState('');
   const [universityCountryFilter, setUniversityCountryFilter] = useState('All');
   const [openUniversityGroups, setOpenUniversityGroups] = useState({
@@ -1300,6 +1301,85 @@ export default function AdminDashboard() {
       status: item.status || 'draft'
     });
     setUniversityEditorOpen(true);
+  };
+
+  const findUniversityImage = async () => {
+    const name = universityForm.name.trim();
+
+    if (!name) {
+      setUniversityError('Enter the university name first.');
+      return;
+    }
+
+    setFindingUniversityImage(true);
+    setUniversityError('');
+
+    try {
+      const searchCommons = async query => {
+        const params = new URLSearchParams({
+          action: 'query',
+          generator: 'search',
+          gsrsearch: query,
+          gsrnamespace: '6',
+          gsrlimit: '10',
+          prop: 'imageinfo',
+          iiprop: 'url|mime',
+          iiurlwidth: '1200',
+          format: 'json',
+          origin: '*'
+        });
+
+        const response = await fetch(
+          `https://commons.wikimedia.org/w/api.php?${params.toString()}`
+        );
+
+        if (!response.ok) {
+          throw new Error('Wikimedia image search failed.');
+        }
+
+        const data = await response.json();
+        const pages = Object.values(data?.query?.pages || {});
+
+        return pages
+          .map(page => ({
+            title: page.title || '',
+            ...(page.imageinfo?.[0] || {})
+          }))
+          .filter(item =>
+            item.url &&
+            String(item.mime || '').startsWith('image/') &&
+            !/svg/i.test(item.mime || '') &&
+            !/logo|seal|flag|map|coat of arms|emblem/i.test(item.title || '')
+          );
+      };
+
+      let results = await searchCommons(`${name} building`);
+
+      if (!results.length) {
+        results = await searchCommons(name);
+      }
+
+      if (!results.length) {
+        setUniversityError(
+          'No suitable Wikimedia image was found. Paste a public image URL manually.'
+        );
+        return;
+      }
+
+      const best = results[0];
+      const imageUrl = best.thumburl || best.url;
+
+      setUniversityForm(old => ({
+        ...old,
+        image_url: imageUrl
+      }));
+    } catch (e) {
+      setUniversityError(
+        e.message || 'Could not find an image automatically.'
+      );
+    } finally {
+      setFindingUniversityImage(false);
+    }
   };
 
   const saveUniversity = async status => {
@@ -3650,6 +3730,18 @@ export default function AdminDashboard() {
                 placeholder="https://example.com/university-building.jpg"
                 className={inputClass}
               />
+
+              <button
+                type="button"
+                onClick={findUniversityImage}
+                disabled={findingUniversityImage || !universityForm.name.trim()}
+                className="mt-2 inline-flex items-center gap-2 rounded-full bg-ink text-cream px-4 py-2 text-[11px] font-semibold disabled:opacity-40"
+              >
+                <Search className="h-3.5 w-3.5" />
+                {findingUniversityImage
+                  ? 'Finding image…'
+                  : 'Find Image Automatically'}
+              </button>
             </Field>
           </div>
 
