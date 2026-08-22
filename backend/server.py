@@ -1050,6 +1050,25 @@ class ApplicationRouteProfileResponse(BaseModel):
     message: str
 
 
+
+# =========================================================
+# APPLICATION DOCUMENT MODELS
+# =========================================================
+
+DocumentStatus = Literal[
+    "pending",
+    "received",
+    "verified",
+    "rejected",
+]
+
+
+class ApplicationDocumentStatusUpdate(BaseModel):
+
+    status: DocumentStatus
+    note: Optional[str] = None
+
+
 # =========================================================
 # HELPERS
 # =========================================================
@@ -2092,7 +2111,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.5-track-application",
+        "7.6-document-checklist",
 
         "google_auth":
         True,
@@ -2122,6 +2141,9 @@ async def root():
         True,
 
         "public_application_tracking":
+        True,
+
+        "application_document_checklist":
         True,
 
         "ai_chat":
@@ -3378,6 +3400,377 @@ async def update_application_route_profile(
 
 
 
+
+# =========================================================
+# APPLICATION DOCUMENT CHECKLIST
+# =========================================================
+
+MBBS_DOCUMENTS = [
+    ("passport", "Passport"),
+    ("class_10_marksheet", "10th Marksheet"),
+    ("class_12_marksheet", "12th Marksheet"),
+    ("neet_result", "NEET Result / Scorecard"),
+    ("passport_photo", "Passport-size Photograph"),
+    ("birth_certificate", "Birth Certificate"),
+]
+
+MANAGEMENT_DOCUMENTS = [
+    ("passport", "Passport"),
+    ("academic_transcripts", "Academic Transcripts"),
+    ("degree_certificate", "Degree / Provisional Certificate"),
+    ("english_test", "English Language Test Result"),
+    ("cv", "CV / Resume"),
+    ("sop", "Statement of Purpose"),
+    ("work_experience", "Work Experience Documents"),
+]
+
+OTHER_DOCUMENTS = [
+    ("passport", "Passport"),
+    ("academic_documents", "Academic Documents"),
+    ("passport_photo", "Passport-size Photograph"),
+]
+
+
+def _default_application_documents(
+    stream: Optional[str]
+):
+
+    normalized = str(
+        stream or ""
+    ).strip().lower()
+
+    if normalized == "mbbs":
+        source = MBBS_DOCUMENTS
+
+    elif normalized == "management":
+        source = MANAGEMENT_DOCUMENTS
+
+    else:
+        source = OTHER_DOCUMENTS
+
+    return [
+        {
+            "key": key,
+            "label": label,
+            "status": "pending",
+            "note": None,
+            "updated_at": None,
+        }
+        for key, label in source
+    ]
+
+
+async def _ensure_application_documents(
+    application_id: str,
+):
+
+    doc = await db.leads.find_one(
+        {
+            "application_id":
+            application_id
+        },
+        {
+            "_id": 0,
+            "stream": 1,
+            "documents": 1,
+        },
+    )
+
+    if not doc:
+        raise HTTPException(
+            status_code=404,
+            detail="Application not found",
+        )
+
+    documents = doc.get(
+        "documents"
+    )
+
+    if isinstance(
+        documents,
+        list
+    ) and documents:
+        return documents
+
+    documents = (
+        _default_application_documents(
+            doc.get("stream")
+        )
+    )
+
+    now = datetime.now(
+        timezone.utc
+    )
+
+    await db.leads.update_one(
+        {
+            "application_id":
+            application_id
+        },
+        {
+            "$set": {
+                "documents":
+                documents,
+
+                "documents_initialized_at":
+                now,
+
+                "updated_at":
+                now,
+            }
+        },
+    )
+
+    return documents
+
+
+def _document_summary(
+    documents: list
+):
+
+    counts = {
+        "total": len(documents),
+        "pending": 0,
+        "received": 0,
+        "verified": 0,
+        "rejected": 0,
+    }
+
+    for item in documents:
+
+        status = str(
+            item.get(
+                "status",
+                "pending"
+            )
+        ).strip().lower()
+
+        if status in counts:
+            counts[status] += 1
+
+    counts["submitted"] = (
+        counts["received"]
+        + counts["verified"]
+    )
+
+    return counts
+
+
+@api_router.get(
+    "/admin/applications/{application_id}/documents"
+)
+async def admin_application_documents(
+    application_id: str,
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    normalized_id = (
+        application_id
+        .strip()
+        .upper()
+    )
+
+    documents = (
+        await _ensure_application_documents(
+            normalized_id
+        )
+    )
+
+    return {
+        "ok": True,
+        "application_id":
+        normalized_id,
+        "documents":
+        documents,
+        "summary":
+        _document_summary(
+            documents
+        ),
+    }
+
+
+@api_router.patch(
+    "/admin/applications/{application_id}/documents/{document_key}"
+)
+async def admin_update_application_document(
+    application_id: str,
+    document_key: str,
+    payload: ApplicationDocumentStatusUpdate,
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    normalized_id = (
+        application_id
+        .strip()
+        .upper()
+    )
+
+    documents = (
+        await _ensure_application_documents(
+            normalized_id
+        )
+    )
+
+    target_index = None
+
+    for index, item in enumerate(
+        documents
+    ):
+
+        if (
+            str(
+                item.get("key", "")
+            ).strip().lower()
+            ==
+            document_key.strip().lower()
+        ):
+            target_index = index
+            break
+
+    if target_index is None:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Document item not found",
+        )
+
+    now = datetime.now(
+        timezone.utc
+    )
+
+    documents[target_index][
+        "status"
+    ] = payload.status
+
+    documents[target_index][
+        "note"
+    ] = (
+        payload.note.strip()
+        if payload.note
+        else None
+    )
+
+    documents[target_index][
+        "updated_at"
+    ] = now
+
+    summary = (
+        _document_summary(
+            documents
+        )
+    )
+
+    update_fields = {
+        "documents":
+        documents,
+
+        "document_summary":
+        summary,
+
+        "updated_at":
+        now,
+    }
+
+    # Enter the Documents journey stage once an admin records
+    # the first meaningful document action. Do not move an
+    # application backwards if it is already beyond Documents.
+    current = await db.leads.find_one(
+        {
+            "application_id":
+            normalized_id
+        },
+        {
+            "_id": 0,
+            "application_status": 1,
+        },
+    )
+
+    stage_order = [
+        "started",
+        "route_built",
+        "university_selected",
+        "contacted",
+        "documents",
+        "applied",
+        "offer_received",
+        "visa",
+        "enrolled",
+    ]
+
+    current_stage = str(
+        (current or {}).get(
+            "application_status",
+            "started"
+        )
+    ).strip().lower()
+
+    aliases = {
+        "contact_captured": "started",
+        "selected": "university_selected",
+    }
+
+    current_stage = aliases.get(
+        current_stage,
+        current_stage
+    )
+
+    if (
+        payload.status
+        != "pending"
+        and (
+            current_stage not in stage_order
+            or stage_order.index(
+                current_stage
+            )
+            < stage_order.index(
+                "documents"
+            )
+        )
+    ):
+        update_fields[
+            "application_status"
+        ] = "documents"
+
+        update_fields[
+            "journey_stage"
+        ] = "documents"
+
+        update_fields[
+            "documents_at"
+        ] = now
+
+    await db.leads.update_one(
+        {
+            "application_id":
+            normalized_id
+        },
+        {
+            "$set":
+            update_fields
+        },
+    )
+
+    return {
+        "ok": True,
+        "application_id":
+        normalized_id,
+        "document":
+        documents[
+            target_index
+        ],
+        "documents":
+        documents,
+        "summary":
+        summary,
+        "message":
+        "Document status updated.",
+    }
+
+
 # =========================================================
 # PUBLIC APPLICATION TRACKING
 # =========================================================
@@ -3569,6 +3962,8 @@ async def public_track_application(
             "enrolled_at": 1,
 
             "selected_route": 1,
+            "documents": 1,
+            "document_summary": 1,
         },
     )
 
@@ -3658,6 +4053,14 @@ async def public_track_application(
         "updated_at":
         doc.get(
             "updated_at"
+        ),
+
+        # Public tracking exposes counts only, never admin
+        # notes or document contents.
+        "document_progress":
+        _document_summary(
+            doc.get("documents")
+            or []
         ),
 
         "timeline":
