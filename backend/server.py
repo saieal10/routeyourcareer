@@ -795,6 +795,7 @@ class UniversityCreate(BaseModel):
     )
 
     website: Optional[str] = None
+    image_url: Optional[str] = None
     apply_link: Optional[str] = None
 
     featured: bool = False
@@ -889,6 +890,7 @@ class UniversityUpdate(BaseModel):
     faqs: Optional[List[UniversityFAQ]] = None
 
     website: Optional[str] = None
+    image_url: Optional[str] = None
     apply_link: Optional[str] = None
 
     featured: Optional[bool] = None
@@ -975,6 +977,7 @@ class University(BaseModel):
     faqs: List[UniversityFAQ] = Field(default_factory=list)
 
     website: Optional[str] = None
+    image_url: Optional[str] = None
     apply_link: Optional[str] = None
 
     featured: bool = False
@@ -2510,7 +2513,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.8.1-russia-import-fixed",
+        "7.9-dynamic-university-images",
 
         "google_auth":
         True,
