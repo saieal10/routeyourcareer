@@ -25,19 +25,16 @@ import CountryDetail from './pages/CountryDetail';
 import BlogPost from './pages/BlogPost';
 import CourseFinderQuiz from './pages/CourseFinderQuiz';
 
+/* NEW V2 PAGES */
+import BuildMyRoute from './pages/BuildMyRoute';
+import TrackApplication from './pages/TrackApplication';
+
 import { Toaster } from './components/ui/toaster';
 
 
 /*
 =========================================================
 COUNTRY ROUTER
-
-Dedicated deep pages:
-- Georgia
-- Italy
-- Uzbekistan
-
-All other countries continue using CountryDetail.
 =========================================================
 */
 
@@ -52,38 +49,32 @@ function DynamicCountryRoute() {
 
 
   if (code === 'ge') {
-
     return (
       <Navigate
         to="/countries/georgia"
         replace
       />
     );
-
   }
 
 
   if (code === 'it') {
-
     return (
       <Navigate
         to="/countries/italy"
         replace
       />
     );
-
   }
 
 
   if (code === 'uz') {
-
     return (
       <Navigate
         to="/countries/uzbekistan"
         replace
       />
     );
-
   }
 
 
@@ -113,9 +104,7 @@ function AppRouter() {
     location.hash &&
     location.hash.includes('session_id=')
   ) {
-
     return <AuthCallback />;
-
   }
 
 
@@ -131,6 +120,52 @@ function AppRouter() {
       <Route
         path="/"
         element={<Home />}
+      />
+
+
+      {/* =========================
+          PRIMARY STUDY TRACKS
+      ========================= */}
+
+      <Route
+        path="/mbbs"
+        element={
+          <Navigate
+            to="/#featured"
+            replace
+          />
+        }
+      />
+
+
+      <Route
+        path="/management"
+        element={
+          <Navigate
+            to="/#management"
+            replace
+          />
+        }
+      />
+
+
+      {/* =========================
+          BUILD MY ROUTE V2
+      ========================= */}
+
+      <Route
+        path="/build-my-route"
+        element={<BuildMyRoute />}
+      />
+
+
+      {/* =========================
+          TRACK APPLICATION
+      ========================= */}
+
+      <Route
+        path="/track-application"
+        element={<TrackApplication />}
       />
 
 
@@ -187,7 +222,7 @@ function AppRouter() {
 
 
       {/* =========================
-          COURSE FINDER
+          QUIZ
       ========================= */}
 
       <Route
@@ -215,6 +250,16 @@ function AppRouter() {
       <Route
         path="/admin/callback"
         element={<AuthCallback />}
+      />
+
+
+      {/* =========================
+          FALLBACK
+      ========================= */}
+
+      <Route
+        path="*"
+        element={<Navigate to="/" replace />}
       />
 
 
