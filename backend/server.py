@@ -2092,7 +2092,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.3-pre-application",
+        "7.4-applications-crm",
 
         "google_auth":
         True,
@@ -2116,6 +2116,9 @@ async def root():
         True,
 
         "application_sessions":
+        True,
+
+        "admin_applications_crm":
         True,
 
         "ai_chat":
@@ -4457,6 +4460,233 @@ async def admin_list_leads(
         )
         for doc in docs
     ]
+
+
+
+# =========================================================
+# ADMIN APPLICATIONS CRM
+# =========================================================
+
+APPLICATION_STAGES = [
+    "started",
+    "route_built",
+    "university_selected",
+    "contacted",
+    "documents",
+    "applied",
+    "offer_received",
+    "visa",
+    "enrolled",
+]
+
+
+class ApplicationStageUpdate(BaseModel):
+    stage: Literal[
+        "started",
+        "route_built",
+        "university_selected",
+        "contacted",
+        "documents",
+        "applied",
+        "offer_received",
+        "visa",
+        "enrolled",
+    ]
+
+
+def _application_stage(doc: dict) -> str:
+    stage = (
+        doc.get("application_status")
+        or doc.get("journey_stage")
+        or "started"
+    )
+
+    aliases = {
+        "contact_captured": "started",
+        "selected": "university_selected",
+        "university selected": "university_selected",
+        "route built": "route_built",
+        "offer received": "offer_received",
+    }
+
+    stage = aliases.get(
+        str(stage).strip().lower(),
+        str(stage).strip().lower(),
+    )
+
+    if stage not in APPLICATION_STAGES:
+        return "started"
+
+    return stage
+
+
+def _admin_application_doc(doc: dict) -> dict:
+    clean = _clean_mongo(doc)
+
+    clean["stage"] = _application_stage(clean)
+
+    # Keep both names available for frontend compatibility.
+    clean["application_status"] = clean["stage"]
+    clean["journey_stage"] = clean["stage"]
+
+    return clean
+
+
+@api_router.get(
+    "/admin/applications"
+)
+async def admin_list_applications(
+    limit: int = 500,
+    stage: Optional[str] = None,
+    q: Optional[str] = None,
+    user: User = Depends(require_admin),
+):
+    query = {
+        "application_id": {
+            "$exists": True,
+            "$ne": None,
+        }
+    }
+
+    if stage:
+        requested_stage = stage.strip().lower()
+
+        if requested_stage not in APPLICATION_STAGES:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid application stage",
+            )
+
+        if requested_stage == "started":
+            query["$or"] = [
+                {"application_status": "started"},
+                {"journey_stage": "started"},
+                {"journey_stage": "contact_captured"},
+            ]
+        else:
+            query["$or"] = [
+                {"application_status": requested_stage},
+                {"journey_stage": requested_stage},
+            ]
+
+    if q:
+        search = re.escape(q.strip())
+        search_query = [
+            {"application_id": {"$regex": search, "$options": "i"}},
+            {"name": {"$regex": search, "$options": "i"}},
+            {"phone": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}},
+            {"country": {"$regex": search, "$options": "i"}},
+            {"selected_route.university_name": {"$regex": search, "$options": "i"}},
+            {"selected_route.course_name": {"$regex": search, "$options": "i"}},
+        ]
+
+        if "$or" in query:
+            stage_or = query.pop("$or")
+            query["$and"] = [
+                {"$or": stage_or},
+                {"$or": search_query},
+            ]
+        else:
+            query["$or"] = search_query
+
+    limit = max(1, min(limit, 2000))
+
+    docs = (
+        await db.leads
+        .find(query, {"_id": 0})
+        .sort("updated_at", -1)
+        .to_list(limit)
+    )
+
+    return [
+        _admin_application_doc(doc)
+        for doc in docs
+    ]
+
+
+@api_router.get(
+    "/admin/applications/{application_id}"
+)
+async def admin_get_application(
+    application_id: str,
+    user: User = Depends(require_admin),
+):
+    doc = await db.leads.find_one(
+        {"application_id": application_id},
+        {"_id": 0},
+    )
+
+    if not doc:
+        raise HTTPException(
+            status_code=404,
+            detail="Application not found",
+        )
+
+    return _admin_application_doc(doc)
+
+
+@api_router.patch(
+    "/admin/applications/{application_id}/stage"
+)
+async def admin_update_application_stage(
+    application_id: str,
+    payload: ApplicationStageUpdate,
+    user: User = Depends(require_admin),
+):
+    existing = await db.leads.find_one(
+        {"application_id": application_id},
+        {"_id": 0},
+    )
+
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail="Application not found",
+        )
+
+    now = datetime.now(timezone.utc)
+
+    update_doc = {
+        "application_status": payload.stage,
+        "journey_stage": payload.stage,
+        "updated_at": now,
+    }
+
+    # Useful timestamps for later CRM reporting.
+    timestamp_fields = {
+        "started": "started_at",
+        "route_built": "route_completed_at",
+        "university_selected": "selected_at",
+        "contacted": "contacted_at",
+        "documents": "documents_at",
+        "applied": "applied_at",
+        "offer_received": "offer_received_at",
+        "visa": "visa_at",
+        "enrolled": "enrolled_at",
+    }
+
+    timestamp_field = timestamp_fields.get(payload.stage)
+
+    if timestamp_field and not existing.get(timestamp_field):
+        update_doc[timestamp_field] = now
+
+    await db.leads.update_one(
+        {"application_id": application_id},
+        {"$set": update_doc},
+    )
+
+    updated = await db.leads.find_one(
+        {"application_id": application_id},
+        {"_id": 0},
+    )
+
+    return {
+        "ok": True,
+        "application_id": application_id,
+        "stage": payload.stage,
+        "application": _admin_application_doc(updated),
+    }
 
 
 # =========================================================
