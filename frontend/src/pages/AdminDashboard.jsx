@@ -10,6 +10,7 @@ import {
 
 import {
   BookOpen,
+  ChevronDown,
   Copy,
   Eye,
   GraduationCap,
@@ -249,6 +250,12 @@ export default function AdminDashboard() {
   const [savingUniversity, setSavingUniversity] = useState(false);
   const [universitySearch, setUniversitySearch] = useState('');
   const [universityCountryFilter, setUniversityCountryFilter] = useState('All');
+  const [openUniversityGroups, setOpenUniversityGroups] = useState({
+    MBBS: true,
+    Management: true,
+    Other: true
+  });
+  const [openUniversityCountries, setOpenUniversityCountries] = useState({});
 
   const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
@@ -409,6 +416,87 @@ export default function AdminDashboard() {
 
     return rows;
   }, [universities, universityCountryFilter, universitySearch]);
+
+  const universityGroups = useMemo(() => {
+    const grouped = {
+      MBBS: {},
+      Management: {},
+      Other: {}
+    };
+
+    filteredUniversities.forEach(item => {
+      const stream =
+        item.stream === 'MBBS'
+          ? 'MBBS'
+          : item.stream === 'Management'
+          ? 'Management'
+          : 'Other';
+
+      const country = item.country || 'Country not set';
+
+      if (!grouped[stream][country]) {
+        grouped[stream][country] = [];
+      }
+
+      grouped[stream][country].push(item);
+    });
+
+    Object.values(grouped).forEach(countryMap => {
+      Object.values(countryMap).forEach(list => {
+        list.sort((a, b) =>
+          String(a.name || '').localeCompare(String(b.name || ''))
+        );
+      });
+    });
+
+    return grouped;
+  }, [filteredUniversities]);
+
+  const universitySummary = useMemo(() => {
+    const medical = universities.filter(x => x.stream === 'MBBS').length;
+    const management = universities.filter(x => x.stream === 'Management').length;
+    const other = universities.length - medical - management;
+
+    return {
+      total: universities.length,
+      medical,
+      management,
+      other
+    };
+  }, [universities]);
+
+  const courseSummary = useMemo(() => {
+    const published = courses.filter(x => x.status === 'published').length;
+    const draft = courses.filter(x => x.status !== 'published').length;
+    const stale = courses.filter(x => {
+      if (!x.last_verified) return true;
+      const age = Date.now() - new Date(x.last_verified).getTime();
+      return age > 90 * 24 * 60 * 60 * 1000;
+    }).length;
+
+    return {
+      total: courses.length,
+      published,
+      draft,
+      stale
+    };
+  }, [courses]);
+
+  const toggleUniversityGroup = key => {
+    setOpenUniversityGroups(old => ({
+      ...old,
+      [key]: !old[key]
+    }));
+  };
+
+  const toggleUniversityCountry = (stream, country) => {
+    const key = `${stream}::${country}`;
+
+    setOpenUniversityCountries(old => ({
+      ...old,
+      [key]: !old[key]
+    }));
+  };
 
   const courseCountries = useMemo(() => {
     return [
@@ -986,25 +1074,16 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                ['Leads', stats?.total ?? leads.length],
-                ['Blogs', blogs.length],
-                ['Universities', universities.length],
-                ['Courses', courses.length],
-                [
-                  'Published courses',
-                  courses.filter(x => x.status === 'published').length
-                ],
-                [
-                  'Need verification',
-                  courses.filter(x => {
-                    if (!x.last_verified) return true;
-                    const age =
-                      Date.now() - new Date(x.last_verified).getTime();
-                    return age > 90 * 24 * 60 * 60 * 1000;
-                  }).length
-                ]
+                ['Universities', universitySummary.total],
+                ['Medical', universitySummary.medical],
+                ['Management', universitySummary.management],
+                ['Courses', courseSummary.total],
+                ['Published courses', courseSummary.published],
+                ['Draft courses', courseSummary.draft],
+                ['Need verification', courseSummary.stale],
+                ['Blogs', blogs.length]
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -1253,11 +1332,13 @@ export default function AdminDashboard() {
                 <div className="text-[10px] mono uppercase tracking-widest text-coral">
                   Institution Master
                 </div>
+
                 <h1 className="serif text-4xl sm:text-5xl mt-1">
                   Universities.
                 </h1>
+
                 <p className="mt-2 text-[13px] text-ink/60">
-                  Keep this simple. Fees, intakes and eligibility belong in Courses.
+                  Organized automatically by study type and country.
                 </p>
               </div>
 
@@ -1268,6 +1349,25 @@ export default function AdminDashboard() {
                 <Plus className="h-4 w-4" />
                 Add University
               </button>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                ['Total', universitySummary.total],
+                ['MBBS / Medical', universitySummary.medical],
+                ['Management', universitySummary.management],
+                ['Other', universitySummary.other]
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-2xl bg-white border border-ink/10 p-4"
+                >
+                  <div className="text-[9px] mono uppercase tracking-widest text-ink/40">
+                    {label}
+                  </div>
+                  <div className="serif text-3xl mt-1">{value}</div>
+                </div>
+              ))}
             </div>
 
             <div className="mt-5 grid sm:grid-cols-[1fr_220px] gap-3">
@@ -1298,54 +1398,186 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            <div className="mt-5 rounded-3xl bg-white border border-ink/10 overflow-hidden divide-y divide-ink/5">
-              {loadingUniversities && (
-                <div className="p-8 text-center text-ink/50">Loading…</div>
-              )}
+            {loadingUniversities && (
+              <div className="mt-5 rounded-3xl bg-white border border-ink/10 p-8 text-center text-ink/50">
+                Loading…
+              </div>
+            )}
 
-              {!loadingUniversities && filteredUniversities.length === 0 && (
-                <div className="p-8 text-center text-ink/50">
-                  No universities yet.
-                </div>
-              )}
+            {!loadingUniversities && filteredUniversities.length === 0 && (
+              <div className="mt-5 rounded-3xl bg-white border border-ink/10 p-8 text-center text-ink/50">
+                No universities found.
+              </div>
+            )}
 
-              {filteredUniversities.map(item => (
-                <div
-                  key={item.id}
-                  className="p-5 flex flex-wrap gap-4 items-center"
-                >
-                  <div className="flex-1 min-w-[230px]">
-                    <div className="text-[10px] mono uppercase text-coral">
-                      {item.country} · {item.city || 'City not set'}
+            {!loadingUniversities && filteredUniversities.length > 0 && (
+              <div className="mt-5 space-y-4">
+                {[
+                  ['MBBS', 'MBBS / Medical'],
+                  ['Management', 'Management'],
+                  ['Other', 'Other']
+                ].map(([streamKey, streamLabel]) => {
+                  const countries = Object.keys(
+                    universityGroups[streamKey] || {}
+                  ).sort();
+
+                  const streamCount = countries.reduce(
+                    (sum, country) =>
+                      sum + universityGroups[streamKey][country].length,
+                    0
+                  );
+
+                  if (streamCount === 0) return null;
+
+                  const streamOpen = Boolean(
+                    openUniversityGroups[streamKey]
+                  );
+
+                  return (
+                    <div
+                      key={streamKey}
+                      className="rounded-3xl bg-white border border-ink/10 overflow-hidden"
+                    >
+                      <button
+                        onClick={() => toggleUniversityGroup(streamKey)}
+                        className="w-full px-5 py-5 flex items-center gap-4 text-left bg-white hover:bg-cream/60"
+                      >
+                        <div>
+                          <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                            Study type
+                          </div>
+                          <div className="serif text-2xl mt-1">
+                            {streamLabel}
+                          </div>
+                        </div>
+
+                        <div className="ml-auto flex items-center gap-3">
+                          <span className="rounded-full bg-cream border border-ink/10 px-3 py-1 text-[11px] font-semibold">
+                            {streamCount}
+                          </span>
+
+                          <ChevronDown
+                            className={`h-5 w-5 transition-transform ${
+                              streamOpen ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </div>
+                      </button>
+
+                      {streamOpen && (
+                        <div className="border-t border-ink/10">
+                          {countries.map(country => {
+                            const list =
+                              universityGroups[streamKey][country] || [];
+
+                            const countryKey = `${streamKey}::${country}`;
+                            const countryOpen = Boolean(
+                              openUniversityCountries[countryKey]
+                            );
+
+                            return (
+                              <div
+                                key={country}
+                                className="border-b last:border-b-0 border-ink/5"
+                              >
+                                <button
+                                  onClick={() =>
+                                    toggleUniversityCountry(
+                                      streamKey,
+                                      country
+                                    )
+                                  }
+                                  className="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-cream/60"
+                                >
+                                  <div className="font-semibold text-[13px]">
+                                    {country}
+                                  </div>
+
+                                  <span className="rounded-full bg-cream border border-ink/10 px-2.5 py-1 text-[10px]">
+                                    {list.length}
+                                  </span>
+
+                                  <ChevronDown
+                                    className={`ml-auto h-4 w-4 transition-transform ${
+                                      countryOpen ? 'rotate-180' : ''
+                                    }`}
+                                  />
+                                </button>
+
+                                {countryOpen && (
+                                  <div className="bg-cream/35 divide-y divide-ink/5">
+                                    {list.map(item => {
+                                      const linkedCourses = courses.filter(
+                                        c =>
+                                          c.university_id === item.id
+                                      ).length;
+
+                                      return (
+                                        <div
+                                          key={item.id}
+                                          className="px-5 py-4 flex flex-wrap gap-4 items-center"
+                                        >
+                                          <div className="flex-1 min-w-[240px]">
+                                            <div className="serif text-lg">
+                                              {item.name}
+                                            </div>
+
+                                            <div className="text-[11px] text-ink/45 mt-1">
+                                              {item.city || 'City not set'}
+                                              {' · '}
+                                              {item.status}
+                                            </div>
+                                          </div>
+
+                                          <div className="text-[10px] rounded-full bg-white border border-ink/10 px-3 py-1.5">
+                                            {linkedCourses} courses
+                                          </div>
+
+                                          <button
+                                            onClick={() =>
+                                              openEditUniversity(item)
+                                            }
+                                            title="Edit university"
+                                            className="h-9 w-9 rounded-full border border-ink/10 bg-white grid place-items-center"
+                                          >
+                                            <Pencil className="h-4 w-4" />
+                                          </button>
+
+                                          <button
+                                            onClick={() =>
+                                              toggleUniversityStatus(item)
+                                            }
+                                            className="text-[11px] font-semibold rounded-full border border-ink/10 bg-white px-3 py-2"
+                                          >
+                                            {item.status === 'published'
+                                              ? 'Unpublish'
+                                              : 'Publish'}
+                                          </button>
+
+                                          <button
+                                            onClick={() =>
+                                              deleteUniversity(item)
+                                            }
+                                            title="Delete university"
+                                            className="h-9 w-9 rounded-full border border-red-100 bg-white grid place-items-center"
+                                          >
+                                            <Trash2 className="h-4 w-4 text-red-600" />
+                                          </button>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    <div className="serif text-xl mt-1">{item.name}</div>
-                    <div className="text-[11px] text-ink/45 mt-1">
-                      {item.status} · ID {item.id?.slice(0, 8)}
-                    </div>
-                  </div>
-
-                  <div className="text-[11px] rounded-full bg-cream border border-ink/10 px-3 py-1.5">
-                    {courses.filter(c => c.university_id === item.id).length}{' '}
-                    courses
-                  </div>
-
-                  <button onClick={() => openEditUniversity(item)}>
-                    <Pencil className="h-4 w-4" />
-                  </button>
-
-                  <button
-                    onClick={() => toggleUniversityStatus(item)}
-                    className="text-[11px] font-semibold"
-                  >
-                    {item.status === 'published' ? 'Unpublish' : 'Publish'}
-                  </button>
-
-                  <button onClick={() => deleteUniversity(item)}>
-                    <Trash2 className="h-4 w-4 text-red-600" />
-                  </button>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
 
