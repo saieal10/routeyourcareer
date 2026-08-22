@@ -84,6 +84,7 @@ const EMPTY_UNIVERSITY = {
   city: '',
   stream: 'MBBS',
   website: '',
+  image_url: '',
   overview: '',
   featured: false,
   status: 'draft'
@@ -1293,6 +1294,7 @@ export default function AdminDashboard() {
       city: item.city || '',
       stream: item.stream || 'MBBS',
       website: item.website || '',
+      image_url: item.image_url || '',
       overview: item.overview || '',
       featured: Boolean(item.featured),
       status: item.status || 'draft'
@@ -1327,6 +1329,7 @@ export default function AdminDashboard() {
           ? 'Management'
           : 'MBBS',
       website: universityForm.website.trim() || null,
+      image_url: universityForm.image_url.trim() || null,
       overview: universityForm.overview.trim() || null,
       featured: Boolean(universityForm.featured),
       status
@@ -3631,7 +3634,43 @@ export default function AdminDashboard() {
                 className={inputClass}
               />
             </Field>
+
+            <Field
+              label="University Image URL"
+              hint="Paste a public image URL of the university building. No upload/storage is required."
+            >
+              <input
+                value={universityForm.image_url}
+                onChange={e =>
+                  setUniversityForm(old => ({
+                    ...old,
+                    image_url: e.target.value
+                  }))
+                }
+                placeholder="https://example.com/university-building.jpg"
+                className={inputClass}
+              />
+            </Field>
           </div>
+
+          {universityForm.image_url && (
+            <div className="mt-4 rounded-2xl border border-ink/10 bg-cream overflow-hidden">
+              <div className="px-4 py-3 text-[9px] mono uppercase tracking-widest text-ink/40">
+                Image preview
+              </div>
+
+              <div className="aspect-[16/7] bg-ink/5">
+                <img
+                  src={universityForm.image_url}
+                  alt="University preview"
+                  className="w-full h-full object-cover"
+                  onError={e => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="mt-4">
             <Field label="Short university overview">
