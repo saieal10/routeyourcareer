@@ -168,6 +168,7 @@ class LeadCreate(BaseModel):
             "newsletter",
             "chat_lead",
             "build_route",
+            "pre_application",
         ]
     ] = "quick"
 
@@ -930,6 +931,11 @@ class BuildMyRouteResponse(BaseModel):
 
 class BuildRouteLeadCreate(BaseModel):
 
+    # If this lead started before Build My Route, pass the
+    # application_id here so the same lead is updated instead
+    # of creating a duplicate.
+    application_id: Optional[str] = None
+
     name: str
     phone: str
     email: Optional[str] = None
@@ -975,6 +981,72 @@ class BuildRouteLeadResponse(BaseModel):
 
     ok: bool = True
     lead_id: str
+    message: str
+
+
+
+class PreApplicationCreate(BaseModel):
+
+    name: str
+    phone: str
+
+    email: Optional[str] = None
+    state: Optional[str] = None
+    preferred_contact: Optional[str] = "WhatsApp"
+
+    stream: Literal[
+        "MBBS",
+        "Management",
+        "Other",
+    ]
+
+    preferred_country: Optional[str] = None
+
+
+class PreApplicationResponse(BaseModel):
+
+    ok: bool = True
+    application_id: str
+    lead_id: str
+    status: str
+    message: str
+
+
+class ApplicationRouteProfileUpdate(BaseModel):
+
+    stream: Literal[
+        "MBBS",
+        "Management",
+        "Other",
+    ]
+
+    preferred_countries: List[str] = Field(
+        default_factory=list
+    )
+
+    budget_total: Optional[float] = None
+    budget_currency: str = "USD"
+    intake: Optional[str] = None
+
+    neet_status: Optional[str] = None
+    neet_score: Optional[float] = None
+    pcb_percentage: Optional[float] = None
+
+    desired_level: Optional[str] = None
+    academic_percentage: Optional[float] = None
+    english_test: Optional[str] = None
+    ielts_score: Optional[float] = None
+    work_experience_years: Optional[float] = None
+
+    shortlisted_routes: List[dict] = Field(
+        default_factory=list
+    )
+
+
+class ApplicationRouteProfileResponse(BaseModel):
+
+    ok: bool = True
+    application_id: str
     message: str
 
 
@@ -2020,7 +2092,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.2-build-route-leads",
+        "7.3-pre-application",
 
         "google_auth":
         True,
@@ -2038,6 +2110,12 @@ async def root():
         True,
 
         "build_route_leads":
+        True,
+
+        "pre_application":
+        True,
+
+        "application_sessions":
         True,
 
         "ai_chat":
@@ -2962,6 +3040,338 @@ async def public_course(
 
 
 # =========================================================
+# PRE-APPLICATION / APPLICATION SESSION
+# =========================================================
+
+
+@api_router.post(
+    "/applications/start",
+    response_model=PreApplicationResponse
+)
+async def start_application(
+    payload: PreApplicationCreate,
+    background: BackgroundTasks,
+):
+
+    name = payload.name.strip()
+    phone = payload.phone.strip()
+
+    if not name:
+        raise HTTPException(
+            status_code=400,
+            detail="Name is required",
+        )
+
+    if not phone:
+        raise HTTPException(
+            status_code=400,
+            detail="Phone number is required",
+        )
+
+    now = datetime.now(
+        timezone.utc
+    )
+
+    # Public/session identifier that can later become the base
+    # for Track Application without exposing Mongo internals.
+    application_id = (
+        "RYC-"
+        + now.strftime("%Y%m%d")
+        + "-"
+        + uuid.uuid4().hex[:8].upper()
+    )
+
+    lead_id = str(
+        uuid.uuid4()
+    )
+
+    preferred_country = (
+        payload.preferred_country.strip()
+        if payload.preferred_country
+        else None
+    )
+
+    message_parts = [
+        "Application started before Build My Route",
+        f"Track: {payload.stream}",
+    ]
+
+    if preferred_country:
+        message_parts.append(
+            f"Preferred country: {preferred_country}"
+        )
+
+    if payload.state:
+        message_parts.append(
+            f"State: {payload.state.strip()}"
+        )
+
+    if payload.preferred_contact:
+        message_parts.append(
+            f"Preferred contact: {payload.preferred_contact}"
+        )
+
+    doc = {
+        "id":
+        lead_id,
+
+        "application_id":
+        application_id,
+
+        "name":
+        name,
+
+        "phone":
+        phone,
+
+        "email":
+        (
+            payload.email.strip()
+            if payload.email
+            else None
+        ),
+
+        "country":
+        preferred_country,
+
+        "neet_score":
+        None,
+
+        "message":
+        " | ".join(message_parts),
+
+        "source":
+        "start_application",
+
+        "type":
+        "pre_application",
+
+        "created_at":
+        now,
+
+        "updated_at":
+        now,
+
+        "state":
+        (
+            payload.state.strip()
+            if payload.state
+            else None
+        ),
+
+        "preferred_contact":
+        payload.preferred_contact,
+
+        "stream":
+        payload.stream,
+
+        "preferred_country":
+        preferred_country,
+
+        # Admissions journey fields.
+        "lead_status":
+        "new",
+
+        "application_status":
+        "started",
+
+        "journey_stage":
+        "contact_captured",
+
+        "route_profile":
+        None,
+
+        "selected_route":
+        None,
+
+        "shortlisted_routes":
+        [],
+
+        "route_started_at":
+        None,
+
+        "route_completed_at":
+        None,
+
+        "selected_at":
+        None,
+    }
+
+    await db.leads.insert_one(
+        doc
+    )
+
+    background.add_task(
+        notify_new_lead,
+        {
+            "id":
+            lead_id,
+
+            "name":
+            name,
+
+            "phone":
+            phone,
+
+            "email":
+            doc["email"],
+
+            "country":
+            preferred_country,
+
+            "neet_score":
+            None,
+
+            "message":
+            doc["message"],
+
+            "source":
+            "start_application",
+
+            "type":
+            "pre_application",
+
+            "created_at":
+            now.isoformat(),
+        },
+    )
+
+    return PreApplicationResponse(
+        ok=True,
+        application_id=application_id,
+        lead_id=lead_id,
+        status="started",
+        message=(
+            "Application started successfully. "
+            "Continue to Build My Route."
+        ),
+    )
+
+
+@api_router.patch(
+    "/applications/{application_id}/route-profile",
+    response_model=ApplicationRouteProfileResponse
+)
+async def update_application_route_profile(
+    application_id: str,
+    payload: ApplicationRouteProfileUpdate,
+):
+
+    existing = await db.leads.find_one(
+        {
+            "application_id":
+            application_id
+        },
+        {
+            "_id": 0
+        },
+    )
+
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail="Application not found",
+        )
+
+    now = datetime.now(
+        timezone.utc
+    )
+
+    route_profile = {
+        "stream":
+        payload.stream,
+
+        "preferred_countries":
+        payload.preferred_countries,
+
+        "budget_total":
+        payload.budget_total,
+
+        "budget_currency":
+        payload.budget_currency,
+
+        "intake":
+        payload.intake,
+
+        "neet_status":
+        payload.neet_status,
+
+        "neet_score":
+        payload.neet_score,
+
+        "pcb_percentage":
+        payload.pcb_percentage,
+
+        "desired_level":
+        payload.desired_level,
+
+        "academic_percentage":
+        payload.academic_percentage,
+
+        "english_test":
+        payload.english_test,
+
+        "ielts_score":
+        payload.ielts_score,
+
+        "work_experience_years":
+        payload.work_experience_years,
+    }
+
+    update_doc = {
+        "route_profile":
+        route_profile,
+
+        "shortlisted_routes":
+        payload.shortlisted_routes[:3],
+
+        "journey_stage":
+        "route_built",
+
+        "application_status":
+        "route_built",
+
+        "route_completed_at":
+        now,
+
+        "updated_at":
+        now,
+    }
+
+    # Keep useful top-level fields aligned with the current
+    # admin Leads UI for backward compatibility.
+    if payload.neet_score is not None:
+        update_doc["neet_score"] = str(
+            payload.neet_score
+        )
+
+    if payload.preferred_countries:
+        update_doc["country"] = (
+            payload.preferred_countries[0]
+        )
+
+    await db.leads.update_one(
+        {
+            "application_id":
+            application_id
+        },
+        {
+            "$set":
+            update_doc
+        },
+    )
+
+    return ApplicationRouteProfileResponse(
+        ok=True,
+        application_id=application_id,
+        message=(
+            "Build My Route profile attached "
+            "to the existing application."
+        ),
+    )
+
+
+# =========================================================
 # BUILD MY ROUTE
 # =========================================================
 
@@ -3093,14 +3503,25 @@ async def capture_build_route_lead(
     phone = payload.phone.strip()
 
     if not name:
-        raise HTTPException(status_code=400, detail="Name is required")
+        raise HTTPException(
+            status_code=400,
+            detail="Name is required",
+        )
 
     if not phone:
-        raise HTTPException(status_code=400, detail="Phone number is required")
+        raise HTTPException(
+            status_code=400,
+            detail="Phone number is required",
+        )
 
     course = await db.courses.find_one(
-        {"id": payload.selected_course_id},
-        {"_id": 0},
+        {
+            "id":
+            payload.selected_course_id
+        },
+        {
+            "_id": 0
+        },
     )
 
     if not course:
@@ -3109,95 +3530,434 @@ async def capture_build_route_lead(
             detail="Selected course was not found",
         )
 
-    now = datetime.now(timezone.utc)
-    lead_id = str(uuid.uuid4())
+    now = datetime.now(
+        timezone.utc
+    )
 
     selected_route = {
-        "course_id": course.get("id"),
-        "course_name": course.get("name") or payload.selected_course_name,
-        "course_slug": course.get("slug") or payload.selected_course_slug,
-        "university_id": course.get("university_id") or payload.selected_university_id,
-        "university_name": course.get("university_name") or payload.selected_university_name,
-        "country": course.get("country") or payload.selected_country,
-        "city": course.get("city") or payload.selected_city,
-        "currency": course.get("currency") or payload.budget_currency,
-        "tuition_fee_year": course.get("tuition_fee_year"),
-        "total_course_cost": course.get("total_course_cost"),
-        "route_score": payload.route_score,
-        "match_type": payload.match_type,
+        "course_id":
+        course.get("id"),
+
+        "course_name":
+        (
+            course.get("name")
+            or payload.selected_course_name
+        ),
+
+        "course_slug":
+        (
+            course.get("slug")
+            or payload.selected_course_slug
+        ),
+
+        "university_id":
+        (
+            course.get("university_id")
+            or payload.selected_university_id
+        ),
+
+        "university_name":
+        (
+            course.get("university_name")
+            or payload.selected_university_name
+        ),
+
+        "country":
+        (
+            course.get("country")
+            or payload.selected_country
+        ),
+
+        "city":
+        (
+            course.get("city")
+            or payload.selected_city
+        ),
+
+        "currency":
+        (
+            course.get("currency")
+            or payload.budget_currency
+        ),
+
+        "tuition_fee_year":
+        course.get("tuition_fee_year"),
+
+        "total_course_cost":
+        course.get("total_course_cost"),
+
+        "route_score":
+        payload.route_score,
+
+        "match_type":
+        payload.match_type,
     }
 
     route_profile = {
-        "stream": payload.stream,
-        "preferred_countries": payload.preferred_countries,
-        "budget_total": payload.budget_total,
-        "budget_currency": payload.budget_currency,
-        "intake": payload.intake,
-        "neet_status": payload.neet_status,
-        "neet_score": payload.neet_score,
-        "pcb_percentage": payload.pcb_percentage,
-        "desired_level": payload.desired_level,
-        "academic_percentage": payload.academic_percentage,
-        "english_test": payload.english_test,
-        "ielts_score": payload.ielts_score,
-        "work_experience_years": payload.work_experience_years,
+        "stream":
+        payload.stream,
+
+        "preferred_countries":
+        payload.preferred_countries,
+
+        "budget_total":
+        payload.budget_total,
+
+        "budget_currency":
+        payload.budget_currency,
+
+        "intake":
+        payload.intake,
+
+        "neet_status":
+        payload.neet_status,
+
+        "neet_score":
+        payload.neet_score,
+
+        "pcb_percentage":
+        payload.pcb_percentage,
+
+        "desired_level":
+        payload.desired_level,
+
+        "academic_percentage":
+        payload.academic_percentage,
+
+        "english_test":
+        payload.english_test,
+
+        "ielts_score":
+        payload.ielts_score,
+
+        "work_experience_years":
+        payload.work_experience_years,
     }
 
     message_parts = [
         "Build My Route application",
-        f"Selected: {selected_route['university_name']} — {selected_route['course_name']}",
-        f"Destination: {selected_route['country']}",
+        (
+            f"Selected: "
+            f"{selected_route['university_name']} — "
+            f"{selected_route['course_name']}"
+        ),
+        (
+            f"Destination: "
+            f"{selected_route['country']}"
+        ),
     ]
 
     if payload.route_score is not None:
-        message_parts.append(f"Route score: {payload.route_score}/100")
+        message_parts.append(
+            f"Route score: {payload.route_score}/100"
+        )
 
     if payload.state:
-        message_parts.append(f"State: {payload.state}")
+        message_parts.append(
+            f"State: {payload.state}"
+        )
 
     if payload.preferred_contact:
-        message_parts.append(f"Preferred contact: {payload.preferred_contact}")
+        message_parts.append(
+            f"Preferred contact: {payload.preferred_contact}"
+        )
+
+    # -----------------------------------------------------
+    # EXISTING PRE-APPLICATION: UPDATE SAME LEAD
+    # -----------------------------------------------------
+    if payload.application_id:
+
+        existing = await db.leads.find_one(
+            {
+                "application_id":
+                payload.application_id
+            },
+            {
+                "_id": 0
+            },
+        )
+
+        if not existing:
+            raise HTTPException(
+                status_code=404,
+                detail="Application not found",
+            )
+
+        update_doc = {
+            "name":
+            name,
+
+            "phone":
+            phone,
+
+            "email":
+            (
+                payload.email.strip()
+                if payload.email
+                else existing.get("email")
+            ),
+
+            "country":
+            selected_route["country"],
+
+            "neet_score":
+            (
+                str(payload.neet_score)
+                if payload.neet_score is not None
+                else existing.get("neet_score")
+            ),
+
+            "message":
+            " | ".join(message_parts),
+
+            "source":
+            "build_my_route",
+
+            "type":
+            "build_route",
+
+            "state":
+            (
+                payload.state.strip()
+                if payload.state
+                else existing.get("state")
+            ),
+
+            "preferred_contact":
+            (
+                payload.preferred_contact
+                or existing.get(
+                    "preferred_contact"
+                )
+            ),
+
+            "stream":
+            payload.stream,
+
+            "route_profile":
+            route_profile,
+
+            "selected_route":
+            selected_route,
+
+            "shortlisted_routes":
+            payload.shortlisted_routes[:3],
+
+            "lead_status":
+            existing.get(
+                "lead_status",
+                "new"
+            ),
+
+            "application_status":
+            "university_selected",
+
+            "journey_stage":
+            "university_selected",
+
+            "route_completed_at":
+            (
+                existing.get(
+                    "route_completed_at"
+                )
+                or now
+            ),
+
+            "selected_at":
+            now,
+
+            "updated_at":
+            now,
+        }
+
+        await db.leads.update_one(
+            {
+                "application_id":
+                payload.application_id
+            },
+            {
+                "$set":
+                update_doc
+            },
+        )
+
+        background.add_task(
+            notify_new_lead,
+            {
+                "id":
+                existing["id"],
+
+                "name":
+                name,
+
+                "phone":
+                phone,
+
+                "email":
+                update_doc["email"],
+
+                "country":
+                selected_route["country"],
+
+                "neet_score":
+                update_doc["neet_score"],
+
+                "message":
+                update_doc["message"],
+
+                "source":
+                "build_my_route",
+
+                "type":
+                "build_route",
+
+                "created_at":
+                now.isoformat(),
+            },
+        )
+
+        return BuildRouteLeadResponse(
+            ok=True,
+            lead_id=existing["id"],
+            message=(
+                "Your selected university was attached "
+                "to the existing application."
+            ),
+        )
+
+    # -----------------------------------------------------
+    # DIRECT BUILD MY ROUTE: CREATE NEW LEAD
+    # -----------------------------------------------------
+    lead_id = str(
+        uuid.uuid4()
+    )
+
+    application_id = (
+        "RYC-"
+        + now.strftime("%Y%m%d")
+        + "-"
+        + uuid.uuid4().hex[:8].upper()
+    )
 
     doc = {
-        "id": lead_id,
-        "name": name,
-        "phone": phone,
-        "email": payload.email.strip() if payload.email else None,
-        "country": selected_route["country"],
-        "neet_score": (
+        "id":
+        lead_id,
+
+        "application_id":
+        application_id,
+
+        "name":
+        name,
+
+        "phone":
+        phone,
+
+        "email":
+        (
+            payload.email.strip()
+            if payload.email
+            else None
+        ),
+
+        "country":
+        selected_route["country"],
+
+        "neet_score":
+        (
             str(payload.neet_score)
             if payload.neet_score is not None
             else None
         ),
-        "message": " | ".join(message_parts),
-        "source": "build_my_route",
-        "type": "build_route",
-        "created_at": now,
 
-        "state": payload.state.strip() if payload.state else None,
-        "preferred_contact": payload.preferred_contact,
-        "route_profile": route_profile,
-        "selected_route": selected_route,
-        "shortlisted_routes": payload.shortlisted_routes[:3],
-        "lead_status": "new",
-        "updated_at": now,
+        "message":
+        " | ".join(message_parts),
+
+        "source":
+        "build_my_route",
+
+        "type":
+        "build_route",
+
+        "created_at":
+        now,
+
+        "updated_at":
+        now,
+
+        "state":
+        (
+            payload.state.strip()
+            if payload.state
+            else None
+        ),
+
+        "preferred_contact":
+        payload.preferred_contact,
+
+        "stream":
+        payload.stream,
+
+        "route_profile":
+        route_profile,
+
+        "selected_route":
+        selected_route,
+
+        "shortlisted_routes":
+        payload.shortlisted_routes[:3],
+
+        "lead_status":
+        "new",
+
+        "application_status":
+        "university_selected",
+
+        "journey_stage":
+        "university_selected",
+
+        "route_completed_at":
+        now,
+
+        "selected_at":
+        now,
     }
 
-    await db.leads.insert_one(doc)
+    await db.leads.insert_one(
+        doc
+    )
 
     background.add_task(
         notify_new_lead,
         {
-            "id": lead_id,
-            "name": name,
-            "phone": phone,
-            "email": doc["email"],
-            "country": selected_route["country"],
-            "neet_score": doc["neet_score"],
-            "message": doc["message"],
-            "source": "build_my_route",
-            "type": "build_route",
-            "created_at": now.isoformat(),
+            "id":
+            lead_id,
+
+            "name":
+            name,
+
+            "phone":
+            phone,
+
+            "email":
+            doc["email"],
+
+            "country":
+            selected_route["country"],
+
+            "neet_score":
+            doc["neet_score"],
+
+            "message":
+            doc["message"],
+
+            "source":
+            "build_my_route",
+
+            "type":
+            "build_route",
+
+            "created_at":
+            now.isoformat(),
         },
     )
 
@@ -3209,6 +3969,8 @@ async def capture_build_route_lead(
             "A Route Your Career counsellor can now follow up."
         ),
     )
+
+
 
 
 # =========================================================
@@ -3724,6 +4486,7 @@ async def admin_stats(
         "chat_lead",
         "newsletter",
         "build_route",
+        "pre_application",
     ]:
 
         by_type[
