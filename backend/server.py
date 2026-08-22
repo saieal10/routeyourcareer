@@ -817,6 +817,75 @@ class Course(BaseModel):
     published_at: Optional[datetime] = None
 
 
+
+# =========================================================
+# BUILD MY ROUTE V2 MODELS
+# =========================================================
+
+
+class BuildMyRouteRequest(BaseModel):
+    stream: Literal["MBBS", "Management"]
+
+    # Shared preferences
+    preferred_countries: List[str] = Field(default_factory=list)
+    budget_total: Optional[float] = None
+    budget_currency: str = "USD"
+    intake: Optional[str] = None
+    max_results: int = Field(default=12, ge=1, le=30)
+
+    # MBBS profile
+    neet_status: Optional[Literal["qualified", "not_qualified", "not_taken"]] = None
+    neet_score: Optional[float] = None
+    pcb_percentage: Optional[float] = Field(default=None, ge=0, le=100)
+
+    # Management profile
+    desired_level: Optional[str] = None
+    academic_percentage: Optional[float] = Field(default=None, ge=0, le=100)
+    english_test: Optional[str] = None
+    ielts_score: Optional[float] = Field(default=None, ge=0, le=9)
+    work_experience_years: Optional[float] = Field(default=None, ge=0, le=60)
+
+
+class RouteMatch(BaseModel):
+    course_id: str
+    course_slug: str
+    course_name: str
+
+    university_id: str
+    university_name: str
+    country: str
+    city: Optional[str] = None
+
+    stream: str
+    level: Optional[str] = None
+    duration: Optional[str] = None
+    medium: Optional[str] = None
+
+    currency: str = "USD"
+    tuition_fee_year: Optional[float] = None
+    total_course_cost: Optional[float] = None
+    intake: Optional[str] = None
+
+    match_type: Literal["best_match", "possible_match"]
+    score: int
+
+    reasons: List[str] = Field(default_factory=list)
+    cautions: List[str] = Field(default_factory=list)
+
+    featured: bool = False
+    recommended: bool = False
+    budget_option: bool = False
+    last_verified: Optional[datetime] = None
+
+
+class BuildMyRouteResponse(BaseModel):
+    stream: str
+    matches_found: int
+    returned: int
+    results: List[RouteMatch]
+    note: str
+
+
 # =========================================================
 # HELPERS
 # =========================================================
@@ -843,6 +912,333 @@ def make_slug(text: str) -> str:
     )
 
     return text.strip("-")
+
+
+
+# =========================================================
+# BUILD MY ROUTE V2 HELPERS
+# =========================================================
+
+
+def _text(value) -> str:
+    return str(value or "").strip().lower()
+
+
+def _extract_first_number(value) -> Optional[float]:
+    if value is None:
+        return None
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    match = re.search(r"(\d+(?:\.\d+)?)", str(value))
+
+    if not match:
+        return None
+
+    try:
+        return float(match.group(1))
+    except ValueError:
+        return None
+
+
+def _requirement_says_neet_qualified(value: Optional[str]) -> bool:
+    text = _text(value)
+
+    if not text:
+        return False
+
+    negative_phrases = [
+        "not required",
+        "no neet",
+        "neet not",
+        "not mandatory",
+    ]
+
+    if any(phrase in text for phrase in negative_phrases):
+        return False
+
+    return "neet" in text and any(
+        phrase in text
+        for phrase in [
+            "qualif",
+            "required",
+            "mandatory",
+            "must",
+            "yes",
+        ]
+    )
+
+
+def _record_is_fresh(last_verified: Optional[datetime]) -> bool:
+    if not last_verified:
+        return False
+
+    if last_verified.tzinfo is None:
+        last_verified = last_verified.replace(tzinfo=timezone.utc)
+
+    return (
+        datetime.now(timezone.utc) - last_verified
+        <= timedelta(days=90)
+    )
+
+
+def _normalise_country_set(values: List[str]) -> set:
+    return {
+        _text(value)
+        for value in values
+        if _text(value)
+    }
+
+
+def _score_course_for_route(
+    course: dict,
+    profile: BuildMyRouteRequest,
+) -> Optional[dict]:
+
+    score = 50
+    reasons = []
+    cautions = []
+    hard_fail = False
+
+    preferred_countries = _normalise_country_set(
+        profile.preferred_countries
+    )
+
+    course_country = _text(
+        course.get("country")
+    )
+
+    # Country preference
+    if preferred_countries:
+        if course_country in preferred_countries:
+            score += 15
+            reasons.append("Matches your preferred country")
+        else:
+            score -= 8
+            cautions.append(
+                "Outside your selected country preferences"
+            )
+
+    # Budget
+    course_total = course.get("total_course_cost")
+
+    if (
+        profile.budget_total is not None
+        and course_total is not None
+        and _text(course.get("currency"))
+        == _text(profile.budget_currency)
+    ):
+        if float(course_total) <= float(profile.budget_total):
+            score += 15
+            reasons.append("Recorded total cost is within your budget")
+        else:
+            score -= 25
+            cautions.append("Recorded total cost is above your budget")
+
+    elif profile.budget_total is not None:
+        cautions.append(
+            "Complete comparable programme cost is not verified"
+        )
+
+    # Intake preference
+    if profile.intake:
+        recorded_intake = _text(course.get("intake"))
+
+        if recorded_intake:
+            if _text(profile.intake) in recorded_intake:
+                score += 8
+                reasons.append("Matches your preferred intake")
+            else:
+                cautions.append(
+                    "Recorded intake may not match your preferred intake"
+                )
+        else:
+            cautions.append("Current intake needs verification")
+
+    # Medium
+    medium = _text(course.get("medium"))
+
+    if "english" in medium:
+        score += 5
+        reasons.append("Recorded as English-medium")
+    elif not medium:
+        cautions.append("Teaching medium needs verification")
+
+    # MBBS rules
+    if profile.stream == "MBBS":
+
+        neet_requirement = course.get("neet_requirement")
+
+        if _requirement_says_neet_qualified(neet_requirement):
+            if profile.neet_status == "qualified":
+                score += 15
+                reasons.append(
+                    "Your NEET status matches the recorded requirement"
+                )
+            elif profile.neet_status in {
+                "not_qualified",
+                "not_taken",
+            }:
+                hard_fail = True
+        elif neet_requirement:
+            reasons.append("NEET information is recorded for this course")
+        else:
+            cautions.append("NEET requirement needs verification")
+
+        required_pcb = _extract_first_number(
+            course.get("pcb_requirement")
+        )
+
+        if (
+            required_pcb is not None
+            and profile.pcb_percentage is not None
+        ):
+            if profile.pcb_percentage >= required_pcb:
+                score += 12
+                reasons.append(
+                    "Your PCB percentage meets the recorded requirement"
+                )
+            else:
+                hard_fail = True
+        elif profile.pcb_percentage is not None:
+            cautions.append("PCB requirement needs verification")
+
+    # Management rules
+    if profile.stream == "Management":
+
+        if profile.desired_level:
+            level = _text(course.get("level"))
+
+            if level:
+                desired = _text(profile.desired_level)
+
+                if desired in level or level in desired:
+                    score += 12
+                    reasons.append("Matches your preferred study level")
+                else:
+                    score -= 10
+                    cautions.append(
+                        "Course level differs from your preferred level"
+                    )
+            else:
+                cautions.append("Course level needs verification")
+
+        required_academic = _extract_first_number(
+            course.get("academic_requirement")
+        )
+
+        if (
+            required_academic is not None
+            and profile.academic_percentage is not None
+        ):
+            if profile.academic_percentage >= required_academic:
+                score += 10
+                reasons.append(
+                    "Your academic score meets the recorded requirement"
+                )
+            else:
+                hard_fail = True
+        elif profile.academic_percentage is not None:
+            cautions.append(
+                "Academic eligibility needs verification"
+            )
+
+        required_ielts = _extract_first_number(
+            course.get("ielts_requirement")
+        )
+
+        if (
+            required_ielts is not None
+            and profile.ielts_score is not None
+        ):
+            if profile.ielts_score >= required_ielts:
+                score += 8
+                reasons.append(
+                    "Your IELTS score meets the recorded requirement"
+                )
+            else:
+                hard_fail = True
+        elif profile.ielts_score is not None:
+            cautions.append("IELTS requirement needs verification")
+
+        required_work = _extract_first_number(
+            course.get("work_experience")
+        )
+
+        if (
+            required_work is not None
+            and profile.work_experience_years is not None
+        ):
+            if profile.work_experience_years >= required_work:
+                score += 5
+                reasons.append(
+                    "Your work experience meets the recorded requirement"
+                )
+            else:
+                hard_fail = True
+        elif profile.work_experience_years is not None:
+            cautions.append(
+                "Work-experience requirement needs verification"
+            )
+
+    if hard_fail:
+        return None
+
+    # Editorial signals
+    if course.get("recommended"):
+        score += 5
+        reasons.append("Marked as recommended by Route Your Career")
+
+    if course.get("featured"):
+        score += 3
+
+    if course.get("budget_option"):
+        score += 3
+
+    # Verification confidence
+    if _record_is_fresh(course.get("last_verified")):
+        score += 5
+        reasons.append("Course information was recently verified")
+    else:
+        cautions.append(
+            "Some current details should be reconfirmed before applying"
+        )
+
+    score = max(0, min(100, int(round(score))))
+
+    # Best Match requires both a strong score and enough known data.
+    match_type = (
+        "best_match"
+        if score >= 75 and len(cautions) <= 2
+        else "possible_match"
+    )
+
+    return {
+        "course_id": course.get("id") or "",
+        "course_slug": course.get("slug") or "",
+        "course_name": course.get("name") or "",
+        "university_id": course.get("university_id") or "",
+        "university_name": course.get("university_name") or "",
+        "country": course.get("country") or "",
+        "city": course.get("city"),
+        "stream": course.get("stream") or "",
+        "level": course.get("level"),
+        "duration": course.get("duration"),
+        "medium": course.get("medium"),
+        "currency": course.get("currency") or "USD",
+        "tuition_fee_year": course.get("tuition_fee_year"),
+        "total_course_cost": course.get("total_course_cost"),
+        "intake": course.get("intake"),
+        "match_type": match_type,
+        "score": score,
+        "reasons": reasons[:6],
+        "cautions": cautions[:6],
+        "featured": bool(course.get("featured")),
+        "recommended": bool(course.get("recommended")),
+        "budget_option": bool(course.get("budget_option")),
+        "last_verified": course.get("last_verified"),
+    }
 
 
 # =========================================================
@@ -1004,6 +1400,9 @@ async def root():
         True,
 
         "course_system":
+        True,
+
+        "build_my_route":
         True,
 
         "ai_chat":
@@ -1924,6 +2323,79 @@ async def public_course(
         )
 
     return Course(**doc)
+
+
+
+# =========================================================
+# BUILD MY ROUTE V2
+# =========================================================
+
+
+@api_router.post(
+    "/build-my-route",
+    response_model=BuildMyRouteResponse,
+)
+async def build_my_route(
+    payload: BuildMyRouteRequest,
+):
+
+    # Only published course records can appear to students.
+    query = {
+        "status": "published",
+        "stream": {
+            "$regex": f"^{re.escape(payload.stream)}$",
+            "$options": "i",
+        },
+    }
+
+    docs = (
+        await db.courses
+        .find(
+            query,
+            {
+                "_id": 0
+            },
+        )
+        .to_list(5000)
+    )
+
+    ranked = []
+
+    for course in docs:
+        result = _score_course_for_route(
+            course,
+            payload,
+        )
+
+        if result is not None:
+            ranked.append(result)
+
+    ranked.sort(
+        key=lambda item: (
+            item["match_type"] == "best_match",
+            item["score"],
+            item["recommended"],
+            item["featured"],
+        ),
+        reverse=True,
+    )
+
+    limited = ranked[:payload.max_results]
+
+    return BuildMyRouteResponse(
+        stream=payload.stream,
+        matches_found=len(ranked),
+        returned=len(limited),
+        results=[
+            RouteMatch(**item)
+            for item in limited
+        ],
+        note=(
+            "Matches use only published Route Your Career database records. "
+            "Missing or older information is shown as needing verification; "
+            "the matcher does not invent eligibility, fees or intake details."
+        ),
+    )
 
 
 # =========================================================
