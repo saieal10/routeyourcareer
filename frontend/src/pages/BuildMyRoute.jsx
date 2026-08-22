@@ -14,18 +14,15 @@ import {
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL ||
   'https://routeyourcareer.onrender.com';
-
 
 const MBBS_COUNTRIES = [
   'Georgia',
   'Uzbekistan',
   'Russia'
 ];
-
 
 const MANAGEMENT_COUNTRIES = [
   'Italy',
@@ -38,6 +35,28 @@ const MANAGEMENT_COUNTRIES = [
   'UAE'
 ];
 
+const PRIORITIES = [
+  {
+    value: 'best_overall',
+    title: 'Best overall option',
+    description: 'Balance affordability, fit and RYC recommendation signals.'
+  },
+  {
+    value: 'lowest_cost',
+    title: 'Lowest total cost',
+    description: 'Prioritise options that fit your overall study budget.'
+  },
+  {
+    value: 'recommended',
+    title: 'RYC recommended',
+    description: 'Prefer programmes marked as recommended by Route Your Career.'
+  },
+  {
+    value: 'no_preference',
+    title: 'No preference',
+    description: 'Let the matcher rank all suitable published options.'
+  }
+];
 
 const INITIAL_FORM = {
   stream: '',
@@ -50,13 +69,11 @@ const INITIAL_FORM = {
   work_experience_years: '',
   budget_total: '',
   budget_currency: 'USD',
-  intake: '',
-  preferred_countries: []
+  preferred_countries: [],
+  priority: 'best_overall'
 };
 
-
 function money(value, currency) {
-
   if (
     value === null ||
     value === undefined ||
@@ -66,9 +83,7 @@ function money(value, currency) {
   }
 
   return `${currency || 'USD'} ${Number(value).toLocaleString()}`;
-
 }
-
 
 function ChoiceCard({
   active,
@@ -76,9 +91,7 @@ function ChoiceCard({
   description,
   onClick
 }) {
-
   return (
-
     <button
       type="button"
       onClick={onClick}
@@ -91,9 +104,7 @@ function ChoiceCard({
         }
       `}
     >
-
       <div className="flex items-start gap-3">
-
         <div
           className={`
             mt-0.5 h-5 w-5 rounded-full border grid place-items-center
@@ -104,15 +115,12 @@ function ChoiceCard({
             }
           `}
         >
-
           {active && (
             <Check className="h-3 w-3 text-white" />
           )}
-
         </div>
 
         <div>
-
           <div className="font-semibold text-[14px] text-ink">
             {title}
           </div>
@@ -122,62 +130,41 @@ function ChoiceCard({
               {description}
             </div>
           )}
-
         </div>
-
       </div>
-
     </button>
-
   );
-
 }
 
-
 export default function BuildMyRoute() {
-
   const [form, setForm] = useState(INITIAL_FORM);
-
   const [step, setStep] = useState(1);
-
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState('');
-
   const [result, setResult] = useState(null);
 
-
   const countries = useMemo(() => {
-
     if (form.stream === 'MBBS') {
       return MBBS_COUNTRIES;
     }
 
     return MANAGEMENT_COUNTRIES;
-
   }, [form.stream]);
 
-
   const update = (key, value) => {
-
     setForm(old => ({
       ...old,
       [key]: value
     }));
-
   };
 
-
   const toggleCountry = country => {
-
     setForm(old => {
-
       const exists =
         old.preferred_countries.includes(country);
 
       return {
         ...old,
-
         preferred_countries:
           exists
             ? old.preferred_countries.filter(
@@ -188,14 +175,10 @@ export default function BuildMyRoute() {
                 country
               ]
       };
-
     });
-
   };
 
-
   const chooseStream = stream => {
-
     setForm({
       ...INITIAL_FORM,
       stream,
@@ -206,16 +189,12 @@ export default function BuildMyRoute() {
     });
 
     setStep(2);
-
   };
 
-
   const canContinue = () => {
-
     if (step === 1) {
       return Boolean(form.stream);
     }
-
 
     if (
       step === 2 &&
@@ -227,7 +206,6 @@ export default function BuildMyRoute() {
       );
     }
 
-
     if (
       step === 2 &&
       form.stream === 'Management'
@@ -238,23 +216,15 @@ export default function BuildMyRoute() {
       );
     }
 
-
     return true;
-
   };
 
-
   const submitRoute = async () => {
-
     setError('');
-
     setLoading(true);
 
-
     try {
-
       const payload = {
-
         stream:
           form.stream,
 
@@ -269,12 +239,13 @@ export default function BuildMyRoute() {
         budget_currency:
           form.budget_currency,
 
+        // Intake deliberately omitted from matching until intake data
+        // is standardised in the course database.
         intake:
-          form.intake || null,
+          null,
 
         max_results:
           12,
-
 
         neet_status:
           form.stream === 'MBBS'
@@ -292,7 +263,6 @@ export default function BuildMyRoute() {
           form.pcb_percentage !== ''
             ? Number(form.pcb_percentage)
             : null,
-
 
         desired_level:
           form.stream === 'Management'
@@ -319,152 +289,150 @@ export default function BuildMyRoute() {
           form.work_experience_years !== ''
             ? Number(form.work_experience_years)
             : null
-
       };
-
 
       const response =
         await fetch(
           `${BACKEND_URL}/api/build-my-route`,
           {
             method: 'POST',
-
             headers: {
               'Content-Type':
                 'application/json'
             },
-
             body:
               JSON.stringify(payload)
           }
         );
 
+      let data = null;
 
-      const data =
-        await response.json();
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          data?.detail ||
-          'Could not build your route.'
-        );
-
+      try {
+        data = await response.json();
+      }
+      catch {
+        data = null;
       }
 
+      if (!response.ok) {
+        const message =
+          typeof data?.detail === 'string'
+            ? data.detail
+            : `Build My Route API returned ${response.status}.`;
+
+        throw new Error(message);
+      }
 
       setResult(data);
-
       setStep(5);
-
 
       window.scrollTo({
         top: 0,
         behavior: 'smooth'
       });
-
     }
     catch (e) {
-
       setError(
         e.message ||
-        'Something went wrong.'
+        'Could not build your route right now.'
       );
-
     }
     finally {
-
       setLoading(false);
-
     }
-
   };
 
-
   const restart = () => {
-
     setForm(INITIAL_FORM);
-
     setResult(null);
-
     setError('');
-
     setStep(1);
 
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
-
   };
 
+  const renderedResults = useMemo(() => {
+    const rows = Array.isArray(result?.results)
+      ? [...result.results]
+      : [];
+
+    if (form.priority === 'recommended') {
+      rows.sort((a, b) => {
+        if (Boolean(b.recommended) !== Boolean(a.recommended)) {
+          return Number(Boolean(b.recommended)) -
+            Number(Boolean(a.recommended));
+        }
+
+        return (b.score || 0) - (a.score || 0);
+      });
+    }
+
+    if (form.priority === 'lowest_cost') {
+      rows.sort((a, b) => {
+        const aCost =
+          a.total_course_cost ??
+          Number.POSITIVE_INFINITY;
+
+        const bCost =
+          b.total_course_cost ??
+          Number.POSITIVE_INFINITY;
+
+        if (aCost !== bCost) {
+          return aCost - bCost;
+        }
+
+        return (b.score || 0) - (a.score || 0);
+      });
+    }
+
+    return rows;
+  }, [result, form.priority]);
 
   return (
-
     <div className="min-h-screen bg-cream text-ink">
 
       <Navbar />
 
-
       {/* HERO */}
-
       <section className="border-b border-ink/10">
-
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-
           <div className="max-w-3xl">
 
             <div className="inline-flex items-center gap-2 text-[10px] mono uppercase tracking-[0.2em] text-coral">
-
               <RouteIcon className="h-3.5 w-3.5" />
-
               Route Your Career V2
-
             </div>
 
-
             <h1 className="serif text-5xl sm:text-7xl font-normal leading-[0.92] mt-5">
-
               Build your route.
-
               <br />
-
               <em className="font-light">
                 Not just a shortlist.
               </em>
-
             </h1>
 
-
             <p className="mt-6 max-w-2xl text-[15px] sm:text-[17px] text-ink/65 leading-relaxed">
-
               Tell us where you stand academically,
               what you can spend and where you want
               to go. Route Your Career checks the
               programmes currently available in our
               database and builds a personalised route.
-
             </p>
 
           </div>
-
         </div>
-
       </section>
-
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
-
         {/* PROGRESS */}
-
         {step < 5 && (
-
           <div className="max-w-3xl mx-auto mb-8">
 
             <div className="flex justify-between text-[10px] mono uppercase tracking-widest text-ink/45 mb-3">
-
               <span>
                 Step {step} of 4
               </span>
@@ -472,12 +440,9 @@ export default function BuildMyRoute() {
               <span>
                 Build My Route
               </span>
-
             </div>
 
-
             <div className="h-1.5 rounded-full bg-ink/10 overflow-hidden">
-
               <div
                 className="h-full bg-coral transition-all duration-300"
                 style={{
@@ -485,18 +450,13 @@ export default function BuildMyRoute() {
                     `${(step / 4) * 100}%`
                 }}
               />
-
             </div>
 
           </div>
-
         )}
 
-
         {/* STEP 1 */}
-
         {step === 1 && (
-
           <div className="max-w-3xl mx-auto">
 
             <div className="text-[10px] mono uppercase tracking-widest text-coral">
@@ -506,7 +466,6 @@ export default function BuildMyRoute() {
             <h2 className="serif text-4xl sm:text-5xl mt-2">
               What are you planning to study?
             </h2>
-
 
             <div className="grid sm:grid-cols-2 gap-4 mt-8">
 
@@ -521,7 +480,6 @@ export default function BuildMyRoute() {
                 }
               />
 
-
               <ChoiceCard
                 title="Management Abroad"
                 description="Bachelor's and Master's programme matching."
@@ -534,14 +492,10 @@ export default function BuildMyRoute() {
               />
 
             </div>
-
           </div>
-
         )}
 
-
         {/* STEP 2 MBBS */}
-
         {step === 2 &&
          form.stream === 'MBBS' && (
 
@@ -555,11 +509,9 @@ export default function BuildMyRoute() {
               Tell us where you stand.
             </h2>
 
-
             <div className="mt-8 grid sm:grid-cols-2 gap-5">
 
               <label>
-
                 <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-2">
                   Class XII PCB %
                 </div>
@@ -576,12 +528,9 @@ export default function BuildMyRoute() {
                   placeholder="Example: 65"
                   className="w-full rounded-2xl border border-ink/15 bg-white px-4 py-3.5 outline-none"
                 />
-
               </label>
 
-
               <label>
-
                 <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-2">
                   NEET score
                 </div>
@@ -598,18 +547,15 @@ export default function BuildMyRoute() {
                   placeholder="Example: 350"
                   className="w-full rounded-2xl border border-ink/15 bg-white px-4 py-3.5 outline-none"
                 />
-
               </label>
 
             </div>
-
 
             <div className="mt-7">
 
               <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-3">
                 NEET status
               </div>
-
 
               <div className="grid sm:grid-cols-3 gap-3">
 
@@ -618,17 +564,14 @@ export default function BuildMyRoute() {
                     'qualified',
                     'Qualified'
                   ],
-
                   [
                     'not_qualified',
                     'Not qualified'
                   ],
-
                   [
                     'not_taken',
                     'Not taken'
                   ]
-
                 ].map(
                   ([value, label]) => (
 
@@ -651,16 +594,13 @@ export default function BuildMyRoute() {
                 )}
 
               </div>
-
             </div>
 
           </div>
 
         )}
 
-
         {/* STEP 2 MANAGEMENT */}
-
         {step === 2 &&
          form.stream === 'Management' && (
 
@@ -673,7 +613,6 @@ export default function BuildMyRoute() {
             <h2 className="serif text-4xl sm:text-5xl mt-2">
               What programme level fits you?
             </h2>
-
 
             <div className="grid sm:grid-cols-2 gap-4 mt-8">
 
@@ -701,11 +640,9 @@ export default function BuildMyRoute() {
 
             </div>
 
-
             <div className="grid sm:grid-cols-3 gap-5 mt-7">
 
               <label>
-
                 <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-2">
                   Academic %
                 </div>
@@ -723,12 +660,9 @@ export default function BuildMyRoute() {
                   }
                   className="w-full rounded-2xl border border-ink/15 bg-white px-4 py-3.5"
                 />
-
               </label>
 
-
               <label>
-
                 <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-2">
                   IELTS
                 </div>
@@ -748,12 +682,9 @@ export default function BuildMyRoute() {
                   placeholder="Optional"
                   className="w-full rounded-2xl border border-ink/15 bg-white px-4 py-3.5"
                 />
-
               </label>
 
-
               <label>
-
                 <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-2">
                   Work experience
                 </div>
@@ -772,7 +703,6 @@ export default function BuildMyRoute() {
                   placeholder="Years"
                   className="w-full rounded-2xl border border-ink/15 bg-white px-4 py-3.5"
                 />
-
               </label>
 
             </div>
@@ -781,9 +711,7 @@ export default function BuildMyRoute() {
 
         )}
 
-
         {/* STEP 3 */}
-
         {step === 3 && (
 
           <div className="max-w-3xl mx-auto">
@@ -795,7 +723,6 @@ export default function BuildMyRoute() {
             <h2 className="serif text-4xl sm:text-5xl mt-2">
               What works for you?
             </h2>
-
 
             <div className="grid sm:grid-cols-[180px_1fr] gap-4 mt-8">
 
@@ -817,7 +744,6 @@ export default function BuildMyRoute() {
 
               </select>
 
-
               <input
                 type="number"
                 value={form.budget_total}
@@ -833,7 +759,6 @@ export default function BuildMyRoute() {
 
             </div>
 
-
             <div className="mt-8">
 
               <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-3">
@@ -845,7 +770,6 @@ export default function BuildMyRoute() {
                 unselected if you want RYC to
                 search everywhere.
               </p>
-
 
               <div className="flex flex-wrap gap-2">
 
@@ -891,9 +815,7 @@ export default function BuildMyRoute() {
 
         )}
 
-
         {/* STEP 4 */}
-
         {step === 4 && (
 
           <div className="max-w-3xl mx-auto">
@@ -903,26 +825,36 @@ export default function BuildMyRoute() {
             </div>
 
             <h2 className="serif text-4xl sm:text-5xl mt-2">
-              When do you want to start?
+              What matters most to you?
             </h2>
 
+            <p className="mt-3 text-[13px] text-ink/55">
+              This changes how your results are presented.
+              It does not override known eligibility requirements.
+            </p>
 
-            <div className="mt-8">
+            <div className="grid sm:grid-cols-2 gap-4 mt-8">
 
-              <input
-                value={form.intake}
-                onChange={e =>
-                  update(
-                    'intake',
-                    e.target.value
-                  )
-                }
-                placeholder="Example: September 2027 — optional"
-                className="w-full rounded-2xl border border-ink/15 bg-white px-4 py-4"
-              />
+              {PRIORITIES.map(item => (
+
+                <ChoiceCard
+                  key={item.value}
+                  title={item.title}
+                  description={item.description}
+                  active={
+                    form.priority === item.value
+                  }
+                  onClick={() =>
+                    update(
+                      'priority',
+                      item.value
+                    )
+                  }
+                />
+
+              ))}
 
             </div>
-
 
             <div className="mt-6 rounded-3xl bg-white border border-ink/10 p-5">
 
@@ -933,16 +865,13 @@ export default function BuildMyRoute() {
                 <div>
 
                   <div className="font-semibold text-[13px]">
-                    RYC does not invent missing eligibility data.
+                    Intake is not used for matching yet.
                   </div>
 
                   <div className="text-[12px] text-ink/55 leading-relaxed mt-1">
-
-                    If a university's latest fee,
-                    intake or requirement still needs
-                    verification, your result will
-                    clearly tell you.
-
+                    Intake wording is not standardised across the current database.
+                    RYC will show recorded intake information later, but it will not
+                    reduce your match score or exclude a course.
                   </div>
 
                 </div>
@@ -955,9 +884,7 @@ export default function BuildMyRoute() {
 
         )}
 
-
         {/* RESULTS */}
-
         {step === 5 && result && (
 
           <div>
@@ -975,31 +902,25 @@ export default function BuildMyRoute() {
                 </h2>
 
                 <p className="text-[14px] text-ink/60 mt-3">
-
                   {result.matches_found}
                   {' '}
                   suitable programmes found.
-
                 </p>
 
               </div>
-
 
               <button
                 onClick={restart}
                 className="rounded-full border border-ink/15 bg-white px-4 py-2.5 text-[12px] font-semibold"
               >
-
                 Start again
-
               </button>
 
             </div>
 
-
             <div className="mt-10 grid lg:grid-cols-2 gap-5">
 
-              {result.results?.map(
+              {renderedResults.map(
                 (item, index) => (
 
                   <div
@@ -1026,13 +947,9 @@ export default function BuildMyRoute() {
 
                           </div>
 
-
                           <h3 className="serif text-3xl leading-tight mt-2">
-
                             {item.university_name}
-
                           </h3>
-
 
                           <div className="flex items-center gap-1.5 text-[12px] text-ink/55 mt-2">
 
@@ -1048,7 +965,6 @@ export default function BuildMyRoute() {
 
                         </div>
 
-
                         <div className="ml-auto rounded-2xl bg-ink text-cream px-4 py-3 text-center">
 
                           <div className="serif text-2xl">
@@ -1063,7 +979,6 @@ export default function BuildMyRoute() {
 
                       </div>
 
-
                       <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
 
                         <div>
@@ -1077,7 +992,6 @@ export default function BuildMyRoute() {
                           </div>
 
                         </div>
-
 
                         <div>
 
@@ -1094,7 +1008,6 @@ export default function BuildMyRoute() {
 
                         </div>
 
-
                         <div>
 
                           <div className="text-[9px] mono uppercase text-ink/40">
@@ -1109,7 +1022,6 @@ export default function BuildMyRoute() {
 
                       </div>
 
-
                       {item.reasons?.length > 0 && (
 
                         <div className="mt-6">
@@ -1117,7 +1029,6 @@ export default function BuildMyRoute() {
                           <div className="text-[10px] mono uppercase tracking-widest text-ink/40 mb-3">
                             Why it matches
                           </div>
-
 
                           <div className="space-y-2">
 
@@ -1129,9 +1040,7 @@ export default function BuildMyRoute() {
                               >
 
                                 <div className="h-5 w-5 rounded-full bg-forest text-cream grid place-items-center shrink-0">
-
                                   <Check className="h-3 w-3" />
-
                                 </div>
 
                                 {reason}
@@ -1146,7 +1055,6 @@ export default function BuildMyRoute() {
 
                       )}
 
-
                       {item.cautions?.length > 0 && (
 
                         <div className="mt-5 rounded-2xl bg-cream p-4">
@@ -1159,9 +1067,7 @@ export default function BuildMyRoute() {
                                 key={caution}
                                 className="text-[11px] text-ink/55 leading-relaxed mb-1 last:mb-0"
                               >
-
                                 • {caution}
-
                               </div>
 
                             ))}
@@ -1179,8 +1085,7 @@ export default function BuildMyRoute() {
 
             </div>
 
-
-            {result.results?.length === 0 && (
+            {renderedResults.length === 0 && (
 
               <div className="mt-10 rounded-3xl bg-white border border-ink/10 p-10 text-center">
 
@@ -1202,22 +1107,28 @@ export default function BuildMyRoute() {
 
         )}
 
-
         {/* ERROR */}
-
         {error && (
 
           <div className="max-w-3xl mx-auto mt-6 rounded-2xl bg-red-50 border border-red-200 text-red-700 p-4 text-[12px]">
 
-            {error}
+            <div className="font-semibold">
+              Build My Route could not complete this request.
+            </div>
+
+            <div className="mt-1">
+              {error}
+            </div>
+
+            <div className="mt-2 text-red-600/70">
+              API: {BACKEND_URL}/api/build-my-route
+            </div>
 
           </div>
 
         )}
 
-
         {/* NAVIGATION */}
-
         {step > 1 && step < 5 && (
 
           <div className="max-w-3xl mx-auto mt-10 pt-6 border-t border-ink/10 flex items-center justify-between gap-3">
@@ -1230,11 +1141,9 @@ export default function BuildMyRoute() {
             >
 
               <ArrowLeft className="h-4 w-4" />
-
               Back
 
             </button>
-
 
             {step < 4 ? (
 
@@ -1247,7 +1156,6 @@ export default function BuildMyRoute() {
               >
 
                 Continue
-
                 <ArrowRight className="h-4 w-4" />
 
               </button>
@@ -1284,14 +1192,10 @@ export default function BuildMyRoute() {
 
         )}
 
-
       </main>
-
 
       <Footer />
 
     </div>
-
   );
-
 }
