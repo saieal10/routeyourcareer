@@ -387,6 +387,12 @@ export default function AdminDashboard() {
   const [applicationError, setApplicationError] = useState('');
   const [updatingApplicationId, setUpdatingApplicationId] = useState('');
 
+  const [applicationDocuments, setApplicationDocuments] = useState([]);
+  const [applicationDocumentSummary, setApplicationDocumentSummary] = useState(null);
+  const [loadingApplicationDocuments, setLoadingApplicationDocuments] = useState(false);
+  const [updatingDocumentKey, setUpdatingDocumentKey] = useState('');
+  const [documentError, setDocumentError] = useState('');
+
   const [newsletter, setNewsletter] = useState([]);
   const [loadingNewsletter, setLoadingNewsletter] = useState(false);
 
@@ -890,6 +896,132 @@ export default function AdminDashboard() {
     courseSearch
   ]);
 
+  const loadApplicationDocuments = async applicationId => {
+    if (!applicationId) return;
+
+    setLoadingApplicationDocuments(true);
+    setDocumentError('');
+
+    try {
+      const data = await adminFetch(
+        `/api/admin/applications/${encodeURIComponent(
+          applicationId
+        )}/documents`
+      );
+
+      setApplicationDocuments(
+        Array.isArray(data?.documents)
+          ? data.documents
+          : []
+      );
+
+      setApplicationDocumentSummary(
+        data?.summary || null
+      );
+    } catch (e) {
+      setApplicationDocuments([]);
+      setApplicationDocumentSummary(null);
+      setDocumentError(
+        e.message || 'Could not load document checklist.'
+      );
+    } finally {
+      setLoadingApplicationDocuments(false);
+    }
+  };
+
+  const updateApplicationDocument = async (
+    applicationId,
+    documentKey,
+    status,
+    note
+  ) => {
+    if (!applicationId || !documentKey) return;
+
+    setUpdatingDocumentKey(documentKey);
+    setDocumentError('');
+
+    try {
+      const data = await adminFetch(
+        `/api/admin/applications/${encodeURIComponent(
+          applicationId
+        )}/documents/${encodeURIComponent(
+          documentKey
+        )}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            status,
+            note: note?.trim() || null
+          })
+        }
+      );
+
+      setApplicationDocuments(
+        Array.isArray(data?.documents)
+          ? data.documents
+          : []
+      );
+
+      setApplicationDocumentSummary(
+        data?.summary || null
+      );
+
+      // A meaningful document action can automatically move
+      // the backend journey into Documents. Refresh the CRM
+      // so the visible pipeline stays in sync.
+      await loadApplications();
+
+      if (status !== 'pending') {
+        setSelectedApplication(old => {
+          if (!old) return old;
+
+          const current =
+            old.stage ||
+            old.application_status ||
+            old.journey_stage ||
+            'started';
+
+          const order =
+            APPLICATION_STAGES.map(x => x.key);
+
+          if (
+            !order.includes(current) ||
+            order.indexOf(current) <
+              order.indexOf('documents')
+          ) {
+            return {
+              ...old,
+              stage: 'documents',
+              application_status: 'documents',
+              journey_stage: 'documents'
+            };
+          }
+
+          return old;
+        });
+      }
+    } catch (e) {
+      setDocumentError(
+        e.message || 'Could not update document status.'
+      );
+    } finally {
+      setUpdatingDocumentKey('');
+    }
+  };
+
+  const updateDocumentNote = (
+    documentKey,
+    note
+  ) => {
+    setApplicationDocuments(old =>
+      old.map(item =>
+        item.key === documentKey
+          ? { ...item, note }
+          : item
+      )
+    );
+  };
+
   const openApplicationDetail = async item => {
     setApplicationError('');
 
@@ -900,8 +1032,15 @@ export default function AdminDashboard() {
         )}`
       );
 
-      setSelectedApplication(detail || item);
+      const resolved = detail || item;
+
+      setSelectedApplication(resolved);
       setApplicationDetailOpen(true);
+
+      await loadApplicationDocuments(
+        resolved.application_id ||
+        item.application_id
+      );
     } catch (e) {
       setApplicationError(
         e.message || 'Could not load application details.'
@@ -2993,7 +3132,199 @@ export default function AdminDashboard() {
               </>
             );
           })()}
-        </Modal>
+        
+            {/* DOCUMENT CHECKLIST */}
+            <div className="mt-7 rounded-3xl bg-white border border-ink/10 overflow-hidden">
+
+              <div className="p-5 sm:p-6 border-b border-ink/10 flex flex-wrap items-start gap-4">
+
+                <div>
+                  <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                    Document management
+                  </div>
+
+                  <div className="serif text-2xl mt-1">
+                    Student documents.
+                  </div>
+
+                  <p className="mt-1 text-[11px] text-ink/50 max-w-2xl">
+                    Record whether each required document is pending, received, verified or rejected. Notes remain internal to the admin CRM.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    loadApplicationDocuments(
+                      selectedApplication.application_id
+                    )
+                  }
+                  className="ml-auto inline-flex items-center gap-2 rounded-full border border-ink/15 px-4 py-2 text-[11px] font-semibold"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Refresh documents
+                </button>
+
+              </div>
+
+              {applicationDocumentSummary && (
+                <div className="grid grid-cols-2 sm:grid-cols-5 border-b border-ink/10">
+
+                  {[
+                    ['Total', applicationDocumentSummary.total || 0],
+                    ['Pending', applicationDocumentSummary.pending || 0],
+                    ['Received', applicationDocumentSummary.received || 0],
+                    ['Verified', applicationDocumentSummary.verified || 0],
+                    ['Rejected', applicationDocumentSummary.rejected || 0]
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="p-4 border-r last:border-r-0 border-ink/10"
+                    >
+                      <div className="text-[8px] mono uppercase tracking-widest text-ink/35">
+                        {label}
+                      </div>
+                      <div className="serif text-2xl mt-1">
+                        {value}
+                      </div>
+                    </div>
+                  ))}
+
+                </div>
+              )}
+
+              {documentError && (
+                <div className="m-5 rounded-xl bg-red-50 border border-red-100 p-3 text-[11px] text-red-700">
+                  {documentError}
+                </div>
+              )}
+
+              {loadingApplicationDocuments ? (
+                <div className="p-8 text-center text-[12px] text-ink/45">
+                  Loading document checklist…
+                </div>
+              ) : applicationDocuments.length === 0 ? (
+                <div className="p-8 text-center text-[12px] text-ink/45">
+                  No document checklist available.
+                </div>
+              ) : (
+                <div className="divide-y divide-ink/5">
+
+                  {applicationDocuments.map(item => {
+
+                    const status =
+                      item.status || 'pending';
+
+                    return (
+                      <div
+                        key={item.key}
+                        className="p-5 grid lg:grid-cols-[1.1fr_170px_1.5fr_auto] gap-4 items-start"
+                      >
+
+                        <div>
+                          <div className="text-[12px] font-semibold">
+                            {item.label}
+                          </div>
+
+                          <div className="text-[9px] mono uppercase tracking-widest text-ink/35 mt-1">
+                            {item.key}
+                          </div>
+
+                          {item.updated_at && (
+                            <div className="text-[9px] text-ink/35 mt-1">
+                              Updated {fmt(item.updated_at)}
+                            </div>
+                          )}
+                        </div>
+
+                        <select
+                          value={status}
+                          disabled={
+                            updatingDocumentKey ===
+                            item.key
+                          }
+                          onChange={e =>
+                            updateApplicationDocument(
+                              selectedApplication.application_id,
+                              item.key,
+                              e.target.value,
+                              item.note || ''
+                            )
+                          }
+                          className={`w-full rounded-xl border px-3 py-2.5 text-[11px] font-semibold outline-none ${
+                            status === 'verified'
+                              ? 'bg-green-50 border-green-200 text-green-700'
+                              : status === 'received'
+                              ? 'bg-blue-50 border-blue-200 text-blue-700'
+                              : status === 'rejected'
+                              ? 'bg-red-50 border-red-200 text-red-700'
+                              : 'bg-cream border-ink/15 text-ink/60'
+                          }`}
+                        >
+                          <option value="pending">
+                            Pending
+                          </option>
+                          <option value="received">
+                            Received
+                          </option>
+                          <option value="verified">
+                            Verified
+                          </option>
+                          <option value="rejected">
+                            Rejected
+                          </option>
+                        </select>
+
+                        <div>
+                          <input
+                            value={item.note || ''}
+                            onChange={e =>
+                              updateDocumentNote(
+                                item.key,
+                                e.target.value
+                              )
+                            }
+                            placeholder="Internal note — optional"
+                            className={inputClass}
+                          />
+
+                          <div className="text-[9px] text-ink/35 mt-1">
+                            This note is not exposed on public tracking.
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={
+                            updatingDocumentKey ===
+                            item.key
+                          }
+                          onClick={() =>
+                            updateApplicationDocument(
+                              selectedApplication.application_id,
+                              item.key,
+                              status,
+                              item.note || ''
+                            )
+                          }
+                          className="rounded-full bg-ink text-cream px-4 py-2.5 text-[10px] font-semibold disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {updatingDocumentKey ===
+                          item.key
+                            ? 'Saving…'
+                            : 'Save'}
+                        </button>
+
+                      </div>
+                    );
+                  })}
+
+                </div>
+              )}
+
+            </div>
+
+</Modal>
       )}
 
       {/* BLOG EDITOR */}
