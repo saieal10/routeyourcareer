@@ -7,6 +7,7 @@ import {
   BookOpen,
   CalendarDays,
   Check,
+  Copy,
   CircleAlert,
   GraduationCap,
   Loader2,
@@ -487,6 +488,12 @@ export default function BuildMyRoute() {
   const [sessionLoaded, setSessionLoaded] =
     useState(false);
 
+  const [savedSelectedRoute, setSavedSelectedRoute] =
+    useState(null);
+
+  const [applicationIdCopied, setApplicationIdCopied] =
+    useState(false);
+
 
   useEffect(() => {
     try {
@@ -518,6 +525,38 @@ export default function BuildMyRoute() {
         setApplicationId(
           storedId
         );
+      }
+
+      const rawSelectedRoute =
+        localStorage.getItem(
+          'ryc_selected_route'
+        );
+
+      if (rawSelectedRoute) {
+        try {
+          const selected =
+            JSON.parse(
+              rawSelectedRoute
+            );
+
+          if (
+            selected &&
+            (
+              !storedId ||
+              !selected.application_id ||
+              selected.application_id === storedId
+            )
+          ) {
+            setSavedSelectedRoute(
+              selected
+            );
+          }
+        }
+        catch {
+          setSavedSelectedRoute(
+            null
+          );
+        }
       }
 
       if (contact) {
@@ -1430,36 +1469,44 @@ export default function BuildMyRoute() {
       );
 
       if (applicationId) {
+        const selectedRoute = {
+          application_id:
+            applicationId,
+
+          course_id:
+            applicationItem.course_id,
+
+          course_name:
+            applicationItem.course_name,
+
+          university_id:
+            applicationItem.university_id,
+
+          university_name:
+            applicationItem.university_name,
+
+          country:
+            applicationItem.country,
+
+          city:
+            applicationItem.city,
+
+          score:
+            applicationItem.score,
+
+          match_type:
+            applicationItem.match_type
+        };
+
         localStorage.setItem(
           'ryc_selected_route',
-          JSON.stringify({
-            application_id:
-              applicationId,
+          JSON.stringify(
+            selectedRoute
+          )
+        );
 
-            course_id:
-              applicationItem.course_id,
-
-            course_name:
-              applicationItem.course_name,
-
-            university_id:
-              applicationItem.university_id,
-
-            university_name:
-              applicationItem.university_name,
-
-            country:
-              applicationItem.country,
-
-            city:
-              applicationItem.city,
-
-            score:
-              applicationItem.score,
-
-            match_type:
-              applicationItem.match_type
-          })
+        setSavedSelectedRoute(
+          selectedRoute
         );
       }
 
@@ -1481,6 +1528,33 @@ export default function BuildMyRoute() {
     }
     finally {
       setSubmittingApplication(false);
+    }
+  };
+
+  const copyApplicationId = async () => {
+    if (!applicationId) return;
+
+    try {
+      await navigator.clipboard.writeText(
+        applicationId
+      );
+
+      setApplicationIdCopied(
+        true
+      );
+
+      window.setTimeout(
+        () =>
+          setApplicationIdCopied(
+            false
+          ),
+        1800
+      );
+    }
+    catch {
+      setApplicationIdCopied(
+        false
+      );
     }
   };
 
@@ -2106,6 +2180,101 @@ export default function BuildMyRoute() {
         {step === 5 && result && (
 
           <div>
+
+            {applicationId && (
+              <section className="mb-6 rounded-[28px] bg-white border border-ink/10 overflow-hidden">
+
+                <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center gap-5">
+
+                  <div className="h-11 w-11 rounded-full bg-forest text-cream grid place-items-center shrink-0">
+                    <Check className="h-5 w-5" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+
+                    <div className="text-[9px] mono uppercase tracking-[0.18em] text-forest">
+                      My Application
+                    </div>
+
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+
+                      <div className="serif text-2xl">
+                        {applicationId}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={copyApplicationId}
+                        className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-ink/50 hover:text-ink"
+                      >
+                        {applicationIdCopied ? (
+                          <>
+                            <Check className="h-3.5 w-3.5" />
+                            Copied
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            Copy ID
+                          </>
+                        )}
+                      </button>
+
+                    </div>
+
+                    {savedSelectedRoute ? (
+                      <div className="mt-2">
+
+                        <div className="text-[12px] font-semibold text-ink">
+                          {savedSelectedRoute.university_name}
+                        </div>
+
+                        <div className="text-[11px] text-ink/50 mt-0.5">
+                          {savedSelectedRoute.course_name || 'Selected course'}
+                          {savedSelectedRoute.country
+                            ? ` · ${savedSelectedRoute.country}`
+                            : ''}
+                          {savedSelectedRoute.city
+                            ? ` · ${savedSelectedRoute.city}`
+                            : ''}
+                        </div>
+
+                        <div className="mt-2 inline-flex items-center rounded-full bg-coral/10 text-coral px-3 py-1.5 text-[9px] mono uppercase tracking-widest">
+                          University selected
+                        </div>
+
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-[11px] text-ink/50">
+                        Route built. Choose a university below to move your application to the next stage.
+                      </div>
+                    )}
+
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 lg:justify-end">
+
+                    <Link
+                      to={`/track-application?application_id=${encodeURIComponent(
+                        applicationId
+                      )}`}
+                      className="inline-flex items-center justify-center rounded-full border border-ink/15 bg-white px-4 py-2.5 text-[11px] font-semibold hover:border-ink/30"
+                    >
+                      Track Application
+                    </Link>
+
+                    {!savedSelectedRoute && (
+                      <div className="inline-flex items-center justify-center rounded-full bg-ink text-cream px-4 py-2.5 text-[11px] font-semibold">
+                        Select your university below
+                      </div>
+                    )}
+
+                  </div>
+
+                </div>
+
+              </section>
+            )}
 
             <section className="rounded-[32px] bg-ink text-cream p-6 sm:p-9">
 
@@ -2733,13 +2902,46 @@ export default function BuildMyRoute() {
 
                 </div>
 
-                <button
-                  type="button"
-                  onClick={closeApplication}
-                  className="mt-6 w-full rounded-full bg-ink text-cream px-5 py-3 text-[12px] font-bold"
-                >
-                  Done
-                </button>
+                {applicationId && (
+                  <div className="mt-4 rounded-2xl bg-forest/5 border border-forest/20 p-4">
+
+                    <div className="text-[9px] mono uppercase tracking-widest text-forest">
+                      Application updated
+                    </div>
+
+                    <div className="mt-1 text-[12px] font-semibold">
+                      {applicationId}
+                    </div>
+
+                    <div className="mt-1 text-[11px] text-ink/50">
+                      Your selected university is now attached to this application.
+                    </div>
+
+                  </div>
+                )}
+
+                <div className="mt-6 grid sm:grid-cols-2 gap-2">
+
+                  <button
+                    type="button"
+                    onClick={closeApplication}
+                    className="w-full rounded-full border border-ink/15 bg-white text-ink px-5 py-3 text-[12px] font-bold"
+                  >
+                    Done
+                  </button>
+
+                  {applicationId && (
+                    <Link
+                      to={`/track-application?application_id=${encodeURIComponent(
+                        applicationId
+                      )}`}
+                      className="w-full inline-flex items-center justify-center rounded-full bg-ink text-cream px-5 py-3 text-[12px] font-bold"
+                    >
+                      Track Application
+                    </Link>
+                  )}
+
+                </div>
 
               </div>
 
