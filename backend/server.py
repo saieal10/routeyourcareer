@@ -119,6 +119,335 @@ if GEMINI_API_KEY:
     )
 
 
+
+# =========================================================
+# LIVE CURRENCY / FX
+# =========================================================
+
+EXCHANGERATE_API_KEY = os.environ.get(
+    "EXCHANGERATE_API_KEY"
+)
+
+FX_API_URL = (
+    "https://api.exchangerate.host/live"
+)
+
+FX_SUPPORTED_CURRENCIES = [
+    "USD",
+    "INR",
+    "EUR",
+    "GBP",
+    "AUD",
+    "RUB",
+]
+
+# Free exchangerate.host plans are updated daily.
+# Cache for 12 hours so normal RYC traffic does not burn
+# one provider request per student.
+FX_CACHE_SECONDS = 12 * 60 * 60
+
+_fx_cache = {
+    "rates": None,
+    "fetched_at": None,
+    "source": None,
+}
+
+
+async def get_live_fx_rates(
+    force: bool = False
+):
+
+    now = datetime.now(
+        timezone.utc
+    )
+
+    cached_rates = (
+        _fx_cache.get(
+            "rates"
+        )
+    )
+
+    fetched_at = (
+        _fx_cache.get(
+            "fetched_at"
+        )
+    )
+
+    if (
+        not force
+        and cached_rates
+        and fetched_at
+        and (
+            now - fetched_at
+        ).total_seconds()
+        < FX_CACHE_SECONDS
+    ):
+        return {
+            "rates":
+            cached_rates,
+
+            "fetched_at":
+            fetched_at,
+
+            "provider":
+            _fx_cache.get(
+                "source"
+            )
+            or "exchangerate.host",
+
+            "cached":
+            True,
+        }
+
+    if not EXCHANGERATE_API_KEY:
+
+        if cached_rates:
+            return {
+                "rates":
+                cached_rates,
+
+                "fetched_at":
+                fetched_at,
+
+                "provider":
+                _fx_cache.get(
+                    "source"
+                )
+                or "cached",
+
+                "cached":
+                True,
+            }
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Live currency conversion is not configured. "
+                "Add EXCHANGERATE_API_KEY in Render."
+            ),
+        )
+
+    params = {
+        "access_key":
+        EXCHANGERATE_API_KEY,
+
+        "currencies":
+        ",".join(
+            [
+                currency
+                for currency
+                in FX_SUPPORTED_CURRENCIES
+                if currency != "USD"
+            ]
+        ),
+    }
+
+    try:
+
+        async with httpx.AsyncClient(
+            timeout=12.0
+        ) as http:
+
+            response = await http.get(
+                FX_API_URL,
+                params=params,
+            )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        if not data.get(
+            "success"
+        ):
+
+            raise ValueError(
+                str(
+                    data.get(
+                        "error"
+                    )
+                    or "FX provider returned an error"
+                )
+            )
+
+        quotes = (
+            data.get(
+                "quotes"
+            )
+            or {}
+        )
+
+        rates = {
+            "USD": 1.0
+        }
+
+        for currency in (
+            FX_SUPPORTED_CURRENCIES
+        ):
+
+            if currency == "USD":
+                continue
+
+            quote_key = (
+                f"USD{currency}"
+            )
+
+            value = quotes.get(
+                quote_key
+            )
+
+            if value is not None:
+
+                try:
+                    rates[
+                        currency
+                    ] = float(
+                        value
+                    )
+                except Exception:
+                    pass
+
+        missing = [
+            currency
+            for currency
+            in FX_SUPPORTED_CURRENCIES
+            if currency not in rates
+        ]
+
+        if missing:
+
+            raise ValueError(
+                "FX provider did not return: "
+                + ", ".join(
+                    missing
+                )
+            )
+
+        _fx_cache[
+            "rates"
+        ] = rates
+
+        _fx_cache[
+            "fetched_at"
+        ] = now
+
+        _fx_cache[
+            "source"
+        ] = "exchangerate.host"
+
+        return {
+            "rates":
+            rates,
+
+            "fetched_at":
+            now,
+
+            "provider":
+            "exchangerate.host",
+
+            "cached":
+            False,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+
+        logging.exception(
+            "Live FX fetch failed: %s",
+            exc
+        )
+
+        if cached_rates:
+
+            return {
+                "rates":
+                cached_rates,
+
+                "fetched_at":
+                fetched_at,
+
+                "provider":
+                _fx_cache.get(
+                    "source"
+                )
+                or "cached",
+
+                "cached":
+                True,
+            }
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Live exchange rates are temporarily unavailable."
+            ),
+        )
+
+
+def convert_currency(
+    amount,
+    from_currency: str,
+    to_currency: str,
+    rates: dict,
+):
+
+    if amount is None:
+        return None
+
+    source = str(
+        from_currency
+        or "USD"
+    ).upper().strip()
+
+    target = str(
+        to_currency
+        or "USD"
+    ).upper().strip()
+
+    try:
+        amount = float(
+            amount
+        )
+    except Exception:
+        return None
+
+    if source == target:
+        return round(
+            amount,
+            2
+        )
+
+    if (
+        source not in rates
+        or target not in rates
+    ):
+        return None
+
+    source_rate = float(
+        rates[source]
+    )
+
+    target_rate = float(
+        rates[target]
+    )
+
+    if source_rate <= 0:
+        return None
+
+    amount_usd = (
+        amount
+        / source_rate
+    )
+
+    return round(
+        amount_usd
+        * target_rate,
+        2,
+    )
+
+
 # =========================================================
 # FRONTEND
 # =========================================================
@@ -914,6 +1243,9 @@ class BuildMyRouteMatch(BaseModel):
 
     last_verified: Optional[datetime] = None
 
+    tuition_fee_inr: Optional[float] = None
+    estimated_total_cost_inr: Optional[float] = None
+
 
 class BuildMyRouteResponse(BaseModel):
 
@@ -926,6 +1258,9 @@ class BuildMyRouteResponse(BaseModel):
     ]
 
     note: str
+
+    fx_provider: Optional[str] = None
+    fx_updated_at: Optional[datetime] = None
 
 
 
@@ -1338,6 +1673,7 @@ def _route_total_cost(
 def _score_route_course(
     course: dict,
     payload: BuildMyRouteRequest,
+    fx_rates: Optional[dict] = None,
 ):
 
     score = 50
@@ -1400,24 +1736,50 @@ def _score_route_course(
         is not None
     ):
 
-        same_currency = (
-            _route_text(
+        course_currency = (
+            str(
                 course.get(
                     "currency"
                 )
                 or "USD"
             )
-            ==
-            _route_text(
+            .upper()
+            .strip()
+        )
+
+        budget_currency = (
+            str(
                 payload.budget_currency
                 or "USD"
             )
+            .upper()
+            .strip()
         )
 
-        if not same_currency:
+        comparable_budget = float(
+            payload.budget_total
+        )
+
+        if (
+            course_currency
+            != budget_currency
+        ):
+
+            comparable_budget = (
+                convert_currency(
+                    payload.budget_total,
+                    budget_currency,
+                    course_currency,
+                    fx_rates,
+                )
+                if fx_rates
+                else None
+            )
+
+        if comparable_budget is None:
 
             cautions.append(
-                "Budget comparison needs currency conversion"
+                "Live budget conversion is temporarily unavailable"
             )
 
         elif estimated_total is None:
@@ -1428,26 +1790,26 @@ def _score_route_course(
 
         elif (
             estimated_total
-            <= payload.budget_total
+            <= comparable_budget
         ):
 
             score += 20
 
             reasons.append(
-                "Estimated programme cost fits your stated budget"
+                "Estimated programme cost fits your budget after live currency conversion"
             )
 
         else:
 
             difference = (
                 estimated_total
-                - payload.budget_total
+                - comparable_budget
             )
 
             ratio = (
                 difference
-                / payload.budget_total
-                if payload.budget_total
+                / comparable_budget
+                if comparable_budget
                 else 1
             )
 
@@ -1456,7 +1818,7 @@ def _score_route_course(
                 score -= 5
 
                 cautions.append(
-                    "Estimated programme cost is slightly above your budget"
+                    "Estimated programme cost is slightly above your budget after currency conversion"
                 )
 
             else:
@@ -1464,7 +1826,7 @@ def _score_route_course(
                 score -= 20
 
                 cautions.append(
-                    "Estimated programme cost is above your budget"
+                    "Estimated programme cost is above your budget after currency conversion"
                 )
 
     # -----------------------------------------------------
@@ -1961,6 +2323,42 @@ def _score_route_course(
         course.get(
             "last_verified"
         ),
+
+        "tuition_fee_inr":
+        (
+            convert_currency(
+                course.get(
+                    "tuition_fee_year"
+                ),
+                course.get(
+                    "currency"
+                )
+                or "USD",
+                "INR",
+                fx_rates,
+            )
+            if fx_rates
+            else None
+        ),
+
+        "estimated_total_cost_inr":
+        (
+            convert_currency(
+                estimated_total,
+                course.get(
+                    "currency"
+                )
+                or "USD",
+                "INR",
+                fx_rates,
+            )
+            if (
+                fx_rates
+                and estimated_total
+                is not None
+            )
+            else None
+        ),
     }
 
 
@@ -2111,7 +2509,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.6-document-checklist",
+        "7.7-live-currency",
 
         "google_auth":
         True,
@@ -2145,6 +2543,12 @@ async def root():
 
         "application_document_checklist":
         True,
+
+        "live_currency":
+        True,
+
+        "supported_currencies":
+        FX_SUPPORTED_CURRENCIES,
 
         "ai_chat":
         bool(GEMINI_API_KEY),
@@ -3065,6 +3469,132 @@ async def public_course(
 
     return Course(**doc)
 
+
+
+
+# =========================================================
+# PUBLIC LIVE CURRENCY
+# =========================================================
+
+
+@api_router.get(
+    "/currency/rates"
+)
+async def public_currency_rates():
+
+    fx = await get_live_fx_rates()
+
+    return {
+        "ok":
+        True,
+
+        "base":
+        "USD",
+
+        "rates":
+        fx["rates"],
+
+        "provider":
+        fx.get(
+            "provider"
+        ),
+
+        "updated_at":
+        fx.get(
+            "fetched_at"
+        ),
+
+        "cached":
+        bool(
+            fx.get(
+                "cached"
+            )
+        ),
+    }
+
+
+@api_router.get(
+    "/currency/convert"
+)
+async def public_currency_convert(
+    amount: float,
+    from_currency: str,
+    to_currency: str,
+):
+
+    source = (
+        from_currency
+        .upper()
+        .strip()
+    )
+
+    target = (
+        to_currency
+        .upper()
+        .strip()
+    )
+
+    if (
+        source
+        not in FX_SUPPORTED_CURRENCIES
+        or target
+        not in FX_SUPPORTED_CURRENCIES
+    ):
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Unsupported currency. Supported: "
+                + ", ".join(
+                    FX_SUPPORTED_CURRENCIES
+                )
+            ),
+        )
+
+    fx = await get_live_fx_rates()
+
+    converted = (
+        convert_currency(
+            amount,
+            source,
+            target,
+            fx["rates"],
+        )
+    )
+
+    if converted is None:
+
+        raise HTTPException(
+            status_code=503,
+            detail="Currency conversion unavailable",
+        )
+
+    return {
+        "ok":
+        True,
+
+        "amount":
+        amount,
+
+        "from":
+        source,
+
+        "to":
+        target,
+
+        "converted":
+        converted,
+
+        "provider":
+        fx.get(
+            "provider"
+        ),
+
+        "updated_at":
+        fx.get(
+            "fetched_at"
+        ),
+    }
 
 
 # =========================================================
@@ -4086,6 +4616,21 @@ async def build_my_route(
     BuildMyRouteRequest
 ):
 
+    fx = None
+
+    try:
+        fx = await get_live_fx_rates()
+    except HTTPException:
+        fx = None
+
+    fx_rates = (
+        fx.get(
+            "rates"
+        )
+        if fx
+        else None
+    )
+
     query = {
         "status":
         "published",
@@ -4119,7 +4664,8 @@ async def build_my_route(
         result = (
             _score_route_course(
                 course,
-                payload
+                payload,
+                fx_rates
             )
         )
 
@@ -4179,7 +4725,25 @@ async def build_my_route(
             "Matches use only published Route Your Career "
             "course records. Intake is not used as a hard "
             "filter. Missing or older information is shown "
-            "as needing verification rather than being invented."
+            "as needing verification rather than being invented. "
+            "When live FX is available, budgets are converted "
+            "before comparison."
+        ),
+
+        fx_provider=(
+            fx.get(
+                "provider"
+            )
+            if fx
+            else None
+        ),
+
+        fx_updated_at=(
+            fx.get(
+                "fetched_at"
+            )
+            if fx
+            else None
         ),
     )
 
