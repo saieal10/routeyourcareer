@@ -77,6 +77,9 @@ const EMPTY_COURSE = {
   medium: 'English',
   currency: 'USD',
   tuition_fee_year: '',
+  hostel_fee_year: '',
+  living_cost_year: '',
+  other_costs_total: '',
   total_course_cost: '',
   intake: '',
   application_deadline: '',
@@ -123,6 +126,20 @@ function optionalNumber(value) {
   if (value === '' || value === null || value === undefined) return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+function durationYears(value) {
+  const match = String(value || '').match(/(\d+(?:\.\d+)?)/);
+  if (!match) return null;
+  const years = Number(match[1]);
+  return Number.isFinite(years) ? years : null;
+}
+
+function formatMoney(value, currency = 'USD') {
+  if (value === '' || value === null || value === undefined) return '—';
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return `${currency} ${n.toLocaleString()}`;
 }
 
 function dateInputValue(value) {
@@ -830,6 +847,9 @@ export default function AdminDashboard() {
       medium: item.medium || 'English',
       currency: item.currency || 'USD',
       tuition_fee_year: item.tuition_fee_year ?? '',
+      hostel_fee_year: item.hostel_fee_year ?? '',
+      living_cost_year: item.living_cost_year ?? '',
+      other_costs_total: item.other_costs_total ?? '',
       total_course_cost: item.total_course_cost ?? '',
       intake: item.intake || '',
       application_deadline: item.application_deadline || '',
@@ -874,6 +894,9 @@ export default function AdminDashboard() {
       medium: courseForm.medium.trim() || null,
       currency: courseForm.currency || 'USD',
       tuition_fee_year: optionalNumber(courseForm.tuition_fee_year),
+      hostel_fee_year: optionalNumber(courseForm.hostel_fee_year),
+      living_cost_year: optionalNumber(courseForm.living_cost_year),
+      other_costs_total: optionalNumber(courseForm.other_costs_total),
       total_course_cost: optionalNumber(courseForm.total_course_cost),
       intake: courseForm.intake.trim() || null,
       application_deadline:
@@ -970,6 +993,27 @@ export default function AdminDashboard() {
     loadUniversities();
     loadCourses();
   };
+
+  const courseDurationYears = durationYears(courseForm.duration);
+  const courseTuitionYear = optionalNumber(courseForm.tuition_fee_year);
+  const courseHostelYear = optionalNumber(courseForm.hostel_fee_year);
+  const courseLivingYear = optionalNumber(courseForm.living_cost_year);
+  const courseOtherTotal = optionalNumber(courseForm.other_costs_total);
+
+  const calculatedTuitionTotal =
+    courseDurationYears != null && courseTuitionYear != null
+      ? courseDurationYears * courseTuitionYear
+      : null;
+
+  const calculatedEstimatedTotal =
+    courseDurationYears != null
+      ? (
+          (courseTuitionYear || 0) +
+          (courseHostelYear || 0) +
+          (courseLivingYear || 0)
+        ) * courseDurationYears +
+        (courseOtherTotal || 0)
+      : null;
 
   if (checking) {
     return (
@@ -1682,16 +1726,25 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    <div className="text-[12px] min-w-[120px]">
+                    <div className="text-[12px] min-w-[150px]">
                       <div className="text-[9px] mono uppercase text-ink/35">
                         Tuition / year
                       </div>
                       <div className="font-semibold mt-1">
-                        {item.tuition_fee_year != null
-                          ? `${item.currency} ${Number(
-                              item.tuition_fee_year
-                            ).toLocaleString()}`
-                          : '—'}
+                        {formatMoney(item.tuition_fee_year, item.currency)}
+                      </div>
+                      <div className="text-[10px] text-ink/40 mt-1">
+                        Total: {formatMoney(
+                          item.total_course_cost ??
+                            (
+                              durationYears(item.duration) != null &&
+                              item.tuition_fee_year != null
+                                ? durationYears(item.duration) *
+                                  Number(item.tuition_fee_year)
+                                : null
+                            ),
+                          item.currency
+                        )}
                       </div>
                     </div>
 
@@ -2249,7 +2302,55 @@ export default function AdminDashboard() {
                 />
               </Field>
 
-              <Field label="Total course tuition">
+              <Field label="Hostel / year">
+                <input
+                  type="number"
+                  value={courseForm.hostel_fee_year}
+                  onChange={e =>
+                    setCourseForm(old => ({
+                      ...old,
+                      hostel_fee_year: e.target.value
+                    }))
+                  }
+                  placeholder="Optional"
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Living / year">
+                <input
+                  type="number"
+                  value={courseForm.living_cost_year}
+                  onChange={e =>
+                    setCourseForm(old => ({
+                      ...old,
+                      living_cost_year: e.target.value
+                    }))
+                  }
+                  placeholder="Food + local living estimate"
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Other one-time costs">
+                <input
+                  type="number"
+                  value={courseForm.other_costs_total}
+                  onChange={e =>
+                    setCourseForm(old => ({
+                      ...old,
+                      other_costs_total: e.target.value
+                    }))
+                  }
+                  placeholder="Application / processing / misc."
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field
+                label="Total course tuition"
+                hint="You may enter an official total. If blank, the dashboard still shows an automatic tuition estimate from duration × annual tuition."
+              >
                 <input
                   type="number"
                   value={courseForm.total_course_cost}
@@ -2290,6 +2391,32 @@ export default function AdminDashboard() {
                   className={inputClass}
                 />
               </Field>
+            </div>
+
+            <div className="mt-4 grid sm:grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-cream border border-ink/10 p-4">
+                <div className="text-[9px] mono uppercase tracking-widest text-ink/40">
+                  Auto tuition estimate
+                </div>
+                <div className="serif text-2xl mt-1">
+                  {formatMoney(calculatedTuitionTotal, courseForm.currency)}
+                </div>
+                <div className="text-[10px] text-ink/45 mt-1">
+                  Duration × tuition/year
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-ink text-cream p-4">
+                <div className="text-[9px] mono uppercase tracking-widest text-coral">
+                  Auto total study estimate
+                </div>
+                <div className="serif text-2xl mt-1">
+                  {formatMoney(calculatedEstimatedTotal, courseForm.currency)}
+                </div>
+                <div className="text-[10px] text-cream/55 mt-1">
+                  Tuition + hostel + living for duration + one-time costs
+                </div>
+              </div>
             </div>
           </div>
 
