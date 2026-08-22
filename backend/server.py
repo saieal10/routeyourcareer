@@ -13,6 +13,16 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from google import genai
 
+# Russia bulk fee migration helpers.
+# This module does NOT run its main() function when imported.
+from migrate_russia import (
+    FEE_DATA as RUSSIA_FEE_DATA,
+    upsert_university as upsert_russia_university,
+    upsert_course as upsert_russia_course,
+    can_auto_publish as can_auto_publish_russia_fee,
+)
+
+
 import os
 import logging
 import uuid
@@ -2509,7 +2519,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.7-live-currency",
+        "7.8-russia-fee-import",
 
         "google_auth":
         True,
@@ -2545,6 +2555,9 @@ async def root():
         True,
 
         "live_currency":
+        True,
+
+        "russia_fee_import":
         True,
 
         "supported_currencies":
@@ -5722,6 +5735,182 @@ async def admin_list_leads(
         for doc in docs
     ]
 
+
+
+
+# =========================================================
+# ADMIN — ONE-CLICK RUSSIA FEE MIGRATION
+# =========================================================
+#
+# Protected by the existing require_admin dependency.
+# Safe to run more than once because migrate_russia.py uses
+# upsert/update logic rather than blind inserts.
+#
+# After the import succeeds you may leave this endpoint in
+# place for future fee refreshes, or remove it if preferred.
+# =========================================================
+
+
+@api_router.post(
+    "/admin/migrations/russia-fees"
+)
+async def admin_run_russia_fee_migration(
+    user: User = Depends(
+        require_admin
+    ),
+):
+
+    universities_created = 0
+    universities_updated = 0
+    courses_created = 0
+    courses_updated = 0
+    published = 0
+    draft_or_review = 0
+
+    results = []
+
+    try:
+
+        for record in RUSSIA_FEE_DATA:
+
+            university_id, created = (
+                await upsert_russia_university(
+                    db,
+                    record,
+                )
+            )
+
+            if created:
+                universities_created += 1
+            else:
+                universities_updated += 1
+
+            course_created = (
+                await upsert_russia_course(
+                    db,
+                    university_id,
+                    record,
+                )
+            )
+
+            if course_created:
+                courses_created += 1
+            else:
+                courses_updated += 1
+
+            auto_published = (
+                can_auto_publish_russia_fee(
+                    record
+                )
+            )
+
+            if auto_published:
+                published += 1
+                state = "published"
+            else:
+                draft_or_review += 1
+                state = "draft_review"
+
+            annual_tuition = None
+
+            tuition_list = record.get(
+                "tuition"
+            )
+
+            if (
+                isinstance(
+                    tuition_list,
+                    list
+                )
+                and tuition_list
+            ):
+                annual_tuition = (
+                    tuition_list[0]
+                )
+
+            results.append(
+                {
+                    "university":
+                    record.get(
+                        "name"
+                    ),
+
+                    "city":
+                    record.get(
+                        "city"
+                    ),
+
+                    "academic_year":
+                    record.get(
+                        "academic_year"
+                    ),
+
+                    "currency":
+                    record.get(
+                        "currency"
+                    ),
+
+                    "year_1_tuition":
+                    annual_tuition,
+
+                    "status":
+                    state,
+
+                    "source_document":
+                    record.get(
+                        "source_document"
+                    ),
+                }
+            )
+
+        return {
+            "ok":
+            True,
+
+            "message":
+            "Russia fee migration completed.",
+
+            "records_processed":
+            len(
+                RUSSIA_FEE_DATA
+            ),
+
+            "universities_created":
+            universities_created,
+
+            "universities_updated":
+            universities_updated,
+
+            "courses_created":
+            courses_created,
+
+            "courses_updated":
+            courses_updated,
+
+            "auto_published_2026_27":
+            published,
+
+            "draft_or_review":
+            draft_or_review,
+
+            "results":
+            results,
+        }
+
+    except Exception as exc:
+
+        logging.exception(
+            "Russia fee migration failed: %s",
+            exc,
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Russia fee migration failed. "
+                "Check Render logs for the exact error."
+            ),
+        )
 
 
 # =========================================================
