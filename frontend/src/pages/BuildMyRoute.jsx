@@ -20,7 +20,6 @@ import {
 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { brand } from '../mock';
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL ||
@@ -202,6 +201,7 @@ function ResultCard({
   index,
   selected,
   onToggleCompare,
+  onStartApplication,
   featured = false
 }) {
   const code =
@@ -414,14 +414,13 @@ function ResultCard({
               : 'Compare'}
           </button>
 
-          <a
-            href={brand.applyLink}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={onStartApplication}
             className="inline-flex items-center justify-center rounded-full bg-ink text-cream px-4 py-2.5 text-[12px] font-semibold hover:bg-forest transition"
           >
             Start application
-          </a>
+          </button>
 
         </div>
 
@@ -453,6 +452,30 @@ export default function BuildMyRoute() {
     useState([]);
 
   const [compareOpen, setCompareOpen] =
+    useState(false);
+
+  const [applicationOpen, setApplicationOpen] =
+    useState(false);
+
+  const [applicationItem, setApplicationItem] =
+    useState(null);
+
+  const [applicationForm, setApplicationForm] =
+    useState({
+      name: '',
+      phone: '',
+      email: '',
+      state: '',
+      preferred_contact: 'WhatsApp'
+    });
+
+  const [applicationError, setApplicationError] =
+    useState('');
+
+  const [applicationSuccess, setApplicationSuccess] =
+    useState('');
+
+  const [submittingApplication, setSubmittingApplication] =
     useState(false);
 
   const countries = useMemo(() => {
@@ -698,6 +721,10 @@ export default function BuildMyRoute() {
     setSortMode('best');
     setCompareIds([]);
     setCompareOpen(false);
+    setApplicationOpen(false);
+    setApplicationItem(null);
+    setApplicationError('');
+    setApplicationSuccess('');
     setStep(1);
 
     window.scrollTo({
@@ -853,6 +880,268 @@ export default function BuildMyRoute() {
         ];
       });
     };
+
+
+  const openApplication = item => {
+    setApplicationItem(item);
+    setApplicationError('');
+    setApplicationSuccess('');
+    setApplicationOpen(true);
+  };
+
+  const closeApplication = () => {
+    if (submittingApplication) return;
+
+    setApplicationOpen(false);
+    setApplicationItem(null);
+    setApplicationError('');
+    setApplicationSuccess('');
+  };
+
+  const submitApplication = async e => {
+    e.preventDefault();
+
+    if (!applicationItem) return;
+
+    setApplicationError('');
+    setApplicationSuccess('');
+
+    const name =
+      applicationForm.name.trim();
+
+    const phone =
+      applicationForm.phone.trim();
+
+    if (!name) {
+      setApplicationError('Please enter your full name.');
+      return;
+    }
+
+    if (!phone) {
+      setApplicationError('Please enter your WhatsApp / mobile number.');
+      return;
+    }
+
+    setSubmittingApplication(true);
+
+    try {
+      const shortlistedRoutes =
+        compareItems
+          .filter(
+            item =>
+              item.course_id !==
+              applicationItem.course_id
+          )
+          .slice(0, 3)
+          .map(item => ({
+            course_id:
+              item.course_id,
+
+            course_name:
+              item.course_name,
+
+            university_id:
+              item.university_id,
+
+            university_name:
+              item.university_name,
+
+            country:
+              item.country,
+
+            city:
+              item.city,
+
+            score:
+              item.score,
+
+            match_type:
+              item.match_type
+          }));
+
+      const payload = {
+        name,
+        phone,
+
+        email:
+          applicationForm.email.trim() ||
+          null,
+
+        state:
+          applicationForm.state.trim() ||
+          null,
+
+        preferred_contact:
+          applicationForm.preferred_contact,
+
+        stream:
+          form.stream,
+
+        preferred_countries:
+          form.preferred_countries,
+
+        budget_total:
+          form.budget_total
+            ? Number(
+                form.budget_total
+              )
+            : null,
+
+        budget_currency:
+          form.budget_currency,
+
+        intake:
+          null,
+
+        neet_status:
+          form.stream === 'MBBS'
+            ? form.neet_status || null
+            : null,
+
+        neet_score:
+          form.stream === 'MBBS' &&
+          form.neet_score !== ''
+            ? Number(
+                form.neet_score
+              )
+            : null,
+
+        pcb_percentage:
+          form.stream === 'MBBS' &&
+          form.pcb_percentage !== ''
+            ? Number(
+                form.pcb_percentage
+              )
+            : null,
+
+        desired_level:
+          form.stream === 'Management'
+            ? form.desired_level || null
+            : null,
+
+        academic_percentage:
+          form.stream === 'Management' &&
+          form.academic_percentage !== ''
+            ? Number(
+                form.academic_percentage
+              )
+            : null,
+
+        english_test:
+          null,
+
+        ielts_score:
+          form.stream === 'Management' &&
+          form.ielts_score !== ''
+            ? Number(
+                form.ielts_score
+              )
+            : null,
+
+        work_experience_years:
+          form.stream === 'Management' &&
+          form.work_experience_years !== ''
+            ? Number(
+                form.work_experience_years
+              )
+            : null,
+
+        selected_course_id:
+          applicationItem.course_id,
+
+        selected_course_name:
+          applicationItem.course_name,
+
+        selected_course_slug:
+          applicationItem.course_slug ||
+          null,
+
+        selected_university_id:
+          applicationItem.university_id,
+
+        selected_university_name:
+          applicationItem.university_name,
+
+        selected_country:
+          applicationItem.country,
+
+        selected_city:
+          applicationItem.city ||
+          null,
+
+        route_score:
+          applicationItem.score ??
+          null,
+
+        match_type:
+          applicationItem.match_type ||
+          null,
+
+        shortlisted_routes:
+          shortlistedRoutes
+      };
+
+      const response =
+        await fetch(
+          `${BACKEND_URL}/api/build-my-route/lead`,
+          {
+            method:
+              'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json'
+            },
+
+            body:
+              JSON.stringify(
+                payload
+              )
+          }
+        );
+
+      let data = null;
+
+      try {
+        data =
+          await response.json();
+      }
+      catch {
+        data = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data?.detail ===
+          'string'
+            ? data.detail
+            : `Application request failed (${response.status}).`
+        );
+      }
+
+      setApplicationSuccess(
+        data?.message ||
+        'Your application interest has been saved. Our admissions team can now follow up.'
+      );
+
+      setApplicationForm({
+        name: '',
+        phone: '',
+        email: '',
+        state: '',
+        preferred_contact: 'WhatsApp'
+      });
+    }
+    catch (err) {
+      setApplicationError(
+        err.message ||
+        'Could not save your application request.'
+      );
+    }
+    finally {
+      setSubmittingApplication(false);
+    }
+  };
 
   const topResult =
     renderedResults[0];
@@ -1624,6 +1913,11 @@ export default function BuildMyRoute() {
                       topResult
                     )
                   }
+                  onStartApplication={() =>
+                    openApplication(
+                      topResult
+                    )
+                  }
                 />
 
               </div>
@@ -1650,6 +1944,11 @@ export default function BuildMyRoute() {
                     }
                     onToggleCompare={() =>
                       toggleCompare(
+                        item
+                      )
+                    }
+                    onStartApplication={() =>
+                      openApplication(
                         item
                       )
                     }
@@ -1987,6 +2286,374 @@ export default function BuildMyRoute() {
           </div>
 
         </div>
+      )}
+
+
+      {/* APPLICATION MODAL */}
+      {applicationOpen &&
+       applicationItem && (
+
+        <div className="fixed inset-0 z-[80] bg-ink/70 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto">
+
+          <div className="max-w-2xl mx-auto rounded-3xl bg-cream overflow-hidden shadow-2xl">
+
+            <div className="bg-ink text-cream px-5 sm:px-7 py-5 flex items-start gap-4">
+
+              <div>
+
+                <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                  Start Application
+                </div>
+
+                <div className="serif text-2xl sm:text-3xl mt-1">
+                  {applicationItem.university_name}
+                </div>
+
+                <div className="text-[11px] text-cream/55 mt-1">
+                  {applicationItem.course_name}
+                  {' · '}
+                  {applicationItem.country}
+                  {' · '}
+                  {applicationItem.score}% route match
+                </div>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={closeApplication}
+                className="ml-auto h-10 w-10 rounded-full border border-cream/20 grid place-items-center hover:bg-cream hover:text-ink transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+            </div>
+
+            {applicationSuccess ? (
+
+              <div className="p-6 sm:p-8">
+
+                <div className="h-12 w-12 rounded-full bg-green-100 text-green-700 grid place-items-center">
+                  <Check className="h-5 w-5" />
+                </div>
+
+                <h3 className="serif text-3xl mt-5">
+                  Application interest saved.
+                </h3>
+
+                <p className="mt-3 text-[13px] leading-relaxed text-ink/60">
+                  {applicationSuccess}
+                </p>
+
+                <div className="mt-6 rounded-2xl bg-white border border-ink/10 p-4">
+
+                  <div className="text-[9px] mono uppercase tracking-widest text-ink/40">
+                    Selected route
+                  </div>
+
+                  <div className="font-semibold mt-1">
+                    {applicationItem.university_name}
+                  </div>
+
+                  <div className="text-[12px] text-ink/55 mt-1">
+                    {applicationItem.course_name}
+                    {' · '}
+                    {applicationItem.country}
+                  </div>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeApplication}
+                  className="mt-6 w-full rounded-full bg-ink text-cream px-5 py-3 text-[12px] font-bold"
+                >
+                  Done
+                </button>
+
+              </div>
+
+            ) : (
+
+              <form
+                onSubmit={submitApplication}
+                className="p-6 sm:p-8"
+              >
+
+                <p className="text-[13px] leading-relaxed text-ink/60">
+                  Your Build My Route profile is already attached. Just tell us how to reach you — you do not need to enter your academic details again.
+                </p>
+
+                <div className="mt-6 grid sm:grid-cols-2 gap-4">
+
+                  <label className="block">
+
+                    <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-2">
+                      Full name *
+                    </div>
+
+                    <input
+                      value={applicationForm.name}
+                      onChange={e =>
+                        setApplicationForm(
+                          old => ({
+                            ...old,
+                            name:
+                              e.target.value
+                          })
+                        )
+                      }
+                      autoComplete="name"
+                      className="w-full rounded-2xl border border-ink/15 bg-white px-4 py-3.5 outline-none focus:border-coral"
+                      placeholder="Your full name"
+                    />
+
+                  </label>
+
+                  <label className="block">
+
+                    <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-2">
+                      WhatsApp / mobile *
+                    </div>
+
+                    <input
+                      type="tel"
+                      value={applicationForm.phone}
+                      onChange={e =>
+                        setApplicationForm(
+                          old => ({
+                            ...old,
+                            phone:
+                              e.target.value
+                          })
+                        )
+                      }
+                      autoComplete="tel"
+                      className="w-full rounded-2xl border border-ink/15 bg-white px-4 py-3.5 outline-none focus:border-coral"
+                      placeholder="+91..."
+                    />
+
+                  </label>
+
+                  <label className="block">
+
+                    <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-2">
+                      Email
+                    </div>
+
+                    <input
+                      type="email"
+                      value={applicationForm.email}
+                      onChange={e =>
+                        setApplicationForm(
+                          old => ({
+                            ...old,
+                            email:
+                              e.target.value
+                          })
+                        )
+                      }
+                      autoComplete="email"
+                      className="w-full rounded-2xl border border-ink/15 bg-white px-4 py-3.5 outline-none focus:border-coral"
+                      placeholder="Optional"
+                    />
+
+                  </label>
+
+                  <label className="block">
+
+                    <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-2">
+                      State
+                    </div>
+
+                    <input
+                      value={applicationForm.state}
+                      onChange={e =>
+                        setApplicationForm(
+                          old => ({
+                            ...old,
+                            state:
+                              e.target.value
+                          })
+                        )
+                      }
+                      className="w-full rounded-2xl border border-ink/15 bg-white px-4 py-3.5 outline-none focus:border-coral"
+                      placeholder="Example: Kerala"
+                    />
+
+                  </label>
+
+                </div>
+
+                <div className="mt-5">
+
+                  <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-3">
+                    Preferred contact
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+
+                    {[
+                      'WhatsApp',
+                      'Call',
+                      'Email'
+                    ].map(
+                      method => (
+
+                        <button
+                          key={method}
+                          type="button"
+                          onClick={() =>
+                            setApplicationForm(
+                              old => ({
+                                ...old,
+                                preferred_contact:
+                                  method
+                              })
+                            )
+                          }
+                          className={`
+                            rounded-2xl border px-3 py-3 text-[11px] font-semibold transition
+                            ${
+                              applicationForm.preferred_contact ===
+                              method
+                                ? 'bg-ink text-cream border-ink'
+                                : 'bg-white text-ink border-ink/15'
+                            }
+                          `}
+                        >
+                          {method}
+                        </button>
+
+                      )
+                    )}
+
+                  </div>
+
+                </div>
+
+                <div className="mt-5 rounded-2xl bg-white border border-ink/10 p-4">
+
+                  <div className="text-[9px] mono uppercase tracking-widest text-coral">
+                    Attached automatically
+                  </div>
+
+                  <div className="mt-2 grid sm:grid-cols-2 gap-2 text-[11px] text-ink/60">
+
+                    <div>
+                      Track:
+                      {' '}
+                      <strong className="text-ink">
+                        {form.stream}
+                      </strong>
+                    </div>
+
+                    <div>
+                      Budget:
+                      {' '}
+                      <strong className="text-ink">
+                        {form.budget_total
+                          ? money(
+                              form.budget_total,
+                              form.budget_currency
+                            )
+                          : 'Flexible'}
+                      </strong>
+                    </div>
+
+                    {form.stream === 'MBBS' && (
+                      <>
+                        <div>
+                          PCB:
+                          {' '}
+                          <strong className="text-ink">
+                            {form.pcb_percentage}%
+                          </strong>
+                        </div>
+
+                        <div>
+                          NEET:
+                          {' '}
+                          <strong className="text-ink">
+                            {form.neet_status.replaceAll(
+                              '_',
+                              ' '
+                            )}
+                            {form.neet_score
+                              ? ` · ${form.neet_score}`
+                              : ''}
+                          </strong>
+                        </div>
+                      </>
+                    )}
+
+                    {compareItems.length > 0 && (
+                      <div className="sm:col-span-2">
+                        Compared shortlist:
+                        {' '}
+                        <strong className="text-ink">
+                          {compareItems.length}
+                          {' '}
+                          route
+                          {compareItems.length === 1 ? '' : 's'}
+                        </strong>
+                      </div>
+                    )}
+
+                  </div>
+
+                </div>
+
+                {applicationError && (
+                  <div className="mt-5 rounded-2xl bg-red-50 border border-red-200 text-red-700 p-4 text-[12px]">
+                    {applicationError}
+                  </div>
+                )}
+
+                <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+
+                  <button
+                    type="button"
+                    onClick={closeApplication}
+                    className="rounded-full border border-ink/15 bg-white px-5 py-3 text-[12px] font-semibold"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={submittingApplication}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-coral text-white px-6 py-3 text-[12px] font-bold disabled:opacity-50"
+                  >
+
+                    {submittingApplication ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Submit application interest
+                      </>
+                    )}
+
+                  </button>
+
+                </div>
+
+                <p className="mt-4 text-center text-[10px] leading-relaxed text-ink/40">
+                  Submitting this form sends your selected route and contact details to Route Your Career for admissions follow-up. It does not itself constitute a university application or guarantee admission.
+                </p>
+
+              </form>
+
+            )}
+
+          </div>
+
+        </div>
+
       )}
 
       <Footer />
