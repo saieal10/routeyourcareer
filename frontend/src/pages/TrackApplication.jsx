@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Check,
   Circle,
@@ -11,6 +11,7 @@ import {
 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useLocation } from 'react-router-dom';
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL ||
@@ -63,6 +64,8 @@ function stageLabel(value) {
 }
 
 export default function TrackApplication() {
+  const location = useLocation();
+
   const [applicationId, setApplicationId] =
     useState('');
 
@@ -75,14 +78,12 @@ export default function TrackApplication() {
   const [loading, setLoading] =
     useState(false);
 
-  const track = async e => {
-    e.preventDefault();
-
+  const fetchTracking = async rawId => {
     setError('');
     setData(null);
 
     const id =
-      applicationId
+      String(rawId || '')
         .trim()
         .toUpperCase();
 
@@ -123,9 +124,17 @@ export default function TrackApplication() {
 
       setData(body);
 
-      setApplicationId(
+      const resolvedId =
         body.application_id ||
-        id
+        id;
+
+      setApplicationId(
+        resolvedId
+      );
+
+      localStorage.setItem(
+        'ryc_application_id',
+        resolvedId
       );
     }
     catch (err) {
@@ -138,6 +147,53 @@ export default function TrackApplication() {
       setLoading(false);
     }
   };
+
+  const track = async e => {
+    e.preventDefault();
+    await fetchTracking(
+      applicationId
+    );
+  };
+
+  useEffect(() => {
+    const params =
+      new URLSearchParams(
+        location.search
+      );
+
+    const fromQuery =
+      params.get(
+        'application_id'
+      );
+
+    const fromStorage =
+      localStorage.getItem(
+        'ryc_application_id'
+      );
+
+    const savedId =
+      (
+        fromQuery ||
+        fromStorage ||
+        ''
+      )
+        .trim()
+        .toUpperCase();
+
+    if (!savedId) {
+      return;
+    }
+
+    setApplicationId(
+      savedId
+    );
+
+    fetchTracking(
+      savedId
+    );
+    // Run only when the tracking page/query changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   const timeline =
     Array.isArray(data?.timeline)
@@ -237,6 +293,12 @@ export default function TrackApplication() {
             {error && (
               <div className="mt-3 rounded-2xl bg-red-50 border border-red-200 p-3 text-[12px] text-red-700">
                 {error}
+              </div>
+            )}
+
+            {!error && applicationId && (
+              <div className="mt-3 text-[10px] text-ink/40">
+                Application ID loaded from this browser or the tracking link.
               </div>
             )}
 
