@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -419,7 +419,7 @@ function ResultCard({
             onClick={onStartApplication}
             className="inline-flex items-center justify-center rounded-full bg-ink text-cream px-4 py-2.5 text-[12px] font-semibold hover:bg-forest transition"
           >
-            Start application
+            Continue application
           </button>
 
         </div>
@@ -477,6 +477,108 @@ export default function BuildMyRoute() {
 
   const [submittingApplication, setSubmittingApplication] =
     useState(false);
+
+  const [applicationId, setApplicationId] =
+    useState('');
+
+  const [preApplicationContact, setPreApplicationContact] =
+    useState(null);
+
+  const [sessionLoaded, setSessionLoaded] =
+    useState(false);
+
+
+  useEffect(() => {
+    try {
+      const storedId =
+        localStorage.getItem(
+          'ryc_application_id'
+        ) || '';
+
+      const rawContact =
+        localStorage.getItem(
+          'ryc_application_contact'
+        );
+
+      let contact = null;
+
+      if (rawContact) {
+        try {
+          contact =
+            JSON.parse(
+              rawContact
+            );
+        }
+        catch {
+          contact = null;
+        }
+      }
+
+      if (storedId) {
+        setApplicationId(
+          storedId
+        );
+      }
+
+      if (contact) {
+        setPreApplicationContact(
+          contact
+        );
+
+        setApplicationForm({
+          name:
+            contact.name || '',
+
+          phone:
+            contact.phone || '',
+
+          email:
+            contact.email || '',
+
+          state:
+            contact.state || '',
+
+          preferred_contact:
+            contact.preferred_contact ||
+            'WhatsApp'
+        });
+
+        if (
+          contact.stream === 'MBBS' ||
+          contact.stream === 'Management'
+        ) {
+          setForm(old => ({
+            ...old,
+
+            stream:
+              contact.stream,
+
+            budget_currency:
+              contact.stream === 'MBBS'
+                ? 'USD'
+                : 'EUR',
+
+            preferred_countries:
+              contact.preferred_country
+                ? [
+                    contact.preferred_country
+                  ]
+                : []
+          }));
+
+          // The study track was already selected on
+          // StartApplication.jsx, so continue directly
+          // with the academic profile.
+          setStep(2);
+        }
+      }
+    }
+    finally {
+      setSessionLoaded(
+        true
+      );
+    }
+  }, []);
 
   const countries = useMemo(() => {
     if (form.stream === 'MBBS') {
@@ -689,6 +791,161 @@ export default function BuildMyRoute() {
         );
       }
 
+      // If this student started from Start Application,
+      // attach the completed Build My Route profile to the
+      // SAME application instead of creating another lead.
+      if (applicationId) {
+        const shortlist =
+          Array.isArray(
+            data?.results
+          )
+            ? data.results
+                .slice(0, 3)
+                .map(item => ({
+                  course_id:
+                    item.course_id,
+
+                  course_name:
+                    item.course_name,
+
+                  university_id:
+                    item.university_id,
+
+                  university_name:
+                    item.university_name,
+
+                  country:
+                    item.country,
+
+                  city:
+                    item.city,
+
+                  score:
+                    item.score,
+
+                  match_type:
+                    item.match_type
+                }))
+            : [];
+
+        const routeProfileResponse =
+          await fetch(
+            `${BACKEND_URL}/api/applications/${encodeURIComponent(
+              applicationId
+            )}/route-profile`,
+            {
+              method:
+                'PATCH',
+
+              headers: {
+                'Content-Type':
+                  'application/json'
+              },
+
+              body:
+                JSON.stringify({
+                  stream:
+                    form.stream,
+
+                  preferred_countries:
+                    form.preferred_countries,
+
+                  budget_total:
+                    form.budget_total
+                      ? Number(
+                          form.budget_total
+                        )
+                      : null,
+
+                  budget_currency:
+                    form.budget_currency,
+
+                  intake:
+                    null,
+
+                  neet_status:
+                    form.stream === 'MBBS'
+                      ? form.neet_status || null
+                      : null,
+
+                  neet_score:
+                    form.stream === 'MBBS' &&
+                    form.neet_score !== ''
+                      ? Number(
+                          form.neet_score
+                        )
+                      : null,
+
+                  pcb_percentage:
+                    form.stream === 'MBBS' &&
+                    form.pcb_percentage !== ''
+                      ? Number(
+                          form.pcb_percentage
+                        )
+                      : null,
+
+                  desired_level:
+                    form.stream === 'Management'
+                      ? form.desired_level || null
+                      : null,
+
+                  academic_percentage:
+                    form.stream === 'Management' &&
+                    form.academic_percentage !== ''
+                      ? Number(
+                          form.academic_percentage
+                        )
+                      : null,
+
+                  english_test:
+                    null,
+
+                  ielts_score:
+                    form.stream === 'Management' &&
+                    form.ielts_score !== ''
+                      ? Number(
+                          form.ielts_score
+                        )
+                      : null,
+
+                  work_experience_years:
+                    form.stream === 'Management' &&
+                    form.work_experience_years !== ''
+                      ? Number(
+                          form.work_experience_years
+                        )
+                      : null,
+
+                  shortlisted_routes:
+                    shortlist
+                })
+            }
+          );
+
+        if (
+          !routeProfileResponse.ok
+        ) {
+          let routeProfileError =
+            null;
+
+          try {
+            routeProfileError =
+              await routeProfileResponse.json();
+          }
+          catch {
+            routeProfileError =
+              null;
+          }
+
+          throw new Error(
+            typeof routeProfileError?.detail ===
+            'string'
+              ? routeProfileError.detail
+              : 'Your route was built, but it could not be attached to the application session.'
+          );
+        }
+      }
+
       setResult(data);
       setSortMode('best');
       setCompareIds([]);
@@ -712,9 +969,31 @@ export default function BuildMyRoute() {
   };
 
   const restart = () => {
-    setForm(
-      INITIAL_FORM
-    );
+    if (
+      applicationId &&
+      preApplicationContact
+    ) {
+      setForm({
+        ...INITIAL_FORM,
+        stream:
+          preApplicationContact.stream || '',
+        budget_currency:
+          preApplicationContact.stream === 'Management'
+            ? 'EUR'
+            : 'USD',
+        preferred_countries:
+          preApplicationContact.preferred_country
+            ? [
+                preApplicationContact.preferred_country
+              ]
+            : []
+      });
+    }
+    else {
+      setForm(
+        INITIAL_FORM
+      );
+    }
 
     setResult(null);
     setError('');
@@ -725,7 +1004,12 @@ export default function BuildMyRoute() {
     setApplicationItem(null);
     setApplicationError('');
     setApplicationSuccess('');
-    setStep(1);
+    setStep(
+      applicationId &&
+      preApplicationContact?.stream
+        ? 2
+        : 1
+    );
 
     window.scrollTo({
       top: 0,
@@ -886,6 +1170,23 @@ export default function BuildMyRoute() {
     setApplicationItem(item);
     setApplicationError('');
     setApplicationSuccess('');
+
+    if (preApplicationContact) {
+      setApplicationForm({
+        name:
+          preApplicationContact.name || '',
+        phone:
+          preApplicationContact.phone || '',
+        email:
+          preApplicationContact.email || '',
+        state:
+          preApplicationContact.state || '',
+        preferred_contact:
+          preApplicationContact.preferred_contact ||
+          'WhatsApp'
+      });
+    }
+
     setApplicationOpen(true);
   };
 
@@ -960,6 +1261,10 @@ export default function BuildMyRoute() {
           }));
 
       const payload = {
+        application_id:
+          applicationId ||
+          null,
+
         name,
         phone,
 
@@ -1124,13 +1429,49 @@ export default function BuildMyRoute() {
         'Your application interest has been saved. Our admissions team can now follow up.'
       );
 
-      setApplicationForm({
-        name: '',
-        phone: '',
-        email: '',
-        state: '',
-        preferred_contact: 'WhatsApp'
-      });
+      if (applicationId) {
+        localStorage.setItem(
+          'ryc_selected_route',
+          JSON.stringify({
+            application_id:
+              applicationId,
+
+            course_id:
+              applicationItem.course_id,
+
+            course_name:
+              applicationItem.course_name,
+
+            university_id:
+              applicationItem.university_id,
+
+            university_name:
+              applicationItem.university_name,
+
+            country:
+              applicationItem.country,
+
+            city:
+              applicationItem.city,
+
+            score:
+              applicationItem.score,
+
+            match_type:
+              applicationItem.match_type
+          })
+        );
+      }
+
+      if (!applicationId) {
+        setApplicationForm({
+          name: '',
+          phone: '',
+          email: '',
+          state: '',
+          preferred_contact: 'WhatsApp'
+        });
+      }
     }
     catch (err) {
       setApplicationError(
@@ -1153,6 +1494,35 @@ export default function BuildMyRoute() {
     <div className="min-h-screen bg-cream text-ink">
 
       <Navbar />
+
+
+      {applicationId &&
+       sessionLoaded && (
+        <div className="border-b border-ink/10 bg-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-forest text-cream grid place-items-center">
+              <Check className="h-4 w-4" />
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-[10px] mono uppercase tracking-widest text-forest">
+                Application in progress
+              </div>
+
+              <div className="text-[12px] font-semibold text-ink truncate">
+                {preApplicationContact?.name
+                  ? `${preApplicationContact.name} · `
+                  : ''}
+                {applicationId}
+              </div>
+            </div>
+
+            <div className="ml-auto text-[10px] text-ink/45">
+              Your route will be attached to this application.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* HERO */}
       {step < 5 && (
@@ -2381,9 +2751,13 @@ export default function BuildMyRoute() {
               >
 
                 <p className="text-[13px] leading-relaxed text-ink/60">
-                  Your Build My Route profile is already attached. Just tell us how to reach you — you do not need to enter your academic details again.
+                  {applicationId
+                    ? 'Your contact details and Build My Route profile are already attached to this application. Confirm the selected university below to continue the same application.'
+                    : 'Your Build My Route profile is ready. Tell us how to reach you and we will save this selected route as an application lead.'}
                 </p>
 
+                {!applicationId && (
+                  <>
                 <div className="mt-6 grid sm:grid-cols-2 gap-4">
 
                   <label className="block">
@@ -2485,6 +2859,11 @@ export default function BuildMyRoute() {
 
                 </div>
 
+                  </>
+                )}
+
+                {!applicationId && (
+                  <>
                 <div className="mt-5">
 
                   <div className="text-[10px] mono uppercase tracking-widest text-ink/45 mb-3">
@@ -2531,6 +2910,34 @@ export default function BuildMyRoute() {
                   </div>
 
                 </div>
+
+                  </>
+                )}
+
+                {applicationId && (
+                  <div className="mt-5 rounded-2xl bg-forest/5 border border-forest/20 p-4">
+
+                    <div className="text-[9px] mono uppercase tracking-widest text-forest">
+                      Existing RYC application
+                    </div>
+
+                    <div className="mt-2 text-[12px] font-semibold text-ink">
+                      {preApplicationContact?.name || 'Student'}
+                    </div>
+
+                    <div className="mt-1 text-[11px] text-ink/55">
+                      {applicationId}
+                      {preApplicationContact?.phone
+                        ? ` · ${preApplicationContact.phone}`
+                        : ''}
+                    </div>
+
+                    <div className="mt-3 text-[11px] text-ink/55 leading-relaxed">
+                      Selecting this university updates the same application record. No duplicate lead will be created.
+                    </div>
+
+                  </div>
+                )}
 
                 <div className="mt-5 rounded-2xl bg-white border border-ink/10 p-4">
 
@@ -2634,7 +3041,9 @@ export default function BuildMyRoute() {
                     ) : (
                       <>
                         <Sparkles className="h-4 w-4" />
-                        Submit application interest
+                        {applicationId
+                          ? 'Confirm selected university'
+                          : 'Submit application interest'}
                       </>
                     )}
 
