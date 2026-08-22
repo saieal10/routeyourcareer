@@ -44,6 +44,24 @@ const LEAD_TABS = [
   { k: 'newsletter', l: 'Newsletter' }
 ];
 
+
+const APPLICATION_STAGES = [
+  { key: 'started', label: 'Started' },
+  { key: 'route_built', label: 'Route Built' },
+  { key: 'university_selected', label: 'University Selected' },
+  { key: 'contacted', label: 'Contacted' },
+  { key: 'documents', label: 'Documents' },
+  { key: 'applied', label: 'Applied' },
+  { key: 'offer_received', label: 'Offer Received' },
+  { key: 'visa', label: 'Visa' },
+  { key: 'enrolled', label: 'Enrolled' }
+];
+
+function applicationStageLabel(value) {
+  const stage = APPLICATION_STAGES.find(x => x.key === value);
+  return stage?.label || value || 'Started';
+}
+
 const EMPTY_BLOG = {
   title: '',
   slug: '',
@@ -360,6 +378,15 @@ export default function AdminDashboard() {
   const [q, setQ] = useState('');
   const [loadingLeads, setLoadingLeads] = useState(false);
 
+  const [applications, setApplications] = useState([]);
+  const [loadingApplications, setLoadingApplications] = useState(false);
+  const [applicationSearch, setApplicationSearch] = useState('');
+  const [applicationStageFilter, setApplicationStageFilter] = useState('All');
+  const [applicationDetailOpen, setApplicationDetailOpen] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [applicationError, setApplicationError] = useState('');
+  const [updatingApplicationId, setUpdatingApplicationId] = useState('');
+
   const [newsletter, setNewsletter] = useState([]);
   const [loadingNewsletter, setLoadingNewsletter] = useState(false);
 
@@ -463,6 +490,24 @@ export default function AdminDashboard() {
     }
   }, [leadTab, user]);
 
+  const loadApplications = useCallback(async () => {
+    if (!user) return;
+
+    setLoadingApplications(true);
+    setApplicationError('');
+
+    try {
+      const data = await adminFetch('/api/admin/applications?limit=1000');
+      setApplications(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setApplicationError(
+        e.message || 'Could not load applications.'
+      );
+    } finally {
+      setLoadingApplications(false);
+    }
+  }, [user]);
+
   const loadNewsletter = useCallback(async () => {
     if (!user) return;
     setLoadingNewsletter(true);
@@ -523,11 +568,19 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!user) return;
+    loadApplications();
     loadNewsletter();
     loadBlogs();
     loadUniversities();
     loadCourses();
-  }, [user, loadNewsletter, loadBlogs, loadUniversities, loadCourses]);
+  }, [
+    user,
+    loadApplications,
+    loadNewsletter,
+    loadBlogs,
+    loadUniversities,
+    loadCourses
+  ]);
 
   const filteredLeads = useMemo(() => {
     if (!q.trim()) return leads;
@@ -546,6 +599,74 @@ export default function AdminDashboard() {
       )
     );
   }, [q, leads]);
+
+  const filteredApplications = useMemo(() => {
+    let rows = [...applications];
+
+    if (applicationStageFilter !== 'All') {
+      rows = rows.filter(
+        item =>
+          (item.stage || item.application_status || item.journey_stage) ===
+          applicationStageFilter
+      );
+    }
+
+    if (applicationSearch.trim()) {
+      const s = applicationSearch.toLowerCase().trim();
+
+      rows = rows.filter(item => {
+        const selectedRoute = item.selected_route || {};
+        const profile = item.route_profile || {};
+
+        return [
+          item.application_id,
+          item.name,
+          item.phone,
+          item.email,
+          item.state,
+          item.country,
+          item.stream,
+          item.source,
+          selectedRoute.university_name,
+          selectedRoute.course_name,
+          selectedRoute.country,
+          profile.neet_score,
+          profile.pcb_percentage
+        ].some(value =>
+          String(value || '').toLowerCase().includes(s)
+        );
+      });
+    }
+
+    return rows;
+  }, [
+    applications,
+    applicationStageFilter,
+    applicationSearch
+  ]);
+
+  const applicationSummary = useMemo(() => {
+    const counts = Object.fromEntries(
+      APPLICATION_STAGES.map(stage => [stage.key, 0])
+    );
+
+    applications.forEach(item => {
+      const stage =
+        item.stage ||
+        item.application_status ||
+        item.journey_stage ||
+        'started';
+
+      if (Object.prototype.hasOwnProperty.call(counts, stage)) {
+        counts[stage] += 1;
+      }
+    });
+
+    return {
+      total: applications.length,
+      ...counts
+    };
+  }, [applications]);
 
   const universityCountries = useMemo(() => {
     return [
@@ -768,6 +889,85 @@ export default function AdminDashboard() {
     courseVerificationFilter,
     courseSearch
   ]);
+
+  const openApplicationDetail = async item => {
+    setApplicationError('');
+
+    try {
+      const detail = await adminFetch(
+        `/api/admin/applications/${encodeURIComponent(
+          item.application_id
+        )}`
+      );
+
+      setSelectedApplication(detail || item);
+      setApplicationDetailOpen(true);
+    } catch (e) {
+      setApplicationError(
+        e.message || 'Could not load application details.'
+      );
+    }
+  };
+
+  const updateApplicationStage = async (
+    applicationId,
+    stage
+  ) => {
+    if (!applicationId || !stage) return;
+
+    setUpdatingApplicationId(applicationId);
+    setApplicationError('');
+
+    try {
+      const data = await adminFetch(
+        `/api/admin/applications/${encodeURIComponent(
+          applicationId
+        )}/stage`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            stage
+          })
+        }
+      );
+
+      const updated =
+        data?.application || null;
+
+      setApplications(old =>
+        old.map(item =>
+          item.application_id === applicationId
+            ? {
+                ...item,
+                ...(updated || {}),
+                stage,
+                application_status: stage,
+                journey_stage: stage
+              }
+            : item
+        )
+      );
+
+      if (
+        selectedApplication?.application_id ===
+        applicationId
+      ) {
+        setSelectedApplication(old => ({
+          ...old,
+          ...(updated || {}),
+          stage,
+          application_status: stage,
+          journey_stage: stage
+        }));
+      }
+    } catch (e) {
+      setApplicationError(
+        e.message || 'Could not update application stage.'
+      );
+    } finally {
+      setUpdatingApplicationId('');
+    }
+  };
 
   const signOut = async () => {
     try {
@@ -1344,6 +1544,7 @@ export default function AdminDashboard() {
 
   const refreshAll = () => {
     loadLeads();
+    loadApplications();
     loadNewsletter();
     loadBlogs();
     loadUniversities();
@@ -1383,6 +1584,7 @@ export default function AdminDashboard() {
 
   const navItems = [
     ['dashboard', 'Dashboard', LayoutDashboard],
+    ['applications', 'Applications', CheckCircle2],
     ['leads', 'Leads', Users],
     ['newsletter', 'Newsletter', Mail],
     ['blogs', 'Blogs', BookOpen],
@@ -1476,14 +1678,14 @@ export default function AdminDashboard() {
 
             <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
+                ['Applications', applicationSummary.total],
+                ['University selected', applicationSummary.university_selected],
+                ['Applied', applicationSummary.applied],
+                ['Enrolled', applicationSummary.enrolled],
                 ['Universities', universitySummary.total],
-                ['Medical', universitySummary.medical],
-                ['Management', universitySummary.management],
                 ['Courses', courseSummary.total],
-                ['Published courses', courseSummary.published],
                 ['Verified courses', courseSummary.verified],
-                ['Need verification', courseSummary.needsVerification],
-                ['Missing tuition', courseSummary.missingFees]
+                ['Need verification', courseSummary.needsVerification]
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -1509,6 +1711,274 @@ export default function AdminDashboard() {
                 intakes and matching. This prevents duplicating one university dozens
                 of times when it offers many programmes.
               </p>
+            </div>
+          </>
+        )}
+
+        {/* APPLICATIONS CRM */}
+        {section === 'applications' && (
+          <>
+            <div className="flex flex-wrap justify-between items-end gap-4">
+              <div>
+                <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                  Admissions CRM
+                </div>
+
+                <h1 className="serif text-4xl sm:text-5xl mt-1">
+                  Applications.
+                </h1>
+
+                <p className="mt-2 text-[13px] text-ink/60 max-w-3xl">
+                  Follow each student from first contact through route building,
+                  university selection, application, visa and enrolment.
+                </p>
+              </div>
+
+              <button
+                onClick={loadApplications}
+                className="rounded-full bg-ink text-cream px-4 py-2.5 text-[12px] flex gap-2 items-center"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </button>
+            </div>
+
+            {/* PIPELINE COUNTERS */}
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+              {APPLICATION_STAGES.map(stage => (
+                <button
+                  key={stage.key}
+                  onClick={() =>
+                    setApplicationStageFilter(
+                      applicationStageFilter === stage.key
+                        ? 'All'
+                        : stage.key
+                    )
+                  }
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    applicationStageFilter === stage.key
+                      ? 'bg-ink text-cream border-ink'
+                      : 'bg-white border-ink/10 hover:border-ink/25'
+                  }`}
+                >
+                  <div
+                    className={`text-[9px] mono uppercase tracking-widest ${
+                      applicationStageFilter === stage.key
+                        ? 'text-cream/50'
+                        : 'text-ink/40'
+                    }`}
+                  >
+                    {stage.label}
+                  </div>
+
+                  <div className="serif text-3xl mt-1">
+                    {applicationSummary[stage.key] || 0}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-5 grid lg:grid-cols-[1fr_240px] gap-3">
+              <div className="relative">
+                <Search className="absolute left-4 top-3.5 h-4 w-4 text-ink/35" />
+
+                <input
+                  value={applicationSearch}
+                  onChange={e =>
+                    setApplicationSearch(e.target.value)
+                  }
+                  placeholder="Search application ID, student, phone, university..."
+                  className={`${inputClass} pl-11`}
+                />
+              </div>
+
+              <select
+                value={applicationStageFilter}
+                onChange={e =>
+                  setApplicationStageFilter(e.target.value)
+                }
+                className={inputClass}
+              >
+                <option value="All">
+                  All stages
+                </option>
+
+                {APPLICATION_STAGES.map(stage => (
+                  <option
+                    key={stage.key}
+                    value={stage.key}
+                  >
+                    {stage.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {applicationError && (
+              <div className="mt-4 rounded-xl bg-red-50 border border-red-100 text-red-700 p-3 text-[12px]">
+                {applicationError}
+              </div>
+            )}
+
+            <div className="mt-5 space-y-3">
+              {loadingApplications && (
+                <div className="rounded-3xl bg-white border border-ink/10 p-8 text-center text-ink/50">
+                  Loading applications…
+                </div>
+              )}
+
+              {!loadingApplications &&
+               filteredApplications.length === 0 && (
+                <div className="rounded-3xl bg-white border border-ink/10 p-8 text-center text-ink/50">
+                  No applications found.
+                </div>
+              )}
+
+              {filteredApplications.map(item => {
+                const route = item.selected_route || {};
+                const profile = item.route_profile || {};
+                const stage =
+                  item.stage ||
+                  item.application_status ||
+                  item.journey_stage ||
+                  'started';
+
+                return (
+                  <div
+                    key={item.application_id || item.id}
+                    className="rounded-3xl bg-white border border-ink/10 p-5"
+                  >
+                    <div className="flex flex-wrap gap-4 items-start">
+                      <div className="flex-1 min-w-[240px]">
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                            {item.application_id || 'Application'}
+                          </div>
+
+                          <span className="rounded-full bg-cream border border-ink/10 px-2.5 py-1 text-[9px] font-semibold">
+                            {item.stream || profile.stream || '—'}
+                          </span>
+                        </div>
+
+                        <div className="serif text-2xl mt-2">
+                          {item.name || 'Unnamed student'}
+                        </div>
+
+                        <div className="text-[11px] text-ink/50 mt-1">
+                          {item.phone || 'No phone'}
+                          {item.email ? ` · ${item.email}` : ''}
+                          {item.state ? ` · ${item.state}` : ''}
+                        </div>
+                      </div>
+
+                      <div className="min-w-[210px]">
+                        <div className="text-[9px] mono uppercase tracking-widest text-ink/35">
+                          Selected route
+                        </div>
+
+                        <div className="text-[12px] font-semibold mt-1">
+                          {route.university_name || 'Not selected yet'}
+                        </div>
+
+                        <div className="text-[10px] text-ink/45 mt-1">
+                          {route.course_name || ''}
+                          {route.country
+                            ? `${route.course_name ? ' · ' : ''}${route.country}`
+                            : ''}
+                        </div>
+
+                        {route.route_score != null && (
+                          <div className="text-[10px] text-forest font-semibold mt-1">
+                            Route score: {route.route_score}/100
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-[180px]">
+                        <div className="text-[9px] mono uppercase tracking-widest text-ink/35 mb-1">
+                          Pipeline stage
+                        </div>
+
+                        <select
+                          value={stage}
+                          disabled={
+                            updatingApplicationId === item.application_id
+                          }
+                          onChange={e =>
+                            updateApplicationStage(
+                              item.application_id,
+                              e.target.value
+                            )
+                          }
+                          className="w-full rounded-xl border border-ink/15 bg-cream px-3 py-2 text-[11px] font-semibold outline-none focus:border-coral"
+                        >
+                          {APPLICATION_STAGES.map(option => (
+                            <option
+                              key={option.key}
+                              value={option.key}
+                            >
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="text-[10px] text-ink/40 min-w-[120px]">
+                        <div className="text-[9px] mono uppercase tracking-widest text-ink/35">
+                          Updated
+                        </div>
+
+                        <div className="mt-1">
+                          {fmt(item.updated_at || item.created_at)}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          openApplicationDetail(item)
+                        }
+                        className="inline-flex items-center gap-2 rounded-full border border-ink/15 px-4 py-2.5 text-[11px] font-semibold hover:bg-ink hover:text-cream transition"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </button>
+                    </div>
+
+                    {/* QUICK PROFILE STRIP */}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {profile.neet_score != null && (
+                        <span className="rounded-full bg-cream border border-ink/10 px-3 py-1 text-[9px]">
+                          NEET {profile.neet_score}
+                        </span>
+                      )}
+
+                      {profile.pcb_percentage != null && (
+                        <span className="rounded-full bg-cream border border-ink/10 px-3 py-1 text-[9px]">
+                          PCB {profile.pcb_percentage}%
+                        </span>
+                      )}
+
+                      {profile.budget_total != null && (
+                        <span className="rounded-full bg-cream border border-ink/10 px-3 py-1 text-[9px]">
+                          Budget {profile.budget_currency || 'USD'}{' '}
+                          {Number(profile.budget_total).toLocaleString()}
+                        </span>
+                      )}
+
+                      {Array.isArray(profile.preferred_countries) &&
+                       profile.preferred_countries.length > 0 && (
+                        <span className="rounded-full bg-cream border border-ink/10 px-3 py-1 text-[9px]">
+                          {profile.preferred_countries.join(', ')}
+                        </span>
+                      )}
+
+                      <span className="rounded-full bg-forest/10 text-forest px-3 py-1 text-[9px] font-semibold">
+                        {applicationStageLabel(stage)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
@@ -2290,6 +2760,241 @@ export default function AdminDashboard() {
           </>
         )}
       </main>
+
+      {/* APPLICATION DETAIL */}
+      {applicationDetailOpen && selectedApplication && (
+        <Modal
+          title={selectedApplication.name || 'Application'}
+          subtitle={selectedApplication.application_id}
+          onClose={() => {
+            setApplicationDetailOpen(false);
+            setSelectedApplication(null);
+          }}
+        >
+          {(() => {
+            const item = selectedApplication;
+            const route = item.selected_route || {};
+            const profile = item.route_profile || {};
+            const stage =
+              item.stage ||
+              item.application_status ||
+              item.journey_stage ||
+              'started';
+
+            return (
+              <>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    ['Application ID', item.application_id || '—'],
+                    ['Stage', applicationStageLabel(stage)],
+                    ['Track', item.stream || profile.stream || '—'],
+                    ['Created', fmt(item.created_at)]
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="rounded-2xl bg-white border border-ink/10 p-4"
+                    >
+                      <div className="text-[9px] mono uppercase tracking-widest text-ink/40">
+                        {label}
+                      </div>
+
+                      <div className="text-[12px] font-semibold mt-1 break-words">
+                        {value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-5 grid lg:grid-cols-2 gap-4">
+                  <div className="rounded-2xl bg-white border border-ink/10 p-5">
+                    <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                      Student
+                    </div>
+
+                    <div className="mt-4 space-y-3 text-[12px]">
+                      <div>
+                        <span className="text-ink/45">Name:</span>{' '}
+                        <strong>{item.name || '—'}</strong>
+                      </div>
+
+                      <div>
+                        <span className="text-ink/45">Phone:</span>{' '}
+                        <strong>{item.phone || '—'}</strong>
+                      </div>
+
+                      <div>
+                        <span className="text-ink/45">Email:</span>{' '}
+                        <strong>{item.email || '—'}</strong>
+                      </div>
+
+                      <div>
+                        <span className="text-ink/45">State:</span>{' '}
+                        <strong>{item.state || '—'}</strong>
+                      </div>
+
+                      <div>
+                        <span className="text-ink/45">Preferred contact:</span>{' '}
+                        <strong>{item.preferred_contact || '—'}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-white border border-ink/10 p-5">
+                    <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                      Selected route
+                    </div>
+
+                    <div className="serif text-2xl mt-4">
+                      {route.university_name || 'No university selected'}
+                    </div>
+
+                    <div className="text-[12px] text-ink/55 mt-1">
+                      {route.course_name || '—'}
+                      {route.country ? ` · ${route.country}` : ''}
+                      {route.city ? ` · ${route.city}` : ''}
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="rounded-xl bg-cream p-3">
+                        <div className="text-[9px] mono uppercase tracking-widest text-ink/35">
+                          Route score
+                        </div>
+                        <div className="font-semibold mt-1">
+                          {route.route_score != null
+                            ? `${route.route_score}/100`
+                            : '—'}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl bg-cream p-3">
+                        <div className="text-[9px] mono uppercase tracking-widest text-ink/35">
+                          Match
+                        </div>
+                        <div className="font-semibold mt-1">
+                          {route.match_type
+                            ? String(route.match_type).replaceAll('_', ' ')
+                            : '—'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-2xl bg-white border border-ink/10 p-5">
+                  <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                    Build My Route profile
+                  </div>
+
+                  <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {[
+                      ['Preferred countries',
+                        Array.isArray(profile.preferred_countries) &&
+                        profile.preferred_countries.length
+                          ? profile.preferred_countries.join(', ')
+                          : '—'],
+                      ['Budget',
+                        profile.budget_total != null
+                          ? `${profile.budget_currency || 'USD'} ${Number(
+                              profile.budget_total
+                            ).toLocaleString()}`
+                          : 'Flexible / not entered'],
+                      ['NEET status',
+                        profile.neet_status
+                          ? String(profile.neet_status).replaceAll('_', ' ')
+                          : '—'],
+                      ['NEET score', profile.neet_score ?? '—'],
+                      ['PCB %', profile.pcb_percentage ?? '—'],
+                      ['Desired level', profile.desired_level || '—'],
+                      ['Academic %', profile.academic_percentage ?? '—'],
+                      ['IELTS', profile.ielts_score ?? '—']
+                    ].map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="rounded-xl bg-cream border border-ink/5 p-3"
+                      >
+                        <div className="text-[9px] mono uppercase tracking-widest text-ink/35">
+                          {label}
+                        </div>
+                        <div className="text-[11px] font-semibold mt-1">
+                          {value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {Array.isArray(item.shortlisted_routes) &&
+                 item.shortlisted_routes.length > 0 && (
+                  <div className="mt-4 rounded-2xl bg-white border border-ink/10 p-5">
+                    <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                      Shortlisted routes
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                      {item.shortlisted_routes.map((short, index) => (
+                        <div
+                          key={`${short.course_id || index}-${index}`}
+                          className="rounded-xl bg-cream p-3 flex flex-wrap gap-3 items-center"
+                        >
+                          <div className="flex-1">
+                            <div className="text-[12px] font-semibold">
+                              {short.university_name || 'University'}
+                            </div>
+                            <div className="text-[10px] text-ink/45 mt-1">
+                              {short.course_name || 'Course'}
+                              {short.country ? ` · ${short.country}` : ''}
+                            </div>
+                          </div>
+
+                          {short.score != null && (
+                            <div className="text-[11px] font-semibold">
+                              {short.score}/100
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-5 rounded-2xl bg-ink text-cream p-5">
+                  <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                    Update admissions stage
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {APPLICATION_STAGES.map(option => (
+                      <button
+                        key={option.key}
+                        disabled={
+                          updatingApplicationId === item.application_id
+                        }
+                        onClick={() =>
+                          updateApplicationStage(
+                            item.application_id,
+                            option.key
+                          )
+                        }
+                        className={`rounded-full px-3 py-2 text-[10px] font-semibold transition ${
+                          stage === option.key
+                            ? 'bg-coral text-white'
+                            : 'bg-white/10 text-cream hover:bg-white/20'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 text-[10px] text-ink/40 leading-relaxed">
+                  Last updated: {fmt(item.updated_at || item.created_at)}
+                </div>
+              </>
+            );
+          })()}
+        </Modal>
+      )}
 
       {/* BLOG EDITOR */}
       {blogEditorOpen && (
