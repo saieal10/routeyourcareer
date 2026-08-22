@@ -403,6 +403,120 @@ export default function TrackApplication() {
                 </div>
 
 
+                {/* DOCUMENT PROGRESS */}
+                {data.document_progress &&
+                 Number(data.document_progress.total || 0) > 0 && (
+                  <div className="mt-8 rounded-3xl bg-white border border-ink/10 p-5 sm:p-6">
+
+                    <div className="flex flex-wrap items-end justify-between gap-4">
+
+                      <div>
+                        <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                          Document progress
+                        </div>
+
+                        <h3 className="serif text-2xl sm:text-3xl mt-1">
+                          Your document checklist.
+                        </h3>
+
+                        <p className="mt-2 text-[11px] text-ink/50 max-w-xl">
+                          This shows document progress only. Internal review notes and uploaded files are not displayed here.
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl bg-ink text-cream px-4 py-3 text-center">
+
+                        <div className="serif text-2xl leading-none">
+                          {Number(data.document_progress.submitted || 0)}
+                          /
+                          {Number(data.document_progress.total || 0)}
+                        </div>
+
+                        <div className="mt-1 text-[8px] mono uppercase tracking-widest text-cream/50">
+                          received or verified
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                    <div className="mt-5 h-2 rounded-full bg-ink/10 overflow-hidden">
+
+                      <div
+                        className="h-full bg-forest transition-all"
+                        style={{
+                          width:
+                            `${Math.min(
+                              100,
+                              Math.round(
+                                (
+                                  Number(
+                                    data.document_progress.submitted || 0
+                                  )
+                                  /
+                                  Math.max(
+                                    1,
+                                    Number(
+                                      data.document_progress.total || 0
+                                    )
+                                  )
+                                ) * 100
+                              )
+                            )}%`
+                        }}
+                      />
+
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+
+                      {[
+                        [
+                          'Pending',
+                          data.document_progress.pending || 0
+                        ],
+                        [
+                          'Received',
+                          data.document_progress.received || 0
+                        ],
+                        [
+                          'Verified',
+                          data.document_progress.verified || 0
+                        ],
+                        [
+                          'Rejected',
+                          data.document_progress.rejected || 0
+                        ]
+                      ].map(([label, value]) => (
+
+                        <div
+                          key={label}
+                          className="rounded-2xl bg-cream border border-ink/10 p-4"
+                        >
+
+                          <div className="text-[9px] mono uppercase tracking-widest text-ink/40">
+                            {label}
+                          </div>
+
+                          <div className="serif text-2xl mt-1">
+                            {value}
+                          </div>
+
+                        </div>
+
+                      ))}
+
+                    </div>
+
+                    {Number(data.document_progress.rejected || 0) > 0 && (
+                      <div className="mt-4 rounded-2xl bg-red-50 border border-red-200 p-4 text-[11px] text-red-700 leading-relaxed">
+                        One or more documents need attention. Please contact your Route Your Career counsellor for the exact correction required.
+                      </div>
+                    )}
+
+                  </div>
+                )}
+
                 {/* TIMELINE */}
                 <div className="mt-8">
 
