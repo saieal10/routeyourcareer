@@ -897,7 +897,7 @@ export default function AdminDashboard() {
       hostel_fee_year: optionalNumber(courseForm.hostel_fee_year),
       living_cost_year: optionalNumber(courseForm.living_cost_year),
       other_costs_total: optionalNumber(courseForm.other_costs_total),
-      total_course_cost: optionalNumber(courseForm.total_course_cost),
+      total_course_cost: calculatedTuitionTotal,
       intake: courseForm.intake.trim() || null,
       application_deadline:
         courseForm.application_deadline.trim() || null,
@@ -2349,18 +2349,13 @@ export default function AdminDashboard() {
 
               <Field
                 label="Total course tuition"
-                hint="You may enter an official total. If blank, the dashboard still shows an automatic tuition estimate from duration × annual tuition."
+                hint="Calculated automatically from duration × tuition/year. You do not need to maintain this field."
               >
                 <input
-                  type="number"
-                  value={courseForm.total_course_cost}
-                  onChange={e =>
-                    setCourseForm(old => ({
-                      ...old,
-                      total_course_cost: e.target.value
-                    }))
-                  }
-                  className={inputClass}
+                  type="text"
+                  value={formatMoney(calculatedTuitionTotal, courseForm.currency)}
+                  readOnly
+                  className={`${inputClass} bg-cream text-ink/60 cursor-not-allowed`}
                 />
               </Field>
 
