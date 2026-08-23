@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { georgiaData } from '../data/georgia';
@@ -21,11 +21,179 @@ import AnnouncementBar from '../components/AnnouncementBar';
 import Footer from '../components/Footer';
 import AiChatWidget from '../components/AiChatWidget';
 
+const BACKEND_URL =
+  process.env.REACT_APP_BACKEND_URL ||
+  'https://routeyourcareer.onrender.com';
+
 
 export default function CountryGeorgia() {
 
   const d = georgiaData;
   const nav = useNavigate();
+
+  const [adminUniversities, setAdminUniversities] = useState([]);
+  const [adminCourses, setAdminCourses] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadGeorgiaUniversities() {
+      try {
+        const [universityResponse, courseResponse] = await Promise.all([
+          fetch(`${BACKEND_URL}/api/universities`),
+          fetch(`${BACKEND_URL}/api/courses`)
+        ]);
+
+        if (!universityResponse.ok || !courseResponse.ok) {
+          return;
+        }
+
+        const universityData = await universityResponse.json();
+        const courseData = await courseResponse.json();
+
+        const universities = Array.isArray(universityData)
+          ? universityData
+          : Array.isArray(universityData?.universities)
+          ? universityData.universities
+          : [];
+
+        const courses = Array.isArray(courseData)
+          ? courseData
+          : Array.isArray(courseData?.courses)
+          ? courseData.courses
+          : [];
+
+        if (cancelled) return;
+
+        setAdminUniversities(
+          universities.filter(item => {
+            const country = String(item.country || '')
+              .trim()
+              .toLowerCase();
+
+            const stream = String(item.stream || '')
+              .trim()
+              .toLowerCase();
+
+            const status = String(item.status || '')
+              .trim()
+              .toLowerCase();
+
+            return (
+              country === 'georgia' &&
+              stream === 'mbbs' &&
+              status === 'published'
+            );
+          })
+        );
+
+        setAdminCourses(
+          courses.filter(item => {
+            const country = String(item.country || '')
+              .trim()
+              .toLowerCase();
+
+            const stream = String(item.stream || '')
+              .trim()
+              .toLowerCase();
+
+            const status = String(item.status || '')
+              .trim()
+              .toLowerCase();
+
+            return (
+              country === 'georgia' &&
+              stream === 'mbbs' &&
+              status === 'published'
+            );
+          })
+        );
+      } catch {
+        // Keep the existing Georgia page working if the API is unavailable.
+      }
+    }
+
+    loadGeorgiaUniversities();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const universityCards = useMemo(() => {
+    const merged = d.universities.map(item => ({
+      ...item,
+      source: 'hardcoded'
+    }));
+
+    adminUniversities.forEach(university => {
+      const key = String(university.name || '')
+        .trim()
+        .toLowerCase();
+
+      const course =
+        adminCourses.find(
+          item => item.university_id === university.id
+        ) || null;
+
+      const existingIndex = merged.findIndex(
+        item =>
+          String(item.name || '')
+            .trim()
+            .toLowerCase() === key
+      );
+
+      const existing =
+        existingIndex >= 0
+          ? merged[existingIndex]
+          : null;
+
+      const adminCard = {
+        name: university.name,
+        city: university.city || existing?.city || 'Georgia',
+        img:
+          university.image_url ||
+          existing?.img ||
+          '/universities/georgia/default.jpg',
+        notes:
+          university.overview ||
+          existing?.notes ||
+          'Published Route Your Career university record.',
+        duration:
+          course?.duration ||
+          university.duration ||
+          existing?.duration ||
+          'Needs verification',
+        medium:
+          course?.medium ||
+          university.medium ||
+          existing?.medium ||
+          'Needs verification',
+        fee:
+          course?.tuition_fee_year != null
+            ? `${course.currency || university.currency || 'USD'} ${Number(
+                course.tuition_fee_year
+              ).toLocaleString()} / year`
+            : university.tuition_fee_year != null
+            ? `${university.currency || 'USD'} ${Number(
+                university.tuition_fee_year
+              ).toLocaleString()} / year`
+            : existing?.fee || 'Needs verification',
+        source: 'admin'
+      };
+
+      if (existingIndex >= 0) {
+        merged[existingIndex] = {
+          ...existing,
+          ...adminCard
+        };
+      } else {
+        merged.push(adminCard);
+      }
+    });
+
+    return merged;
+  }, [d.universities, adminUniversities, adminCourses]);
 
 
   return (
@@ -443,7 +611,7 @@ export default function CountryGeorgia() {
 
           <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
 
-            {d.universities.map((u, i) => (
+            {universityCards.map((u, i) => (
 
               <div
                 key={u.name}
@@ -459,6 +627,10 @@ export default function CountryGeorgia() {
                     alt={u.name}
                     loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    onError={event => {
+                      event.currentTarget.src =
+                        '/universities/georgia/default.jpg';
+                    }}
                   />
 
                 </div>
@@ -481,7 +653,7 @@ export default function CountryGeorgia() {
 
                       {String(i + 1).padStart(2, '0')}
                       {' / '}
-                      {String(d.universities.length).padStart(2, '0')}
+                      {String(universityCards.length).padStart(2, '0')}
 
                     </div>
 
