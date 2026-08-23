@@ -1162,13 +1162,6 @@ class Course(BaseModel):
 
 
 
-class CourseLinkRepairRequest(BaseModel):
-    university_name: str
-    course_name: str = "General Medicine"
-
-
-
-
 # =========================================================
 # BUILD MY ROUTE MODELS
 # =========================================================
@@ -2520,7 +2513,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.11-course-link-repair",
+        "7.12-auto-course-link-sync",
 
         "google_auth":
         True,
@@ -6704,235 +6697,6 @@ async def admin_run_russia_fee_migration(
 
 
 # =========================================================
-# ADMIN COURSE LINK REPAIR
-# =========================================================
-
-@api_router.post(
-    "/admin/course-maintenance/repair-link"
-)
-async def admin_repair_course_link(
-    payload: CourseLinkRepairRequest,
-    user: User = Depends(require_admin),
-):
-    """
-    Repair one existing course that is not visible under the correct
-    university/country in Admin.
-
-    Finds the university by name, then finds the most likely existing
-    course by:
-    1) current university_id
-    2) university-specific slug
-    3) university_name + course name
-    4) exact course name among orphan/stale records
-
-    It preserves tuition, duration, eligibility and all programme data.
-    Only link/snapshot fields and slug are repaired.
-    """
-
-    university_name = payload.university_name.strip()
-    course_name = payload.course_name.strip() or "General Medicine"
-
-    if not university_name:
-        raise HTTPException(
-            status_code=400,
-            detail="University name is required",
-        )
-
-    university = await db.universities.find_one(
-        {
-            "name": {
-                "$regex": f"^{re.escape(university_name)}$",
-                "$options": "i",
-            }
-        },
-        {
-            "_id": 0
-        },
-    )
-
-    if not university:
-        raise HTTPException(
-            status_code=404,
-            detail=f'University "{university_name}" not found',
-        )
-
-    university_id = university.get("id")
-    expected_slug = make_slug(
-        f"{university.get('name', '')}-{course_name}"
-    )
-
-    course = None
-    matched_by = None
-
-    # 1) Already linked to the university.
-    course = await db.courses.find_one(
-        {
-            "university_id": university_id,
-            "name": {
-                "$regex": f"^{re.escape(course_name)}$",
-                "$options": "i",
-            },
-        },
-        {
-            "_id": 0
-        },
-    )
-
-    if course:
-        matched_by = "university_id"
-
-    # 2) Expected university-specific slug.
-    if not course:
-        course = await db.courses.find_one(
-            {
-                "slug": expected_slug
-            },
-            {
-                "_id": 0
-            },
-        )
-
-        if course:
-            matched_by = "expected_slug"
-
-    # 3) Snapshot university name + course name.
-    if not course:
-        course = await db.courses.find_one(
-            {
-                "university_name": {
-                    "$regex": f"^{re.escape(university_name)}$",
-                    "$options": "i",
-                },
-                "name": {
-                    "$regex": f"^{re.escape(course_name)}$",
-                    "$options": "i",
-                },
-            },
-            {
-                "_id": 0
-            },
-        )
-
-        if course:
-            matched_by = "university_name"
-
-    # 4) Last resort: exact course name among stale/orphan records.
-    # Only use this if it resolves to exactly ONE plausible record.
-    if not course:
-        candidates = (
-            await db.courses
-            .find(
-                {
-                    "name": {
-                        "$regex": f"^{re.escape(course_name)}$",
-                        "$options": "i",
-                    },
-                    "$or": [
-                        {"university_id": {"$exists": False}},
-                        {"university_id": None},
-                        {"university_id": ""},
-                        {"university_name": {"$exists": False}},
-                        {"university_name": None},
-                        {"university_name": ""},
-                        {"country": {"$exists": False}},
-                        {"country": None},
-                        {"country": ""},
-                    ],
-                },
-                {
-                    "_id": 0
-                },
-            )
-            .to_list(50)
-        )
-
-        if len(candidates) == 1:
-            course = candidates[0]
-            matched_by = "single_orphan_candidate"
-
-    if not course:
-        raise HTTPException(
-            status_code=404,
-            detail=(
-                "Existing course could not be identified safely. "
-                "No data was changed."
-            ),
-        )
-
-    # Avoid creating a duplicate slug if another record already owns it.
-    slug_owner = await db.courses.find_one(
-        {
-            "slug": expected_slug,
-            "id": {
-                "$ne": course.get("id")
-            },
-        },
-        {
-            "_id": 0,
-            "id": 1,
-            "university_name": 1,
-            "name": 1,
-        },
-    )
-
-    if slug_owner:
-        raise HTTPException(
-            status_code=409,
-            detail=(
-                "Another course already owns the expected repaired slug. "
-                "No data was changed."
-            ),
-        )
-
-    now = datetime.now(timezone.utc)
-
-    patch = {
-        "university_id": university_id,
-        "university_name": university.get("name") or university_name,
-        "country": university.get("country") or "",
-        "city": university.get("city"),
-        "slug": expected_slug,
-        "updated_at": now,
-    }
-
-    await db.courses.update_one(
-        {
-            "id": course.get("id")
-        },
-        {
-            "$set": patch
-        },
-    )
-
-    repaired = await db.courses.find_one(
-        {
-            "id": course.get("id")
-        },
-        {
-            "_id": 0
-        },
-    )
-
-    return {
-        "ok": True,
-        "matched_by": matched_by,
-        "course_id": repaired.get("id"),
-        "course_name": repaired.get("name"),
-        "course_slug": repaired.get("slug"),
-        "university_id": repaired.get("university_id"),
-        "university_name": repaired.get("university_name"),
-        "country": repaired.get("country"),
-        "city": repaired.get("city"),
-        "tuition_fee_year": repaired.get("tuition_fee_year"),
-        "currency": repaired.get("currency"),
-        "status": repaired.get("status"),
-        "message": "Course link repaired successfully.",
-    }
-
-
-
-
-# =========================================================
 # ADMIN APPLICATIONS CRM
 # =========================================================
 
@@ -7936,6 +7700,168 @@ async def admin_delete_university(
 
 
 # =========================================================
+# COURSE ↔ UNIVERSITY AUTO-SYNC
+# =========================================================
+
+async def sync_all_course_university_links():
+    """
+    Safely repair course snapshot/link fields from the Universities master.
+
+    Matching order:
+    1. Valid existing university_id
+    2. Exact saved university_name
+    3. University slug prefix inside the course slug
+
+    Repairs only:
+    - university_id
+    - university_name
+    - country
+    - city
+
+    It does NOT touch tuition, duration, eligibility, intake,
+    verification, source URL, status, or other course data.
+
+    Safe to run repeatedly.
+    """
+
+    universities = (
+        await db.universities
+        .find(
+            {},
+            {
+                "_id": 0,
+                "id": 1,
+                "name": 1,
+                "slug": 1,
+                "country": 1,
+                "city": 1,
+            }
+        )
+        .to_list(10000)
+    )
+
+    courses = (
+        await db.courses
+        .find(
+            {},
+            {
+                "_id": 0
+            }
+        )
+        .to_list(10000)
+    )
+
+    by_id = {
+        str(u.get("id") or "").strip(): u
+        for u in universities
+        if str(u.get("id") or "").strip()
+    }
+
+    by_name = {
+        str(u.get("name") or "").strip().lower(): u
+        for u in universities
+        if str(u.get("name") or "").strip()
+    }
+
+    # Longest university slugs first prevents shorter names
+    # from accidentally matching a more specific university slug.
+    slug_universities = sorted(
+        [
+            u
+            for u in universities
+            if str(u.get("slug") or "").strip()
+        ],
+        key=lambda u: len(str(u.get("slug") or "")),
+        reverse=True,
+    )
+
+    now = datetime.now(timezone.utc)
+    repaired = 0
+    unresolved = 0
+
+    for course in courses:
+        university = None
+
+        current_id = str(
+            course.get("university_id") or ""
+        ).strip()
+
+        if current_id and current_id in by_id:
+            university = by_id[current_id]
+
+        if not university:
+            current_name = str(
+                course.get("university_name") or ""
+            ).strip().lower()
+
+            if current_name:
+                university = by_name.get(current_name)
+
+        if not university:
+            course_slug = str(
+                course.get("slug") or ""
+            ).strip().lower()
+
+            if course_slug:
+                for candidate in slug_universities:
+                    university_slug = str(
+                        candidate.get("slug") or ""
+                    ).strip().lower()
+
+                    if (
+                        course_slug == university_slug
+                        or course_slug.startswith(
+                            university_slug + "-"
+                        )
+                    ):
+                        university = candidate
+                        break
+
+        if not university:
+            unresolved += 1
+            continue
+
+        patch = {}
+
+        correct_id = university.get("id")
+        correct_name = university.get("name") or ""
+        correct_country = university.get("country") or ""
+        correct_city = university.get("city")
+
+        if course.get("university_id") != correct_id:
+            patch["university_id"] = correct_id
+
+        if course.get("university_name") != correct_name:
+            patch["university_name"] = correct_name
+
+        if course.get("country") != correct_country:
+            patch["country"] = correct_country
+
+        if course.get("city") != correct_city:
+            patch["city"] = correct_city
+
+        if patch:
+            patch["updated_at"] = now
+
+            await db.courses.update_one(
+                {
+                    "id": course.get("id")
+                },
+                {
+                    "$set": patch
+                },
+            )
+
+            repaired += 1
+
+    return {
+        "courses_checked": len(courses),
+        "courses_repaired": repaired,
+        "courses_unresolved": unresolved,
+    }
+
+
+# =========================================================
 # V2 ADMIN COURSES
 # =========================================================
 
@@ -7981,6 +7907,12 @@ async def admin_get_courses(
         require_admin
     ),
 ):
+
+    # Repair stale university/course links BEFORE applying filters.
+    # This means a newly added Armenia/Tajikistan university can
+    # immediately make its existing linked course visible under
+    # the correct country and university filters.
+    await sync_all_course_university_links()
 
     query = {}
 
@@ -8174,11 +8106,16 @@ async def admin_update_course(
         exclude_unset=True
     )
 
-    if "university_id" in updates:
+    linked_university_id = (
+        updates.get("university_id")
+        or current.get("university_id")
+    )
+
+    if linked_university_id:
 
         university = await db.universities.find_one(
             {
-                "id": updates["university_id"]
+                "id": linked_university_id
             },
             {
                 "_id": 0
@@ -8188,9 +8125,10 @@ async def admin_update_course(
         if not university:
             raise HTTPException(
                 status_code=404,
-                detail="University not found",
+                detail="Linked university not found",
             )
 
+        updates["university_id"] = university.get("id")
         updates["university_name"] = (
             university.get("name")
             or ""
@@ -8289,6 +8227,24 @@ async def admin_delete_course(
 
     return {
         "ok": True
+    }
+
+
+# =========================================================
+# ADMIN COURSE SYNC DIAGNOSTICS
+# =========================================================
+
+@api_router.post(
+    "/admin/maintenance/sync-course-links"
+)
+async def admin_sync_course_links(
+    user: User = Depends(require_admin),
+):
+    return {
+        "ok": True,
+        **(
+            await sync_all_course_university_links()
+        ),
     }
 
 
