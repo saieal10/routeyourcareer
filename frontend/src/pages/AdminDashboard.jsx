@@ -1543,7 +1543,12 @@ export default function AdminDashboard() {
       university_id: courseForm.university_id,
       stream: courseForm.stream,
       name: courseForm.name.trim(),
-      slug: slugify(courseForm.slug || courseForm.name),
+      // Leave slug empty for new courses unless you explicitly type one.
+      // The backend will then create a university-specific slug such as:
+      // progress-medical-university-general-medicine
+      slug: courseForm.slug.trim()
+        ? slugify(courseForm.slug)
+        : null,
       level: courseForm.level.trim() || null,
       duration: courseForm.duration.trim() || null,
       medium: courseForm.medium.trim() || null,
