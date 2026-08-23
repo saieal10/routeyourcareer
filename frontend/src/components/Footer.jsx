@@ -12,19 +12,20 @@ import {
 
 /*
 =========================================================
-FOOTER CONFIG
+COUNTRIES
 =========================================================
+Add/remove countries here.
 
-Keep footer marketing links controlled here.
-
-Adding/editing a university in Admin will NOT unexpectedly
-change this footer.
-
-When you want another country visible in the footer,
-simply add it to MBBS_COUNTRIES.
+IMPORTANT:
+Country links use:
+/countries/russia
+/countries/armenia
+/countries/tajikistan
+etc.
+=========================================================
 */
 
-const MBBS_COUNTRIES = [
+const countries = [
   'Georgia',
   'Russia',
   'Uzbekistan',
@@ -33,57 +34,28 @@ const MBBS_COUNTRIES = [
   'Kazakhstan',
   'Kyrgyzstan',
   'Moldova',
-  'Philippines',
-  'Egypt',
-  'Ireland',
-  'Nepal'
-];
-
-const EXPLORE_LINKS = [
-  {
-    label: 'All Countries',
-    href: '/#featured'
-  },
-  {
-    label: 'Build My Route',
-    href: '/build-my-route'
-  },
-  {
-    label: 'Course Finder',
-    href: '/quiz'
-  },
-  {
-    label: 'Track Application',
-    href: '/track-application'
-  },
-  {
-    label: 'Blog',
-    href: '/#blog'
-  }
+  'Philippines'
 ];
 
 
 /*
 =========================================================
-HELPER
+CREATE COUNTRY SLUG
+=========================================================
+Example:
+"Russia" -> "russia"
+"United Arab Emirates" -> "united-arab-emirates"
 =========================================================
 */
 
-function countrySlug(country) {
-  return country
+const countrySlug = (country) =>
+  country
     .toLowerCase()
     .trim()
     .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
 
-
-/*
-=========================================================
-FOOTER
-=========================================================
-*/
 
 export default function Footer() {
 
@@ -97,30 +69,18 @@ export default function Footer() {
         <div className="grid lg:grid-cols-12 gap-10">
 
 
-          {/* =================================================
+          {/* =====================================================
               BRAND + CONTACT
-          ================================================= */}
+          ===================================================== */}
 
           <div className="lg:col-span-5">
 
 
+            {/* LOGO */}
+
             <div className="flex items-center gap-3">
 
-              <div
-                className="
-                  h-10
-                  w-10
-                  rounded-full
-                  bg-cream
-                  text-ink
-                  grid
-                  place-items-center
-                  serif
-                  italic
-                  text-lg
-                  font-medium
-                "
-              >
+              <div className="h-10 w-10 rounded-full bg-cream text-ink grid place-items-center serif italic text-lg font-medium">
                 r
               </div>
 
@@ -131,15 +91,7 @@ export default function Footer() {
                   Route Your Career
                 </div>
 
-                <div
-                  className="
-                    text-[10px]
-                    mono
-                    uppercase
-                    tracking-[0.22em]
-                    text-coral
-                  "
-                >
+                <div className="text-[10px] mono uppercase tracking-[0.22em] text-coral">
                   Your pathway · MBBS Abroad
                 </div>
 
@@ -148,18 +100,14 @@ export default function Footer() {
             </div>
 
 
-            <p
-              className="
-                mt-6
-                text-[14px]
-                leading-relaxed
-                max-w-md
-                text-cream/60
-              "
-            >
-              Route Your Career helps students explore international
-              medical education, compare universities and understand
-              their pathway from counselling to application.
+            {/* DESCRIPTION */}
+
+            <p className="mt-6 text-[14px] leading-relaxed max-w-md text-cream/60">
+
+              Route Your Career helps students explore international medical
+              education, compare universities and understand their pathway
+              from counselling to application.
+
             </p>
 
 
@@ -168,15 +116,11 @@ export default function Footer() {
             <div className="mt-8 space-y-3 text-[13px]">
 
 
+              {/* PHONE */}
+
               <a
                 href={`tel:${brand.phone}`}
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  hover:text-coral
-                  transition-colors
-                "
+                className="flex items-center gap-3 hover:text-coral transition-colors"
               >
 
                 <Phone className="h-4 w-4 text-coral" />
@@ -186,15 +130,11 @@ export default function Footer() {
               </a>
 
 
+              {/* EMAIL */}
+
               <a
                 href={`mailto:${brand.email}`}
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  hover:text-coral
-                  transition-colors
-                "
+                className="flex items-center gap-3 hover:text-coral transition-colors"
               >
 
                 <Mail className="h-4 w-4 text-coral" />
@@ -204,9 +144,11 @@ export default function Footer() {
               </a>
 
 
-              <div className="flex items-start gap-3">
+              {/* LOCATION */}
 
-                <MapPin className="h-4 w-4 text-coral mt-[2px] shrink-0" />
+              <div className="flex items-center gap-3">
+
+                <MapPin className="h-4 w-4 text-coral" />
 
                 <span>
                   Serving students across India
@@ -218,31 +160,21 @@ export default function Footer() {
             </div>
 
 
-            {/* =================================================
+            {/* =====================================================
                 SOCIAL MEDIA
-            ================================================= */}
+            ===================================================== */}
 
             <div className="mt-6 flex items-center gap-2">
 
+
+              {/* FACEBOOK */}
 
               <a
                 href="https://www.facebook.com/share/1HFXZJteo1/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="
-                  h-10
-                  w-10
-                  rounded-full
-                  border
-                  border-cream/15
-                  grid
-                  place-items-center
-                  hover:bg-coral
-                  hover:border-coral
-                  hover:text-white
-                  transition-colors
-                "
+                className="h-10 w-10 rounded-full border border-cream/15 grid place-items-center hover:bg-coral hover:border-coral hover:text-white transition-colors"
               >
 
                 <Facebook className="h-4 w-4" />
@@ -250,24 +182,14 @@ export default function Footer() {
               </a>
 
 
+              {/* INSTAGRAM */}
+
               <a
                 href="https://www.instagram.com/route_your_career"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="
-                  h-10
-                  w-10
-                  rounded-full
-                  border
-                  border-cream/15
-                  grid
-                  place-items-center
-                  hover:bg-coral
-                  hover:border-coral
-                  hover:text-white
-                  transition-colors
-                "
+                className="h-10 w-10 rounded-full border border-cream/15 grid place-items-center hover:bg-coral hover:border-coral hover:text-white transition-colors"
               >
 
                 <Instagram className="h-4 w-4" />
@@ -275,24 +197,14 @@ export default function Footer() {
               </a>
 
 
+              {/* YOUTUBE */}
+
               <a
                 href="https://www.youtube.com/@route_your_career"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="YouTube"
-                className="
-                  h-10
-                  w-10
-                  rounded-full
-                  border
-                  border-cream/15
-                  grid
-                  place-items-center
-                  hover:bg-coral
-                  hover:border-coral
-                  hover:text-white
-                  transition-colors
-                "
+                className="h-10 w-10 rounded-full border border-cream/15 grid place-items-center hover:bg-coral hover:border-coral hover:text-white transition-colors"
               >
 
                 <Youtube className="h-4 w-4" />
@@ -306,71 +218,85 @@ export default function Footer() {
 
 
 
-          {/* =================================================
+          {/* =====================================================
               EXPLORE
-          ================================================= */}
+          ===================================================== */}
 
           <div className="lg:col-span-2">
 
 
-            <div
-              className="
-                text-cream
-                font-semibold
-                text-[12px]
-                mono
-                uppercase
-                tracking-widest
-              "
-            >
+            <div className="text-cream font-semibold text-[12px] mono uppercase tracking-widest">
               Explore
             </div>
 
 
             <ul className="mt-5 space-y-2.5 text-[13px]">
 
-              {EXPLORE_LINKS.map((item) => (
 
-                <li key={item.label}>
+              <li>
+                <a
+                  href="/#featured"
+                  className="hover:text-coral transition-colors"
+                >
+                  All Countries
+                </a>
+              </li>
 
-                  <a
-                    href={item.href}
-                    className="
-                      hover:text-coral
-                      transition-colors
-                    "
-                  >
-                    {item.label}
-                  </a>
 
-                </li>
+              <li>
+                <a
+                  href="/build-my-route"
+                  className="hover:text-coral transition-colors"
+                >
+                  Build My Route
+                </a>
+              </li>
 
-              ))}
+
+              <li>
+                <a
+                  href="/quiz"
+                  className="hover:text-coral transition-colors"
+                >
+                  Course Finder
+                </a>
+              </li>
+
+
+              <li>
+                <a
+                  href="/track-application"
+                  className="hover:text-coral transition-colors"
+                >
+                  Track Application
+                </a>
+              </li>
+
+
+              <li>
+                <a
+                  href="/#blog"
+                  className="hover:text-coral transition-colors"
+                >
+                  Blog
+                </a>
+              </li>
+
 
             </ul>
-
 
           </div>
 
 
 
-          {/* =================================================
-              MBBS COUNTRIES
-          ================================================= */}
+          {/* =====================================================
+              COUNTRIES
+          ===================================================== */}
 
           <div className="lg:col-span-2">
 
 
-            <div
-              className="
-                text-cream
-                font-semibold
-                text-[12px]
-                mono
-                uppercase
-                tracking-widest
-              "
-            >
+            <div className="text-cream font-semibold text-[12px] mono uppercase tracking-widest">
               Countries
             </div>
 
@@ -378,18 +304,17 @@ export default function Footer() {
             <ul className="mt-5 space-y-2.5 text-[13px]">
 
 
-              {MBBS_COUNTRIES.map((country) => (
+              {countries.map((country) => (
 
                 <li key={country}>
 
                   <a
-                    href={`/country/${countrySlug(country)}`}
-                    className="
-                      hover:text-coral
-                      transition-colors
-                    "
+                    href={`/countries/${countrySlug(country)}`}
+                    className="hover:text-coral transition-colors"
                   >
+
                     MBBS in {country}
+
                   </a>
 
                 </li>
@@ -399,64 +324,36 @@ export default function Footer() {
 
             </ul>
 
-
           </div>
 
 
 
-          {/* =================================================
+          {/* =====================================================
               CTA
-          ================================================= */}
+          ===================================================== */}
 
           <div className="lg:col-span-3">
 
 
-            <div
-              className="
-                text-cream
-                font-semibold
-                text-[12px]
-                mono
-                uppercase
-                tracking-widest
-              "
-            >
+            <div className="text-cream font-semibold text-[12px] mono uppercase tracking-widest">
+
               Ready to route your career?
+
             </div>
 
+
+            {/* APPLY */}
 
             <a
               href={brand.applyLink}
               target="_blank"
               rel="noreferrer"
-              className="
-                mt-5
-                group
-                inline-flex
-                items-center
-                gap-2
-                rounded-full
-                bg-coral
-                text-white
-                px-5
-                py-3
-                text-[13px]
-                font-bold
-                hover:bg-[#d94a26]
-                transition-colors
-              "
+              className="mt-5 group inline-flex items-center gap-2 rounded-full bg-coral text-white px-5 py-3 text-[13px] font-bold hover:bg-[#d94a26]"
             >
 
               Apply Online
 
-              <ArrowUpRight
-                className="
-                  h-4
-                  w-4
-                  transition-transform
-                  group-hover:rotate-45
-                "
-              />
+              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
 
             </a>
 
@@ -464,26 +361,13 @@ export default function Footer() {
             <br />
 
 
+            {/* CALLBACK */}
+
             <a
               href={brand.callbackLink}
               target="_blank"
               rel="noreferrer"
-              className="
-                mt-2
-                inline-flex
-                items-center
-                gap-2
-                rounded-full
-                border
-                border-cream/20
-                text-cream
-                px-5
-                py-3
-                text-[13px]
-                font-semibold
-                hover:bg-cream/5
-                transition-colors
-              "
+              className="mt-2 inline-flex items-center gap-2 rounded-full border border-cream/20 text-cream px-5 py-3 text-[13px] font-semibold hover:bg-cream/5"
             >
 
               Request Callback
@@ -491,17 +375,12 @@ export default function Footer() {
             </a>
 
 
-            <div
-              className="
-                mt-6
-                text-[11px]
-                mono
-                uppercase
-                tracking-widest
-                text-cream/50
-              "
-            >
+            {/* HOURS */}
+
+            <div className="mt-6 text-[11px] mono uppercase tracking-widest text-cream/50">
+
               {brand.hours}
+
             </div>
 
 
@@ -512,55 +391,46 @@ export default function Footer() {
 
 
 
-        {/* =================================================
+        {/* =====================================================
             BOTTOM
-        ================================================= */}
+        ===================================================== */}
 
-        <div
-          className="
-            mt-14
-            pt-6
-            border-t
-            border-cream/10
-            flex
-            flex-wrap
-            items-center
-            justify-between
-            gap-3
-            text-[12px]
-            text-cream/50
-          "
-        >
+        <div className="mt-14 pt-6 border-t border-cream/10 flex flex-wrap items-center justify-between gap-3 text-[12px] text-cream/50">
 
 
           <div>
-            © {new Date().getFullYear()} Route Your Career.
-            All rights reserved.
+
+            © {new Date().getFullYear()} Route Your Career. All rights reserved.
+
           </div>
 
 
           <div className="flex items-center gap-5">
 
+
             <a
-              href="#"
-              className="hover:text-coral"
+              href="/privacy"
+              className="hover:text-coral transition-colors"
             >
               Privacy
             </a>
 
+
             <a
-              href="#"
-              className="hover:text-coral"
+              href="/terms"
+              className="hover:text-coral transition-colors"
             >
               Terms
             </a>
 
+
             <a
-              href="#"
-              className="hover:text-coral"
+              href="/refund"
+              className="hover:text-coral transition-colors"
             >
               Refund
             </a>
+
 
           </div>
 
