@@ -2513,7 +2513,7 @@ async def root():
         "Route Your Career API is live",
 
         "version":
-        "7.9-dynamic-university-images",
+        "7.10-course-university-sync",
 
         "google_auth":
         True,
@@ -7731,6 +7731,148 @@ def derive_course_costs(doc: dict) -> dict:
     return out
 
 
+
+async def sync_course_university_snapshots(
+    course_docs: Optional[List[dict]] = None,
+):
+    """
+    Keep course snapshot fields aligned with the linked university master.
+
+    Repairs:
+    - university_name
+    - country
+    - city
+
+    This is safe to run repeatedly.
+    """
+
+    if course_docs is None:
+        course_docs = (
+            await db.courses
+            .find(
+                {},
+                {
+                    "_id": 0
+                }
+            )
+            .to_list(10000)
+        )
+
+    university_ids = {
+        str(doc.get("university_id") or "").strip()
+        for doc in course_docs
+        if str(doc.get("university_id") or "").strip()
+    }
+
+    if not university_ids:
+        return {
+            "courses": course_docs,
+            "updated": 0,
+            "orphaned": 0,
+        }
+
+    university_docs = (
+        await db.universities
+        .find(
+            {
+                "id": {
+                    "$in": list(university_ids)
+                }
+            },
+            {
+                "_id": 0,
+                "id": 1,
+                "name": 1,
+                "country": 1,
+                "city": 1,
+            }
+        )
+        .to_list(10000)
+    )
+
+    university_map = {
+        university.get("id"): university
+        for university in university_docs
+        if university.get("id")
+    }
+
+    now = datetime.now(timezone.utc)
+    updated = 0
+    orphaned = 0
+
+    for course in course_docs:
+        university_id = course.get("university_id")
+        university = university_map.get(university_id)
+
+        if not university:
+            orphaned += 1
+            continue
+
+        correct_name = university.get("name") or ""
+        correct_country = university.get("country") or ""
+        correct_city = university.get("city")
+
+        patch = {}
+
+        if course.get("university_name") != correct_name:
+            patch["university_name"] = correct_name
+            course["university_name"] = correct_name
+
+        if course.get("country") != correct_country:
+            patch["country"] = correct_country
+            course["country"] = correct_country
+
+        if course.get("city") != correct_city:
+            patch["city"] = correct_city
+            course["city"] = correct_city
+
+        if patch:
+            patch["updated_at"] = now
+            course["updated_at"] = now
+
+            await db.courses.update_one(
+                {
+                    "id": course.get("id")
+                },
+                {
+                    "$set": patch
+                },
+            )
+
+            updated += 1
+
+    return {
+        "courses": course_docs,
+        "updated": updated,
+        "orphaned": orphaned,
+    }
+
+
+@api_router.post(
+    "/admin/course-maintenance/sync-university-data"
+)
+async def admin_sync_course_university_data(
+    user: User = Depends(
+        require_admin
+    ),
+):
+    """
+    One-click repair for all course records.
+
+    It copies the current university name, country and city from
+    the Universities collection into every linked Course record.
+    """
+
+    result = await sync_course_university_snapshots()
+
+    return {
+        "ok": True,
+        "courses_checked": len(result["courses"]),
+        "courses_updated": result["updated"],
+        "orphaned_courses": result["orphaned"],
+    }
+
+
 @api_router.get(
     "/admin/courses",
     response_model=List[Course]
@@ -7810,6 +7952,12 @@ async def admin_get_courses(
         )
         .to_list(5000)
     )
+
+    sync_result = await sync_course_university_snapshots(
+        docs
+    )
+
+    docs = sync_result["courses"]
 
     return [
         Course(**doc)
@@ -7938,11 +8086,16 @@ async def admin_update_course(
         exclude_unset=True
     )
 
-    if "university_id" in updates:
+    linked_university_id = (
+        updates.get("university_id")
+        or current.get("university_id")
+    )
+
+    if linked_university_id:
 
         university = await db.universities.find_one(
             {
-                "id": updates["university_id"]
+                "id": linked_university_id
             },
             {
                 "_id": 0
@@ -7952,7 +8105,7 @@ async def admin_update_course(
         if not university:
             raise HTTPException(
                 status_code=404,
-                detail="University not found",
+                detail="Linked university not found",
             )
 
         updates["university_name"] = (
