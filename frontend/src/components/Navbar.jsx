@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+
 import {
   ChevronDown,
   Menu,
@@ -14,9 +15,23 @@ export default function Navbar() {
 
   const location = useLocation();
 
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [mbbsOpen, setMbbsOpen] = useState(false);
-  const [managementOpen, setManagementOpen] = useState(false);
+  const [
+    mobileOpen,
+    setMobileOpen
+  ] =
+    useState(false);
+
+  const [
+    mbbsOpen,
+    setMbbsOpen
+  ] =
+    useState(false);
+
+  const [
+    managementOpen,
+    setManagementOpen
+  ] =
+    useState(false);
 
 
   /*
@@ -26,39 +41,83 @@ export default function Navbar() {
   */
 
   const mbbsCountries = [
-    { name: 'Georgia', slug: 'georgia' },
-    { name: 'Russia', slug: 'russia' },
-    { name: 'Uzbekistan', slug: 'uzbekistan' },
-    { name: 'Armenia', slug: 'armenia' },
-    { name: 'Tajikistan', slug: 'tajikistan' },
-    { name: 'Kazakhstan', slug: 'kazakhstan' },
-    { name: 'Kyrgyzstan', slug: 'kyrgyzstan' },
-    { name: 'Moldova', slug: 'moldova' },
-    { name: 'Egypt', slug: 'egypt' },
-    { name: 'Ireland', slug: 'ireland' },
-    { name: 'Nepal', slug: 'nepal' }
+    {
+      name: 'Georgia',
+      slug: 'georgia'
+    },
+    {
+      name: 'Russia',
+      slug: 'russia'
+    },
+    {
+      name: 'Uzbekistan',
+      slug: 'uzbekistan'
+    },
+    {
+      name: 'Armenia',
+      slug: 'armenia'
+    },
+    {
+      name: 'Tajikistan',
+      slug: 'tajikistan'
+    },
+    {
+      name: 'Kazakhstan',
+      slug: 'kazakhstan'
+    },
+    {
+      name: 'Kyrgyzstan',
+      slug: 'kyrgyzstan'
+    },
+    {
+      name: 'Moldova',
+      slug: 'moldova'
+    },
+    {
+      name: 'Egypt',
+      slug: 'egypt'
+    },
+    {
+      name: 'Ireland',
+      slug: 'ireland'
+    },
+    {
+      name: 'Nepal',
+      slug: 'nepal'
+    }
   ];
 
 
   /*
   =========================================================
-  MANAGEMENT OPTIONS
+  MANAGEMENT LINKS
   =========================================================
   */
 
   const managementLinks = [
+
     {
       name: 'Management Abroad',
       path: '/management'
     },
+
+    {
+      name: 'Italy — Course Finder',
+      path: '/countries/italy/courses'
+    },
+
     {
       name: 'Undergraduate Management',
-      path: '/management?level=undergraduate'
+      path:
+        '/management?level=undergraduate'
     },
+
     {
       name: 'Postgraduate Management',
-      path: '/management?level=postgraduate'
+      path:
+        '/management?level=postgraduate'
     }
+
   ];
 
 
@@ -68,13 +127,27 @@ export default function Navbar() {
   =========================================================
   */
 
-  const isActive = (path) => {
+  const isActive = (
+    path
+  ) => {
 
-    if (path === '/') {
-      return location.pathname === '/';
+    if (
+      path === '/'
+    ) {
+
+      return (
+        location.pathname ===
+        '/'
+      );
+
     }
 
-    return location.pathname.startsWith(path);
+    return (
+      location.pathname.startsWith(
+        path
+      )
+    );
+
   };
 
 
@@ -85,24 +158,34 @@ export default function Navbar() {
   */
 
   const closeMobile = () => {
-    setMobileOpen(false);
-    setMbbsOpen(false);
-    setManagementOpen(false);
+
+    setMobileOpen(
+      false
+    );
+
+    setMbbsOpen(
+      false
+    );
+
+    setManagementOpen(
+      false
+    );
+
   };
 
 
   return (
-    <>
 
-      {/* ===================================================
-          MAIN NAVBAR
-      =================================================== */}
+    <>
 
       <header className="sticky top-0 z-50 bg-cream/95 backdrop-blur border-b border-ink/10">
 
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
+
           <div className="h-[78px] flex items-center justify-between gap-5">
+
 
 
             {/* =================================================
@@ -111,34 +194,52 @@ export default function Navbar() {
 
             <Link
               to="/"
-              onClick={closeMobile}
+              onClick={
+                closeMobile
+              }
               className="flex items-center gap-3 shrink-0"
             >
 
+
               <div className="relative">
 
+
                 <div className="h-11 w-11 rounded-full bg-ink text-cream grid place-items-center serif italic text-lg font-medium">
+
                   r
+
                 </div>
+
 
                 <div className="absolute -bottom-1 right-0 h-3.5 w-3.5 rounded-full bg-coral border-2 border-cream" />
 
+
               </div>
+
 
 
               <div>
 
+
                 <div className="serif text-[20px] sm:text-[22px] font-medium text-ink leading-none">
+
                   Route Your Career
+
                 </div>
 
+
                 <div className="mt-1 text-[9px] mono uppercase tracking-[0.24em] text-ink/45 whitespace-nowrap">
+
                   Your pathway · MBBS + Management
+
                 </div>
+
 
               </div>
 
+
             </Link>
+
 
 
             {/* =================================================
@@ -148,141 +249,220 @@ export default function Navbar() {
             <nav className="hidden xl:flex items-center gap-1 text-[13px]">
 
 
+
               {/* MBBS DROPDOWN */}
 
               <div
                 className="relative"
-                onMouseEnter={() => setMbbsOpen(true)}
-                onMouseLeave={() => setMbbsOpen(false)}
+                onMouseEnter={() =>
+                  setMbbsOpen(
+                    true
+                  )
+                }
+                onMouseLeave={() =>
+                  setMbbsOpen(
+                    false
+                  )
+                }
               >
+
 
                 <button
                   type="button"
                   className="flex items-center gap-1 rounded-full px-3 py-2 hover:bg-ink/5 transition"
                 >
+
                   MBBS
 
                   <ChevronDown className="h-3.5 w-3.5" />
+
                 </button>
+
 
 
                 {mbbsOpen && (
 
                   <div className="absolute left-0 top-full pt-2 w-[245px]">
 
+
                     <div className="rounded-2xl border border-ink/10 bg-white shadow-xl overflow-hidden">
 
+
                       <div className="px-4 pt-4 pb-2 text-[9px] mono uppercase tracking-widest text-coral">
+
                         Study MBBS Abroad
+
                       </div>
+
 
 
                       <div className="max-h-[430px] overflow-y-auto pb-2">
 
-                        {mbbsCountries.map((country) => (
 
-                          <Link
-                            key={country.slug}
-                            to={`/country/${country.slug}`}
-                            onClick={closeMobile}
-                            className="flex items-center justify-between px-4 py-2.5 hover:bg-cream transition"
-                          >
+                        {mbbsCountries.map(
+                          country => (
 
-                            <span>
-                              MBBS in {country.name}
-                            </span>
+                            <Link
+                              key={
+                                country.slug
+                              }
+                              to={
+                                `/country/${country.slug}`
+                              }
+                              onClick={
+                                closeMobile
+                              }
+                              className="flex items-center justify-between px-4 py-2.5 hover:bg-cream transition"
+                            >
 
-                            <ArrowUpRight className="h-3.5 w-3.5 text-ink/30" />
 
-                          </Link>
+                              <span>
 
-                        ))}
+                                MBBS in {country.name}
+
+                              </span>
+
+
+                              <ArrowUpRight className="h-3.5 w-3.5 text-ink/30" />
+
+
+                            </Link>
+
+                          )
+                        )}
+
 
                       </div>
 
 
-                      <div className="border-t border-ink/10 p-2">
-
-                        <Link
-                          to="/countries"
-                          onClick={closeMobile}
-                          className="block rounded-xl px-3 py-2.5 font-semibold hover:bg-cream"
-                        >
-                          View all countries
-                        </Link>
-
-                      </div>
 
                     </div>
+
 
                   </div>
 
                 )}
 
+
               </div>
 
 
-              {/* MANAGEMENT DROPDOWN */}
+
+              {/* =================================================
+                  MANAGEMENT DROPDOWN
+              ================================================= */}
 
               <div
                 className="relative"
-                onMouseEnter={() => setManagementOpen(true)}
-                onMouseLeave={() => setManagementOpen(false)}
+                onMouseEnter={() =>
+                  setManagementOpen(
+                    true
+                  )
+                }
+                onMouseLeave={() =>
+                  setManagementOpen(
+                    false
+                  )
+                }
               >
+
 
                 <button
                   type="button"
                   className="flex items-center gap-1 rounded-full px-3 py-2 hover:bg-ink/5 transition"
                 >
+
                   Management
 
                   <ChevronDown className="h-3.5 w-3.5" />
+
                 </button>
+
 
 
                 {managementOpen && (
 
-                  <div className="absolute left-0 top-full pt-2 w-[250px]">
+                  <div className="absolute left-0 top-full pt-2 w-[270px]">
+
 
                     <div className="rounded-2xl border border-ink/10 bg-white shadow-xl overflow-hidden p-2">
 
-                      {managementLinks.map((item) => (
 
-                        <Link
-                          key={item.name}
-                          to={item.path}
-                          onClick={closeMobile}
-                          className="block rounded-xl px-3 py-2.5 hover:bg-cream transition"
-                        >
-                          {item.name}
-                        </Link>
+                      {managementLinks.map(
+                        item => (
 
-                      ))}
+                          <Link
+                            key={
+                              item.name
+                            }
+                            to={
+                              item.path
+                            }
+                            onClick={
+                              closeMobile
+                            }
+                            className={`
+                              block
+                              rounded-xl
+                              px-3
+                              py-2.5
+                              transition
+
+                              ${
+                                item.name ===
+                                'Italy — Course Finder'
+                                  ? 'bg-coral/5 text-coral font-semibold hover:bg-coral/10'
+                                  : 'hover:bg-cream'
+                              }
+                            `}
+                          >
+
+                            {item.name}
+
+                          </Link>
+
+                        )
+                      )}
+
 
                     </div>
+
 
                   </div>
 
                 )}
 
+
               </div>
 
 
-              {/* CAREER GUIDE */}
+
+              {/* =================================================
+                  CAREER GUIDE
+              ================================================= */}
 
               <Link
                 to="/build-my-route"
                 className={`
-                  rounded-full px-3 py-2 transition
+                  rounded-full
+                  px-3
+                  py-2
+                  transition
+
                   ${
-                    isActive('/build-my-route')
+                    isActive(
+                      '/build-my-route'
+                    )
                       ? 'bg-ink text-cream'
                       : 'hover:bg-ink/5'
                   }
                 `}
               >
+
                 Career Guide
+
               </Link>
+
 
 
               {/* QUIZ */}
@@ -290,16 +470,25 @@ export default function Navbar() {
               <Link
                 to="/quiz"
                 className={`
-                  rounded-full px-3 py-2 transition
+                  rounded-full
+                  px-3
+                  py-2
+                  transition
+
                   ${
-                    isActive('/quiz')
+                    isActive(
+                      '/quiz'
+                    )
                       ? 'bg-ink text-cream'
                       : 'hover:bg-ink/5'
                   }
                 `}
               >
+
                 Quiz
+
               </Link>
+
 
 
               {/* CALCULATOR */}
@@ -307,16 +496,25 @@ export default function Navbar() {
               <Link
                 to="/calculator"
                 className={`
-                  rounded-full px-3 py-2 transition
+                  rounded-full
+                  px-3
+                  py-2
+                  transition
+
                   ${
-                    isActive('/calculator')
+                    isActive(
+                      '/calculator'
+                    )
                       ? 'bg-ink text-cream'
                       : 'hover:bg-ink/5'
                   }
                 `}
               >
+
                 Calculator
+
               </Link>
+
 
 
               {/* BLOG */}
@@ -324,16 +522,25 @@ export default function Navbar() {
               <Link
                 to="/blog"
                 className={`
-                  rounded-full px-3 py-2 transition
+                  rounded-full
+                  px-3
+                  py-2
+                  transition
+
                   ${
-                    isActive('/blog')
+                    isActive(
+                      '/blog'
+                    )
                       ? 'bg-ink text-cream'
                       : 'hover:bg-ink/5'
                   }
                 `}
               >
+
                 Blog
+
               </Link>
+
 
 
               {/* STATES */}
@@ -341,16 +548,25 @@ export default function Navbar() {
               <Link
                 to="/states"
                 className={`
-                  rounded-full px-3 py-2 transition
+                  rounded-full
+                  px-3
+                  py-2
+                  transition
+
                   ${
-                    isActive('/states')
+                    isActive(
+                      '/states'
+                    )
                       ? 'bg-ink text-cream'
                       : 'hover:bg-ink/5'
                   }
                 `}
               >
+
                 States
+
               </Link>
+
 
 
               {/* TRACK APPLICATION */}
@@ -358,18 +574,28 @@ export default function Navbar() {
               <Link
                 to="/track-application"
                 className={`
-                  rounded-full px-3 py-2 transition
+                  rounded-full
+                  px-3
+                  py-2
+                  transition
+
                   ${
-                    isActive('/track-application')
+                    isActive(
+                      '/track-application'
+                    )
                       ? 'bg-ink text-cream'
                       : 'hover:bg-ink/5'
                   }
                 `}
               >
+
                 Track Application
+
               </Link>
 
+
             </nav>
+
 
 
             {/* =================================================
@@ -378,48 +604,71 @@ export default function Navbar() {
 
             <div className="hidden xl:flex items-center gap-4 shrink-0">
 
+
               <a
-                href={`tel:${brand.phone}`}
+                href={
+                  `tel:${brand.phone}`
+                }
                 className="text-[13px] text-ink/70 hover:text-coral whitespace-nowrap"
               >
+
                 {brand.phoneDisplay}
+
               </a>
+
 
 
               <Link
                 to="/start-application"
                 className="inline-flex items-center gap-2 rounded-full bg-ink text-cream px-5 py-3 text-[12px] font-bold hover:bg-coral transition"
               >
+
                 Start Application
 
                 <ArrowUpRight className="h-4 w-4" />
+
               </Link>
+
 
             </div>
 
 
+
             {/* =================================================
-                MOBILE MENU BUTTON
+                MOBILE BUTTON
             ================================================= */}
 
             <button
               type="button"
-              onClick={() => setMobileOpen(!mobileOpen)}
+              onClick={() =>
+                setMobileOpen(
+                  !mobileOpen
+                )
+              }
               className="xl:hidden h-10 w-10 rounded-full border border-ink/15 grid place-items-center"
               aria-label="Menu"
             >
 
+
               {mobileOpen ? (
+
                 <X className="h-5 w-5" />
+
               ) : (
+
                 <Menu className="h-5 w-5" />
+
               )}
+
 
             </button>
 
+
           </div>
 
+
         </div>
+
 
 
         {/* ===================================================
@@ -430,196 +679,322 @@ export default function Navbar() {
 
           <div className="xl:hidden border-t border-ink/10 bg-cream">
 
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
 
 
-              {/* MOBILE CAREER GUIDE */}
+
+              {/* CAREER GUIDE */}
 
               <Link
                 to="/build-my-route"
-                onClick={closeMobile}
+                onClick={
+                  closeMobile
+                }
                 className="flex items-center justify-between rounded-2xl bg-ink text-cream px-4 py-4 font-semibold"
               >
+
                 Career Guide
 
                 <ArrowUpRight className="h-4 w-4" />
+
               </Link>
 
 
-              {/* MOBILE MBBS */}
+
+              {/* =================================================
+                  MBBS MOBILE
+              ================================================= */}
 
               <div className="mt-3 border border-ink/10 rounded-2xl bg-white overflow-hidden">
 
+
                 <button
                   type="button"
-                  onClick={() => setMbbsOpen(!mbbsOpen)}
+                  onClick={() =>
+                    setMbbsOpen(
+                      !mbbsOpen
+                    )
+                  }
                   className="w-full flex items-center justify-between px-4 py-4 font-semibold"
                 >
+
                   MBBS Abroad
+
 
                   <ChevronDown
                     className={`
-                      h-4 w-4 transition-transform
-                      ${mbbsOpen ? 'rotate-180' : ''}
+                      h-4
+                      w-4
+                      transition-transform
+
+                      ${
+                        mbbsOpen
+                          ? 'rotate-180'
+                          : ''
+                      }
                     `}
                   />
+
+
                 </button>
+
 
 
                 {mbbsOpen && (
 
                   <div className="border-t border-ink/10">
 
-                    {mbbsCountries.map((country) => (
 
-                      <Link
-                        key={country.slug}
-                        to={`/country/${country.slug}`}
-                        onClick={closeMobile}
-                        className="block px-4 py-3 text-[13px] border-b border-ink/5 last:border-0"
-                      >
-                        MBBS in {country.name}
-                      </Link>
+                    {mbbsCountries.map(
+                      country => (
 
-                    ))}
+                        <Link
+                          key={
+                            country.slug
+                          }
+                          to={
+                            `/country/${country.slug}`
+                          }
+                          onClick={
+                            closeMobile
+                          }
+                          className="block px-4 py-3 text-[13px] border-b border-ink/5 last:border-0"
+                        >
 
+                          MBBS in {country.name}
 
-                    <Link
-                      to="/countries"
-                      onClick={closeMobile}
-                      className="block px-4 py-3 text-[13px] font-semibold text-coral"
-                    >
-                      View all countries
-                    </Link>
+                        </Link>
+
+                      )
+                    )}
+
 
                   </div>
 
                 )}
 
+
               </div>
 
 
-              {/* MOBILE MANAGEMENT */}
+
+              {/* =================================================
+                  MANAGEMENT MOBILE
+              ================================================= */}
 
               <div className="mt-3 border border-ink/10 rounded-2xl bg-white overflow-hidden">
 
+
                 <button
                   type="button"
-                  onClick={() => setManagementOpen(!managementOpen)}
+                  onClick={() =>
+                    setManagementOpen(
+                      !managementOpen
+                    )
+                  }
                   className="w-full flex items-center justify-between px-4 py-4 font-semibold"
                 >
+
                   Management
+
 
                   <ChevronDown
                     className={`
-                      h-4 w-4 transition-transform
-                      ${managementOpen ? 'rotate-180' : ''}
+                      h-4
+                      w-4
+                      transition-transform
+
+                      ${
+                        managementOpen
+                          ? 'rotate-180'
+                          : ''
+                      }
                     `}
                   />
+
+
                 </button>
+
 
 
                 {managementOpen && (
 
                   <div className="border-t border-ink/10">
 
-                    {managementLinks.map((item) => (
 
-                      <Link
-                        key={item.name}
-                        to={item.path}
-                        onClick={closeMobile}
-                        className="block px-4 py-3 text-[13px] border-b border-ink/5 last:border-0"
-                      >
-                        {item.name}
-                      </Link>
+                    {managementLinks.map(
+                      item => (
 
-                    ))}
+                        <Link
+                          key={
+                            item.name
+                          }
+                          to={
+                            item.path
+                          }
+                          onClick={
+                            closeMobile
+                          }
+                          className={`
+                            block
+                            px-4
+                            py-3
+                            text-[13px]
+                            border-b
+                            border-ink/5
+                            last:border-0
+
+                            ${
+                              item.name ===
+                              'Italy — Course Finder'
+                                ? 'text-coral font-semibold'
+                                : ''
+                            }
+                          `}
+                        >
+
+                          {item.name}
+
+                        </Link>
+
+                      )
+                    )}
+
 
                   </div>
 
                 )}
 
+
               </div>
 
 
-              {/* OTHER MOBILE LINKS */}
+
+              {/* =================================================
+                  OTHER MOBILE LINKS
+              ================================================= */}
 
               <div className="mt-3 rounded-2xl border border-ink/10 bg-white overflow-hidden">
 
+
                 <Link
                   to="/quiz"
-                  onClick={closeMobile}
+                  onClick={
+                    closeMobile
+                  }
                   className="block px-4 py-3.5 border-b border-ink/5"
                 >
+
                   Quiz
+
                 </Link>
+
+
 
                 <Link
                   to="/calculator"
-                  onClick={closeMobile}
+                  onClick={
+                    closeMobile
+                  }
                   className="block px-4 py-3.5 border-b border-ink/5"
                 >
+
                   Calculator
+
                 </Link>
+
+
 
                 <Link
                   to="/blog"
-                  onClick={closeMobile}
+                  onClick={
+                    closeMobile
+                  }
                   className="block px-4 py-3.5 border-b border-ink/5"
                 >
+
                   Blog
+
                 </Link>
+
+
 
                 <Link
                   to="/states"
-                  onClick={closeMobile}
+                  onClick={
+                    closeMobile
+                  }
                   className="block px-4 py-3.5 border-b border-ink/5"
                 >
+
                   States
+
                 </Link>
+
+
 
                 <Link
                   to="/track-application"
-                  onClick={closeMobile}
+                  onClick={
+                    closeMobile
+                  }
                   className="block px-4 py-3.5"
                 >
+
                   Track Application
+
                 </Link>
 
+
               </div>
+
 
 
               {/* PHONE */}
 
               <a
-                href={`tel:${brand.phone}`}
+                href={
+                  `tel:${brand.phone}`
+                }
                 className="mt-5 block text-center text-[13px] font-semibold"
               >
+
                 {brand.phoneDisplay}
+
               </a>
+
 
 
               {/* START APPLICATION */}
 
               <Link
                 to="/start-application"
-                onClick={closeMobile}
+                onClick={
+                  closeMobile
+                }
                 className="mt-3 flex items-center justify-center gap-2 rounded-full bg-coral text-white px-5 py-3.5 text-[13px] font-bold"
               >
+
                 Start Application
 
                 <ArrowUpRight className="h-4 w-4" />
+
               </Link>
 
+
             </div>
+
 
           </div>
 
         )}
 
+
       </header>
 
     </>
+
   );
+
 }
