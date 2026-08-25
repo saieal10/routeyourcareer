@@ -47,11 +47,34 @@ export default function CountryDetail() {
     ...managementCountries
   ];
 
-  const c = allCountries.find(
-    (country) => country.code === code
-  );
+  const normalizedCode = String(code || '')
+    .trim()
+    .toLowerCase();
 
-  const d = countryDetails[code];
+  const c = allCountries.find((country) => {
+
+    const countryCode = String(country.code || '')
+      .trim()
+      .toLowerCase();
+
+    const countryNameSlug = String(country.name || '')
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, 'and')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    return (
+      countryCode === normalizedCode ||
+      countryNameSlug === normalizedCode
+    );
+
+  });
+
+  const d =
+    c
+      ? countryDetails[c.code]
+      : null;
 
   const isMbbs =
     c?.track === 'mbbs';
@@ -84,8 +107,15 @@ export default function CountryDetail() {
       );
 
 
+    const canonicalCountrySlug = String(c.name || c.code)
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, 'and')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
     const pageUrl =
-      `https://routeyourcareer.in/country/${c.code}`;
+      `https://routeyourcareer.in/country/${canonicalCountrySlug}`;
 
 
     document.title = pageTitle;
