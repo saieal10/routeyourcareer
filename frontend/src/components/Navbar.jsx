@@ -1,1030 +1,625 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
+  ChevronDown,
   Menu,
   X,
-  ArrowUpRight,
-  ChevronDown
+  ArrowUpRight
 } from 'lucide-react';
 
 import { brand } from '../mock';
 
 
-/* =========================================================
-   API
-========================================================= */
-
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  'https://routeyourcareer.onrender.com';
-
-
-/* =========================================================
-   FALLBACK COUNTRIES
-
-   These are shown if Render/API is temporarily unavailable.
-========================================================= */
-
-const fallbackMbbsCountries = [
-  'Georgia',
-  'Uzbekistan',
-  'Russia'
-];
-
-const fallbackManagementCountries = [
-  'Italy',
-  'Germany',
-  'United Kingdom',
-  'United States',
-  'Australia',
-  'Singapore',
-  'Spain',
-  'UAE'
-];
-
-
-/* =========================================================
-   NORMAL NAVIGATION
-========================================================= */
-
-const normalNav = [
-  {
-    label: 'Build My Route',
-    to: '/build-my-route'
-  },
-  {
-    label: 'Quiz',
-    to: '/quiz'
-  },
-  {
-    label: 'Calculator',
-    href: '/#calculator'
-  },
-  {
-    label: 'Blog',
-    href: '/#blog'
-  },
-  {
-    label: 'States',
-    href: '/#offices'
-  },
-  {
-    label: 'Track Application',
-    to: '/track-application'
-  }
-];
-
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function countrySlug(country) {
-  return String(country || '')
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-
-function makeCountryItems(countries) {
-  return countries.map(country => ({
-    label: country,
-    to: `/countries/${countrySlug(country)}`
-  }));
-}
-
-
-function uniqueCountries(universities, stream) {
-
-  const countries = universities
-    .filter(university => {
-
-      const universityStream =
-        String(university.stream || '')
-          .trim()
-          .toLowerCase();
-
-      const status =
-        String(university.status || '')
-          .trim()
-          .toLowerCase();
-
-      return (
-        universityStream === stream.toLowerCase() &&
-        status === 'published' &&
-        university.country
-      );
-
-    })
-    .map(university =>
-      String(university.country).trim()
-    );
-
-  return [...new Set(countries)]
-    .sort((a, b) =>
-      a.localeCompare(b)
-    );
-}
-
-
-/* =========================================================
-   DESKTOP DROPDOWN
-========================================================= */
-
-function DesktopDropdown({
-  label,
-  items,
-  footerLabel,
-  footerHref
-}) {
-
-  return (
-    <div className="relative group">
-
-      <button
-        type="button"
-        className="
-          px-3 py-2
-          inline-flex
-          items-center
-          gap-1
-          text-[13px]
-          font-medium
-          text-ink/70
-          hover:text-ink
-        "
-      >
-
-        {label}
-
-        <ChevronDown
-          className="
-            h-3.5 w-3.5
-            transition-transform
-            duration-200
-            group-hover:rotate-180
-          "
-        />
-
-      </button>
-
-
-      {/* Hover bridge */}
-      <div className="absolute left-0 top-full h-3 w-full" />
-
-
-      <div
-        className="
-          absolute
-          left-0
-          top-[calc(100%+8px)]
-          min-w-[230px]
-          max-h-[420px]
-          overflow-y-auto
-          rounded-2xl
-          bg-white
-          border
-          border-ink/10
-          shadow-xl
-          p-2
-          opacity-0
-          invisible
-          translate-y-1
-          group-hover:opacity-100
-          group-hover:visible
-          group-hover:translate-y-0
-          transition-all
-          duration-200
-          z-[100]
-        "
-      >
-
-        <div
-          className="
-            px-3
-            pt-2
-            pb-1
-            text-[9px]
-            mono
-            uppercase
-            tracking-[0.18em]
-            text-ink/35
-          "
-        >
-          Study destinations
-        </div>
-
-
-        {items.map(item => (
-
-          <Link
-            key={item.label}
-            to={item.to}
-            className="
-              flex
-              items-center
-              justify-between
-              rounded-xl
-              px-3
-              py-2.5
-              text-[12px]
-              font-medium
-              text-ink/70
-              hover:bg-cream
-              hover:text-ink
-              transition
-            "
-          >
-
-            {item.label}
-
-            <ArrowUpRight
-              className="h-3.5 w-3.5 text-ink/25"
-            />
-
-          </Link>
-
-        ))}
-
-
-        <div className="border-t border-ink/10 mt-2 pt-2">
-
-          <a
-            href={footerHref}
-            className="
-              flex
-              items-center
-              justify-between
-              rounded-xl
-              px-3
-              py-2.5
-              text-[11px]
-              font-semibold
-              text-coral
-              hover:bg-coral/5
-            "
-          >
-
-            {footerLabel}
-
-            <ArrowUpRight className="h-3.5 w-3.5" />
-
-          </a>
-
-        </div>
-
-      </div>
-
-    </div>
-  );
-}
-
-
-/* =========================================================
-   NAVBAR
-========================================================= */
-
 export default function Navbar() {
 
-  const [open, setOpen] =
-    useState(false);
+  const location = useLocation();
 
-  const [mobileMbbsOpen, setMobileMbbsOpen] =
-    useState(false);
-
-  const [
-    mobileManagementOpen,
-    setMobileManagementOpen
-  ] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mbbsOpen, setMbbsOpen] = useState(false);
+  const [managementOpen, setManagementOpen] = useState(false);
 
 
   /*
-   * Start with fallback countries.
-   *
-   * Once the API responds successfully,
-   * these are replaced by countries from MongoDB.
-   */
+  =========================================================
+  MBBS COUNTRIES
+  =========================================================
+  */
 
-  const [
-    mbbsCountries,
-    setMbbsCountries
-  ] = useState(
-    makeCountryItems(
-      fallbackMbbsCountries
-    )
-  );
-
-
-  const [
-    managementCountries,
-    setManagementCountries
-  ] = useState(
-    makeCountryItems(
-      fallbackManagementCountries
-    )
-  );
+  const mbbsCountries = [
+    { name: 'Georgia', slug: 'georgia' },
+    { name: 'Russia', slug: 'russia' },
+    { name: 'Uzbekistan', slug: 'uzbekistan' },
+    { name: 'Armenia', slug: 'armenia' },
+    { name: 'Tajikistan', slug: 'tajikistan' },
+    { name: 'Kazakhstan', slug: 'kazakhstan' },
+    { name: 'Kyrgyzstan', slug: 'kyrgyzstan' },
+    { name: 'Moldova', slug: 'moldova' },
+    { name: 'Egypt', slug: 'egypt' },
+    { name: 'Ireland', slug: 'ireland' },
+    { name: 'Nepal', slug: 'nepal' }
+  ];
 
 
-  /* =======================================================
-     LOAD COUNTRIES FROM ADMIN DATABASE
-  ======================================================= */
+  /*
+  =========================================================
+  MANAGEMENT OPTIONS
+  =========================================================
+  */
 
-  useEffect(() => {
-
-    let cancelled = false;
-
-
-    async function loadCountries() {
-
-      try {
-
-        const response = await fetch(
-          `${API_URL}/api/universities`
-        );
-
-
-        if (!response.ok) {
-          throw new Error(
-            `University API returned ${response.status}`
-          );
-        }
+  const managementLinks = [
+    {
+      name: 'Management Abroad',
+      path: '/management'
+    },
+    {
+      name: 'Undergraduate Management',
+      path: '/management?level=undergraduate'
+    },
+    {
+      name: 'Postgraduate Management',
+      path: '/management?level=postgraduate'
+    }
+  ];
 
 
-        const data =
-          await response.json();
+  /*
+  =========================================================
+  ACTIVE LINK
+  =========================================================
+  */
 
+  const isActive = (path) => {
 
-        /*
-         * Supports either:
-         *
-         * [...]
-         *
-         * OR
-         *
-         * {
-         *   universities: [...]
-         * }
-         */
-
-        const universities =
-          Array.isArray(data)
-            ? data
-            : Array.isArray(data?.universities)
-              ? data.universities
-              : [];
-
-
-        if (
-          cancelled ||
-          universities.length === 0
-        ) {
-          return;
-        }
-
-
-        const mbbs =
-          uniqueCountries(
-            universities,
-            'MBBS'
-          );
-
-
-        const management =
-          uniqueCountries(
-            universities,
-            'Management'
-          );
-
-
-        /*
-         * Only replace fallback lists if
-         * database actually returned countries.
-         */
-
-        if (mbbs.length > 0) {
-
-          setMbbsCountries(
-            makeCountryItems(mbbs)
-          );
-
-        }
-
-
-        if (management.length > 0) {
-
-          setManagementCountries(
-            makeCountryItems(management)
-          );
-
-        }
-
-      } catch (error) {
-
-        /*
-         * Keep fallback countries.
-         *
-         * Navbar must continue working even
-         * if Render is temporarily waking up.
-         */
-
-        console.warn(
-          'Navbar country loading failed:',
-          error
-        );
-
-      }
-
+    if (path === '/') {
+      return location.pathname === '/';
     }
 
-
-    loadCountries();
-
-
-    return () => {
-      cancelled = true;
-    };
-
-  }, []);
+    return location.pathname.startsWith(path);
+  };
 
 
-  /* =======================================================
-     CLOSE MOBILE MENU
-  ======================================================= */
+  /*
+  =========================================================
+  CLOSE MOBILE MENU
+  =========================================================
+  */
 
-  const closeMenu = () => {
-
-    setOpen(false);
-
-    setMobileMbbsOpen(false);
-
-    setMobileManagementOpen(false);
-
+  const closeMobile = () => {
+    setMobileOpen(false);
+    setMbbsOpen(false);
+    setManagementOpen(false);
   };
 
 
   return (
+    <>
 
-    <header
-      className="
-        sticky
-        top-0
-        z-50
-        bg-cream/90
-        backdrop-blur-md
-        border-b
-        border-ink/10
-      "
-    >
+      {/* ===================================================
+          MAIN NAVBAR
+      =================================================== */}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <header className="sticky top-0 z-50 bg-cream/95 backdrop-blur border-b border-ink/10">
 
-        <div className="flex items-center justify-between py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+
+          <div className="h-[78px] flex items-center justify-between gap-5">
 
 
-          {/* =================================================
-              LOGO
-          ================================================= */}
-
-          <Link
-            to="/"
-            className="flex items-center gap-3 shrink-0"
-            onClick={closeMenu}
-          >
-
-            <div className="relative">
-
-              <div
-                className="
-                  h-10
-                  w-10
-                  rounded-full
-                  bg-ink
-                  text-cream
-                  grid
-                  place-items-center
-                  serif
-                  italic
-                  text-lg
-                  font-medium
-                "
-              >
-                r
-              </div>
-
-              <div
-                className="
-                  absolute
-                  -bottom-1
-                  -right-1
-                  h-3
-                  w-3
-                  rounded-full
-                  bg-coral
-                  ring-2
-                  ring-cream
-                "
-              />
-
-            </div>
-
-
-            <div className="leading-tight">
-
-              <div
-                className="
-                  serif
-                  text-[19px]
-                  font-medium
-                  text-ink
-                  tracking-tight
-                "
-              >
-                Route Your Career
-              </div>
-
-              <div
-                className="
-                  text-[10px]
-                  mono
-                  uppercase
-                  tracking-[0.22em]
-                  text-ink/50
-                "
-              >
-                Your pathway · MBBS + Management
-              </div>
-
-            </div>
-
-          </Link>
-
-
-          {/* =================================================
-              DESKTOP NAV
-          ================================================= */}
-
-          <nav className="hidden lg:flex items-center gap-0">
-
-            <DesktopDropdown
-              label="MBBS"
-              items={mbbsCountries}
-              footerLabel="Explore MBBS Abroad"
-              footerHref="/#featured"
-            />
-
-
-            <DesktopDropdown
-              label="Management"
-              items={managementCountries}
-              footerLabel="Explore Management"
-              footerHref="/#management"
-            />
-
-
-            {normalNav.map(item => {
-
-              if (item.to) {
-
-                return (
-
-                  <Link
-                    key={item.label}
-                    to={item.to}
-                    className="
-                      px-3
-                      py-2
-                      text-[13px]
-                      font-medium
-                      text-ink/70
-                      hover:text-ink
-                      link-uline
-                      whitespace-nowrap
-                    "
-                  >
-                    {item.label}
-                  </Link>
-
-                );
-
-              }
-
-
-              return (
-
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className="
-                    px-3
-                    py-2
-                    text-[13px]
-                    font-medium
-                    text-ink/70
-                    hover:text-ink
-                    link-uline
-                    whitespace-nowrap
-                  "
-                >
-                  {item.label}
-                </a>
-
-              );
-
-            })}
-
-          </nav>
-
-
-          {/* =================================================
-              RIGHT SIDE
-          ================================================= */}
-
-          <div className="hidden md:flex items-center gap-3 shrink-0">
-
-            <a
-              href={`tel:${brand.phone}`}
-              className="
-                text-[13px]
-                font-medium
-                text-ink/70
-                hover:text-ink
-                hidden
-                2xl:inline
-              "
-            >
-              {brand.phoneDisplay}
-            </a>
-
+            {/* =================================================
+                LOGO
+            ================================================= */}
 
             <Link
-              to="/start-application"
-              className="
-                group
-                inline-flex
-                items-center
-                gap-1.5
-                rounded-full
-                bg-ink
-                text-cream
-                px-4
-                py-2.5
-                text-[13px]
-                font-semibold
-                hover:bg-forest
-                transition
-                whitespace-nowrap
-              "
+              to="/"
+              onClick={closeMobile}
+              className="flex items-center gap-3 shrink-0"
             >
 
-              Start Application
+              <div className="relative">
 
-              <ArrowUpRight
-                className="
-                  h-3.5
-                  w-3.5
-                  transition-transform
-                  group-hover:rotate-45
-                "
-              />
+                <div className="h-11 w-11 rounded-full bg-ink text-cream grid place-items-center serif italic text-lg font-medium">
+                  r
+                </div>
+
+                <div className="absolute -bottom-1 right-0 h-3.5 w-3.5 rounded-full bg-coral border-2 border-cream" />
+
+              </div>
+
+
+              <div>
+
+                <div className="serif text-[20px] sm:text-[22px] font-medium text-ink leading-none">
+                  Route Your Career
+                </div>
+
+                <div className="mt-1 text-[9px] mono uppercase tracking-[0.24em] text-ink/45 whitespace-nowrap">
+                  Your pathway · MBBS + Management
+                </div>
+
+              </div>
 
             </Link>
 
+
+            {/* =================================================
+                DESKTOP NAVIGATION
+            ================================================= */}
+
+            <nav className="hidden xl:flex items-center gap-1 text-[13px]">
+
+
+              {/* MBBS DROPDOWN */}
+
+              <div
+                className="relative"
+                onMouseEnter={() => setMbbsOpen(true)}
+                onMouseLeave={() => setMbbsOpen(false)}
+              >
+
+                <button
+                  type="button"
+                  className="flex items-center gap-1 rounded-full px-3 py-2 hover:bg-ink/5 transition"
+                >
+                  MBBS
+
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+
+
+                {mbbsOpen && (
+
+                  <div className="absolute left-0 top-full pt-2 w-[245px]">
+
+                    <div className="rounded-2xl border border-ink/10 bg-white shadow-xl overflow-hidden">
+
+                      <div className="px-4 pt-4 pb-2 text-[9px] mono uppercase tracking-widest text-coral">
+                        Study MBBS Abroad
+                      </div>
+
+
+                      <div className="max-h-[430px] overflow-y-auto pb-2">
+
+                        {mbbsCountries.map((country) => (
+
+                          <Link
+                            key={country.slug}
+                            to={`/country/${country.slug}`}
+                            onClick={closeMobile}
+                            className="flex items-center justify-between px-4 py-2.5 hover:bg-cream transition"
+                          >
+
+                            <span>
+                              MBBS in {country.name}
+                            </span>
+
+                            <ArrowUpRight className="h-3.5 w-3.5 text-ink/30" />
+
+                          </Link>
+
+                        ))}
+
+                      </div>
+
+
+                      <div className="border-t border-ink/10 p-2">
+
+                        <Link
+                          to="/countries"
+                          onClick={closeMobile}
+                          className="block rounded-xl px-3 py-2.5 font-semibold hover:bg-cream"
+                        >
+                          View all countries
+                        </Link>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                )}
+
+              </div>
+
+
+              {/* MANAGEMENT DROPDOWN */}
+
+              <div
+                className="relative"
+                onMouseEnter={() => setManagementOpen(true)}
+                onMouseLeave={() => setManagementOpen(false)}
+              >
+
+                <button
+                  type="button"
+                  className="flex items-center gap-1 rounded-full px-3 py-2 hover:bg-ink/5 transition"
+                >
+                  Management
+
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+
+
+                {managementOpen && (
+
+                  <div className="absolute left-0 top-full pt-2 w-[250px]">
+
+                    <div className="rounded-2xl border border-ink/10 bg-white shadow-xl overflow-hidden p-2">
+
+                      {managementLinks.map((item) => (
+
+                        <Link
+                          key={item.name}
+                          to={item.path}
+                          onClick={closeMobile}
+                          className="block rounded-xl px-3 py-2.5 hover:bg-cream transition"
+                        >
+                          {item.name}
+                        </Link>
+
+                      ))}
+
+                    </div>
+
+                  </div>
+
+                )}
+
+              </div>
+
+
+              {/* CAREER GUIDE */}
+
+              <Link
+                to="/build-my-route"
+                className={`
+                  rounded-full px-3 py-2 transition
+                  ${
+                    isActive('/build-my-route')
+                      ? 'bg-ink text-cream'
+                      : 'hover:bg-ink/5'
+                  }
+                `}
+              >
+                Career Guide
+              </Link>
+
+
+              {/* QUIZ */}
+
+              <Link
+                to="/quiz"
+                className={`
+                  rounded-full px-3 py-2 transition
+                  ${
+                    isActive('/quiz')
+                      ? 'bg-ink text-cream'
+                      : 'hover:bg-ink/5'
+                  }
+                `}
+              >
+                Quiz
+              </Link>
+
+
+              {/* CALCULATOR */}
+
+              <Link
+                to="/calculator"
+                className={`
+                  rounded-full px-3 py-2 transition
+                  ${
+                    isActive('/calculator')
+                      ? 'bg-ink text-cream'
+                      : 'hover:bg-ink/5'
+                  }
+                `}
+              >
+                Calculator
+              </Link>
+
+
+              {/* BLOG */}
+
+              <Link
+                to="/blog"
+                className={`
+                  rounded-full px-3 py-2 transition
+                  ${
+                    isActive('/blog')
+                      ? 'bg-ink text-cream'
+                      : 'hover:bg-ink/5'
+                  }
+                `}
+              >
+                Blog
+              </Link>
+
+
+              {/* STATES */}
+
+              <Link
+                to="/states"
+                className={`
+                  rounded-full px-3 py-2 transition
+                  ${
+                    isActive('/states')
+                      ? 'bg-ink text-cream'
+                      : 'hover:bg-ink/5'
+                  }
+                `}
+              >
+                States
+              </Link>
+
+
+              {/* TRACK APPLICATION */}
+
+              <Link
+                to="/track-application"
+                className={`
+                  rounded-full px-3 py-2 transition
+                  ${
+                    isActive('/track-application')
+                      ? 'bg-ink text-cream'
+                      : 'hover:bg-ink/5'
+                  }
+                `}
+              >
+                Track Application
+              </Link>
+
+            </nav>
+
+
+            {/* =================================================
+                DESKTOP RIGHT
+            ================================================= */}
+
+            <div className="hidden xl:flex items-center gap-4 shrink-0">
+
+              <a
+                href={`tel:${brand.phone}`}
+                className="text-[13px] text-ink/70 hover:text-coral whitespace-nowrap"
+              >
+                {brand.phoneDisplay}
+              </a>
+
+
+              <Link
+                to="/start-application"
+                className="inline-flex items-center gap-2 rounded-full bg-ink text-cream px-5 py-3 text-[12px] font-bold hover:bg-coral transition"
+              >
+                Start Application
+
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+
+            </div>
+
+
+            {/* =================================================
+                MOBILE MENU BUTTON
+            ================================================= */}
+
+            <button
+              type="button"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="xl:hidden h-10 w-10 rounded-full border border-ink/15 grid place-items-center"
+              aria-label="Menu"
+            >
+
+              {mobileOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+
+            </button>
+
           </div>
-
-
-          {/* =================================================
-              MOBILE BUTTON
-          ================================================= */}
-
-          <button
-            type="button"
-            onClick={() =>
-              setOpen(!open)
-            }
-            className="
-              lg:hidden
-              p-2
-              rounded-md
-              hover:bg-ink/5
-            "
-            aria-label="menu"
-          >
-
-            {open ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-
-          </button>
 
         </div>
 
 
         {/* ===================================================
-            MOBILE MENU
+            MOBILE NAVIGATION
         =================================================== */}
 
-        {open && (
+        {mobileOpen && (
 
-          <div
-            className="
-              lg:hidden
-              pb-5
-              border-t
-              border-ink/10
-              pt-3
-            "
-          >
+          <div className="xl:hidden border-t border-ink/10 bg-cream">
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
 
 
-            {/* MBBS */}
+              {/* MOBILE CAREER GUIDE */}
 
-            <button
-              type="button"
-              onClick={() =>
-                setMobileMbbsOpen(
-                  !mobileMbbsOpen
-                )
-              }
-              className="
-                w-full
-                flex
-                items-center
-                justify-between
-                px-2
-                py-3
-                text-[14px]
-                font-semibold
-                text-ink
-              "
-            >
-
-              MBBS
-
-              <ChevronDown
-                className={`
-                  h-4
-                  w-4
-                  transition-transform
-                  ${
-                    mobileMbbsOpen
-                      ? 'rotate-180'
-                      : ''
-                  }
-                `}
-              />
-
-            </button>
-
-
-            {mobileMbbsOpen && (
-
-              <div
-                className="
-                  ml-2
-                  mb-2
-                  rounded-2xl
-                  bg-white
-                  border
-                  border-ink/10
-                  p-2
-                  max-h-[320px]
-                  overflow-y-auto
-                "
+              <Link
+                to="/build-my-route"
+                onClick={closeMobile}
+                className="flex items-center justify-between rounded-2xl bg-ink text-cream px-4 py-4 font-semibold"
               >
+                Career Guide
 
-                {mbbsCountries.map(item => (
-
-                  <Link
-                    key={item.label}
-                    to={item.to}
-                    onClick={closeMenu}
-                    className="
-                      block
-                      rounded-xl
-                      px-3
-                      py-2.5
-                      text-[13px]
-                      text-ink/65
-                      hover:bg-cream
-                    "
-                  >
-                    {item.label}
-                  </Link>
-
-                ))}
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
 
 
-                <a
-                  href="/#featured"
-                  onClick={closeMenu}
-                  className="
-                    block
-                    border-t
-                    border-ink/10
-                    mt-1
-                    pt-3
-                    px-3
-                    pb-2
-                    text-[12px]
-                    font-semibold
-                    text-coral
-                  "
+              {/* MOBILE MBBS */}
+
+              <div className="mt-3 border border-ink/10 rounded-2xl bg-white overflow-hidden">
+
+                <button
+                  type="button"
+                  onClick={() => setMbbsOpen(!mbbsOpen)}
+                  className="w-full flex items-center justify-between px-4 py-4 font-semibold"
                 >
-                  Explore MBBS Abroad
-                </a>
+                  MBBS Abroad
+
+                  <ChevronDown
+                    className={`
+                      h-4 w-4 transition-transform
+                      ${mbbsOpen ? 'rotate-180' : ''}
+                    `}
+                  />
+                </button>
+
+
+                {mbbsOpen && (
+
+                  <div className="border-t border-ink/10">
+
+                    {mbbsCountries.map((country) => (
+
+                      <Link
+                        key={country.slug}
+                        to={`/country/${country.slug}`}
+                        onClick={closeMobile}
+                        className="block px-4 py-3 text-[13px] border-b border-ink/5 last:border-0"
+                      >
+                        MBBS in {country.name}
+                      </Link>
+
+                    ))}
+
+
+                    <Link
+                      to="/countries"
+                      onClick={closeMobile}
+                      className="block px-4 py-3 text-[13px] font-semibold text-coral"
+                    >
+                      View all countries
+                    </Link>
+
+                  </div>
+
+                )}
 
               </div>
 
-            )}
 
+              {/* MOBILE MANAGEMENT */}
 
-            {/* MANAGEMENT */}
+              <div className="mt-3 border border-ink/10 rounded-2xl bg-white overflow-hidden">
 
-            <button
-              type="button"
-              onClick={() =>
-                setMobileManagementOpen(
-                  !mobileManagementOpen
-                )
-              }
-              className="
-                w-full
-                flex
-                items-center
-                justify-between
-                px-2
-                py-3
-                text-[14px]
-                font-semibold
-                text-ink
-              "
-            >
-
-              Management
-
-              <ChevronDown
-                className={`
-                  h-4
-                  w-4
-                  transition-transform
-                  ${
-                    mobileManagementOpen
-                      ? 'rotate-180'
-                      : ''
-                  }
-                `}
-              />
-
-            </button>
-
-
-            {mobileManagementOpen && (
-
-              <div
-                className="
-                  ml-2
-                  mb-2
-                  rounded-2xl
-                  bg-white
-                  border
-                  border-ink/10
-                  p-2
-                  max-h-[320px]
-                  overflow-y-auto
-                "
-              >
-
-                {managementCountries.map(item => (
-
-                  <Link
-                    key={item.label}
-                    to={item.to}
-                    onClick={closeMenu}
-                    className="
-                      block
-                      rounded-xl
-                      px-3
-                      py-2.5
-                      text-[13px]
-                      text-ink/65
-                      hover:bg-cream
-                    "
-                  >
-                    {item.label}
-                  </Link>
-
-                ))}
-
-
-                <a
-                  href="/#management"
-                  onClick={closeMenu}
-                  className="
-                    block
-                    border-t
-                    border-ink/10
-                    mt-1
-                    pt-3
-                    px-3
-                    pb-2
-                    text-[12px]
-                    font-semibold
-                    text-coral
-                  "
+                <button
+                  type="button"
+                  onClick={() => setManagementOpen(!managementOpen)}
+                  className="w-full flex items-center justify-between px-4 py-4 font-semibold"
                 >
-                  Explore Management
-                </a>
+                  Management
+
+                  <ChevronDown
+                    className={`
+                      h-4 w-4 transition-transform
+                      ${managementOpen ? 'rotate-180' : ''}
+                    `}
+                  />
+                </button>
+
+
+                {managementOpen && (
+
+                  <div className="border-t border-ink/10">
+
+                    {managementLinks.map((item) => (
+
+                      <Link
+                        key={item.name}
+                        to={item.path}
+                        onClick={closeMobile}
+                        className="block px-4 py-3 text-[13px] border-b border-ink/5 last:border-0"
+                      >
+                        {item.name}
+                      </Link>
+
+                    ))}
+
+                  </div>
+
+                )}
 
               </div>
 
-            )}
 
+              {/* OTHER MOBILE LINKS */}
 
-            {/* OTHER LINKS */}
+              <div className="mt-3 rounded-2xl border border-ink/10 bg-white overflow-hidden">
 
-            {normalNav.map(item => {
-
-              if (item.to) {
-
-                return (
-
-                  <Link
-                    key={item.label}
-                    to={item.to}
-                    onClick={closeMenu}
-                    className="
-                      block
-                      px-2
-                      py-2.5
-                      text-[14px]
-                      font-medium
-                      text-ink/75
-                    "
-                  >
-                    {item.label}
-                  </Link>
-
-                );
-
-              }
-
-
-              return (
-
-                <a
-                  key={item.label}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className="
-                    block
-                    px-2
-                    py-2.5
-                    text-[14px]
-                    font-medium
-                    text-ink/75
-                  "
+                <Link
+                  to="/quiz"
+                  onClick={closeMobile}
+                  className="block px-4 py-3.5 border-b border-ink/5"
                 >
-                  {item.label}
-                </a>
+                  Quiz
+                </Link>
 
-              );
+                <Link
+                  to="/calculator"
+                  onClick={closeMobile}
+                  className="block px-4 py-3.5 border-b border-ink/5"
+                >
+                  Calculator
+                </Link>
 
-            })}
+                <Link
+                  to="/blog"
+                  onClick={closeMobile}
+                  className="block px-4 py-3.5 border-b border-ink/5"
+                >
+                  Blog
+                </Link>
+
+                <Link
+                  to="/states"
+                  onClick={closeMobile}
+                  className="block px-4 py-3.5 border-b border-ink/5"
+                >
+                  States
+                </Link>
+
+                <Link
+                  to="/track-application"
+                  onClick={closeMobile}
+                  className="block px-4 py-3.5"
+                >
+                  Track Application
+                </Link>
+
+              </div>
 
 
-            {/* MOBILE CTA */}
+              {/* PHONE */}
 
-            <Link
-              to="/start-application"
-              onClick={closeMenu}
-              className="
-                mt-4
-                block
-                text-center
-                rounded-full
-                bg-ink
-                text-cream
-                px-4
-                py-3
-                text-[13px]
-                font-semibold
-              "
-            >
-              Start Application
-            </Link>
+              <a
+                href={`tel:${brand.phone}`}
+                className="mt-5 block text-center text-[13px] font-semibold"
+              >
+                {brand.phoneDisplay}
+              </a>
+
+
+              {/* START APPLICATION */}
+
+              <Link
+                to="/start-application"
+                onClick={closeMobile}
+                className="mt-3 flex items-center justify-center gap-2 rounded-full bg-coral text-white px-5 py-3.5 text-[13px] font-bold"
+              >
+                Start Application
+
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+
+            </div>
 
           </div>
 
         )}
 
-      </div>
+      </header>
 
-    </header>
+    </>
   );
 }
