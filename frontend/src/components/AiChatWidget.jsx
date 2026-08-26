@@ -14,15 +14,13 @@ import { sendChat, captureChatLead } from '../lib/api';
 
 
 /* =========================================================
-   CREATE / RESTORE CHAT SESSION
+   SESSION
 ========================================================= */
 
 function newSessionId() {
   const existing = localStorage.getItem('ryc_chat_session');
 
-  if (existing) {
-    return existing;
-  }
+  if (existing) return existing;
 
   const id =
     'ryc_' +
@@ -49,14 +47,10 @@ const STARTERS = [
 
 
 /* =========================================================
-   AI CHAT WIDGET
+   MAIN COMPONENT
 ========================================================= */
 
 export default function AiChatWidget() {
-
-  /* ---------------------------------------------------------
-     STATE
-  --------------------------------------------------------- */
 
   const [open, setOpen] = useState(false);
 
@@ -93,23 +87,24 @@ export default function AiChatWidget() {
   ========================================================= */
 
   useEffect(() => {
+
     if (scrollRef.current) {
       scrollRef.current.scrollTop =
         scrollRef.current.scrollHeight;
     }
+
   }, [messages, open, showLeadForm]);
 
 
   /* =========================================================
-     SEND CHAT MESSAGE
+     SEND MESSAGE
   ========================================================= */
 
   const send = async (text) => {
+
     const msg = (text ?? input).trim();
 
-    if (!msg || loading) {
-      return;
-    }
+    if (!msg || loading) return;
 
     setInput('');
 
@@ -124,6 +119,7 @@ export default function AiChatWidget() {
     setLoading(true);
 
     try {
+
       const res = await sendChat(
         sessionRef.current,
         msg
@@ -137,27 +133,33 @@ export default function AiChatWidget() {
         }
       ]);
 
-      /*
-        Show counsellor form only after the student
-        has actually used the assistant for a while.
-      */
+
+      /* Show lead form after student has chatted */
 
       if (!leadCaptured && !showLeadForm) {
+
         setMessages((current) => {
+
           const turns = current.filter(
             (message) => message.role === 'user'
           ).length;
 
           if (turns >= 2) {
+
             setTimeout(() => {
               setShowLeadForm(true);
             }, 500);
+
           }
 
           return current;
+
         });
+
       }
+
     } catch (error) {
+
       console.error('Chat failed:', error);
 
       setMessages((current) => [
@@ -168,24 +170,28 @@ export default function AiChatWidget() {
             'I could not connect for a moment. Please try again, or continue with our counsellor on WhatsApp.'
         }
       ]);
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
 
   /* =========================================================
-     CAPTURE COUNSELLING LEAD
+     LEAD FORM
   ========================================================= */
 
   const submitLead = async (event) => {
+
     event.preventDefault();
 
-    if (!lead.name || !lead.phone) {
-      return;
-    }
+    if (!lead.name || !lead.phone) return;
 
     try {
+
       await captureChatLead({
         session_id: sessionRef.current,
         ...lead
@@ -205,12 +211,16 @@ export default function AiChatWidget() {
             `You can continue chatting with me here too.`
         }
       ]);
+
     } catch (error) {
+
       console.error(
         'Lead capture failed:',
         error
       );
+
     }
+
   };
 
 
@@ -222,18 +232,19 @@ export default function AiChatWidget() {
     <>
 
       {/* =====================================================
-          DESKTOP CLOSED ASSISTANT
+          DESKTOP CLOSED RYCe
 
           IMPORTANT:
-          Compact floating launcher.
-          Does not use the previous large white card.
+          Mascot + globe are ABOVE white card.
+          Everything stays in one narrow vertical column.
       ===================================================== */}
 
       {!open && (
+
         <div
           className="
             hidden
-            xl:flex
+            xl:block
 
             fixed
 
@@ -242,14 +253,13 @@ export default function AiChatWidget() {
 
             z-40
 
-            items-end
-            gap-2
+            w-[184px]
           "
         >
 
-          {/* =================================================
-              RYCe VISUAL
-          ================================================= */}
+          {/* ===============================================
+              MASCOT AREA
+          =============================================== */}
 
           <button
             type="button"
@@ -258,24 +268,22 @@ export default function AiChatWidget() {
             className="
               relative
 
-              w-[112px]
-              h-[108px]
+              block
 
-              shrink-0
+              w-full
+              h-[104px]
 
               bg-transparent
+
               border-0
 
               cursor-pointer
-
-              transition-transform
-              duration-200
-
-              hover:-translate-y-1
             "
           >
 
-            {/* GLOBE */}
+            {/* =============================================
+                GLOBE
+            ============================================= */}
 
             <img
               src="/ryce-globe.png"
@@ -284,10 +292,10 @@ export default function AiChatWidget() {
               className="
                 absolute
 
-                right-0
-                bottom-0
+                right-[8px]
+                bottom-[-5px]
 
-                w-[76px]
+                w-[78px]
                 h-auto
 
                 object-contain
@@ -295,23 +303,26 @@ export default function AiChatWidget() {
                 drop-shadow-md
 
                 z-0
+
+                pointer-events-none
               "
             />
 
 
-            {/* STUDENT MASCOT */}
+            {/* =============================================
+                STUDENT MASCOT
+            ============================================= */}
 
             <img
               src="/ryce-student.png"
-              alt=""
-              aria-hidden="true"
+              alt="RYCe career guide"
               className="
                 absolute
 
-                left-0
-                bottom-0
+                left-[30px]
+                bottom-[-5px]
 
-                w-[74px]
+                w-[84px]
                 h-auto
 
                 object-contain
@@ -319,21 +330,32 @@ export default function AiChatWidget() {
                 drop-shadow-lg
 
                 z-10
+
+                pointer-events-none
+
+                transition-transform
+                duration-200
               "
             />
 
           </button>
 
 
-          {/* =================================================
-              SMALL RYCe CARD
-          ================================================= */}
+          {/* ===============================================
+              WHITE GUIDANCE CARD
+          =============================================== */}
 
           <button
             type="button"
             onClick={() => setOpen(true)}
             className="
-              w-[172px]
+              relative
+
+              z-20
+
+              block
+
+              w-full
 
               rounded-[18px]
 
@@ -404,24 +426,36 @@ export default function AiChatWidget() {
               className="
                 mt-1
 
-                text-[10px]
+                text-[9px]
 
                 leading-[1.4]
 
-                text-ink/50
+                text-ink/45
               "
             >
               Careers · courses · abroad
             </div>
 
 
+            {/* DIVIDER */}
+
+            <div
+              className="
+                my-2
+
+                h-px
+
+                bg-ink/10
+              "
+            />
+
+
             {/* CTA */}
 
             <div
               className="
-                mt-2.5
-
                 flex
+
                 items-center
                 justify-between
 
@@ -481,14 +515,16 @@ export default function AiChatWidget() {
           </button>
 
         </div>
+
       )}
 
 
       {/* =====================================================
-          MOBILE CLOSED ASSISTANT
+          MOBILE CLOSED RYCe
       ===================================================== */}
 
       {!open && (
+
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -532,14 +568,16 @@ export default function AiChatWidget() {
           Ask RYCe
 
         </button>
+
       )}
 
 
       {/* =====================================================
-          FULL CHAT WINDOW
+          OPEN CHAT WINDOW
       ===================================================== */}
 
       {open && (
+
         <div
           className="
             fixed
@@ -575,7 +613,7 @@ export default function AiChatWidget() {
         >
 
           {/* =================================================
-              CHAT HEADER
+              HEADER
           ================================================= */}
 
           <div
@@ -592,7 +630,7 @@ export default function AiChatWidget() {
             "
           >
 
-            {/* BOT ICON */}
+            {/* ICON */}
 
             <div className="relative">
 
@@ -617,8 +655,6 @@ export default function AiChatWidget() {
               </div>
 
 
-              {/* ONLINE DOT */}
-
               <span
                 className="
                   absolute
@@ -641,7 +677,7 @@ export default function AiChatWidget() {
             </div>
 
 
-            {/* HEADER TEXT */}
+            {/* TEXT */}
 
             <div className="flex-1">
 
@@ -711,7 +747,7 @@ export default function AiChatWidget() {
 
 
           {/* =================================================
-              CHAT BODY
+              MESSAGES
           ================================================= */}
 
           <div
@@ -729,10 +765,9 @@ export default function AiChatWidget() {
             "
           >
 
-            {/* MESSAGES */}
-
             {messages.map(
               (message, index) => (
+
                 <div
                   key={index}
                   className={`
@@ -782,6 +817,7 @@ export default function AiChatWidget() {
                   </div>
 
                 </div>
+
               )
             )}
 
@@ -791,6 +827,7 @@ export default function AiChatWidget() {
             ================================================= */}
 
             {loading && (
+
               <div className="flex justify-start">
 
                 <div
@@ -815,14 +852,16 @@ export default function AiChatWidget() {
                 </div>
 
               </div>
+
             )}
 
 
             {/* =================================================
-                STARTER QUESTIONS
+                STARTERS
             ================================================= */}
 
             {messages.length <= 1 && (
+
               <div className="pt-2">
 
                 <div
@@ -852,6 +891,7 @@ export default function AiChatWidget() {
                 >
 
                   {STARTERS.map((starter) => (
+
                     <button
                       type="button"
                       key={starter}
@@ -876,21 +916,26 @@ export default function AiChatWidget() {
                         transition
                       "
                     >
+
                       {starter}
+
                     </button>
+
                   ))}
 
                 </div>
 
               </div>
+
             )}
 
 
             {/* =================================================
-                LEAD CAPTURE FORM
+                LEAD FORM
             ================================================= */}
 
             {showLeadForm && !leadCaptured && (
+
               <form
                 onSubmit={submitLead}
                 className="
@@ -938,14 +983,13 @@ export default function AiChatWidget() {
                       text-ink/60
                     "
                   >
-                    Leave your details only if you'd like a
-                    counsellor to contact you.
+                    Leave your details only if you'd like a counsellor to contact you.
                   </div>
 
                 </div>
 
 
-                {/* INPUTS */}
+                {/* FORM INPUTS */}
 
                 <div
                   className="
@@ -954,8 +998,6 @@ export default function AiChatWidget() {
                     gap-2
                   "
                 >
-
-                  {/* NAME */}
 
                   <input
                     value={lead.name}
@@ -986,8 +1028,6 @@ export default function AiChatWidget() {
                   />
 
 
-                  {/* PHONE */}
-
                   <input
                     value={lead.phone}
                     onChange={(event) =>
@@ -1016,8 +1056,6 @@ export default function AiChatWidget() {
                     "
                   />
 
-
-                  {/* INTEREST */}
 
                   <input
                     value={lead.country}
@@ -1108,13 +1146,14 @@ export default function AiChatWidget() {
                 </div>
 
               </form>
+
             )}
 
           </div>
 
 
           {/* =================================================
-              MESSAGE COMPOSER
+              MESSAGE INPUT
           ================================================= */}
 
           <div
@@ -1204,7 +1243,7 @@ export default function AiChatWidget() {
 
 
             {/* =================================================
-                CHAT FOOTER LINKS
+                CHAT CONTACT OPTIONS
             ================================================= */}
 
             <div
@@ -1212,15 +1251,12 @@ export default function AiChatWidget() {
                 mt-2
 
                 flex
-
                 items-center
                 justify-between
 
                 gap-2
               "
             >
-
-              {/* WHATSAPP */}
 
               <a
                 href={`https://wa.me/${brand.whatsapp.replace(
@@ -1251,8 +1287,6 @@ export default function AiChatWidget() {
               </a>
 
 
-              {/* PHONE */}
-
               <a
                 href={`tel:${brand.phone}`}
                 className="
@@ -1281,6 +1315,7 @@ export default function AiChatWidget() {
           </div>
 
         </div>
+
       )}
 
 
