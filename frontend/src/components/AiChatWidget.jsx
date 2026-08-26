@@ -1,8 +1,4 @@
-import React, {
-  useEffect,
-  useRef,
-  useState
-} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import {
   MessageCircle,
@@ -14,23 +10,15 @@ import {
 } from 'lucide-react';
 
 import { brand } from '../mock';
-
-import {
-  sendChat,
-  captureChatLead
-} from '../lib/api';
+import { sendChat, captureChatLead } from '../lib/api';
 
 
 /* =========================================================
-   SESSION
+   CREATE / RESTORE CHAT SESSION
 ========================================================= */
 
 function newSessionId() {
-
-  const existing =
-    localStorage.getItem(
-      'ryc_chat_session'
-    );
+  const existing = localStorage.getItem('ryc_chat_session');
 
   if (existing) {
     return existing;
@@ -38,16 +26,10 @@ function newSessionId() {
 
   const id =
     'ryc_' +
-    Math.random()
-      .toString(36)
-      .slice(2) +
-    Date.now()
-      .toString(36);
+    Math.random().toString(36).slice(2) +
+    Date.now().toString(36);
 
-  localStorage.setItem(
-    'ryc_chat_session',
-    id
-  );
+  localStorage.setItem('ryc_chat_session', id);
 
   return id;
 }
@@ -58,17 +40,11 @@ function newSessionId() {
 ========================================================= */
 
 const STARTERS = [
-
   'Which career suits me after 12th?',
-
   'MBBS abroad — which country is best for me?',
-
   'What management courses can I study abroad?',
-
   'Can I study in Italy with low tuition fees?',
-
   'I am confused about my career. Help me choose.'
-
 ];
 
 
@@ -78,391 +54,226 @@ const STARTERS = [
 
 export default function AiChatWidget() {
 
-
-  /* =======================================================
+  /* ---------------------------------------------------------
      STATE
-  ======================================================= */
+  --------------------------------------------------------- */
 
-  const [
-    open,
-    setOpen
-  ] =
-    useState(false);
+  const [open, setOpen] = useState(false);
 
-
-  const [
-    messages,
-    setMessages
-  ] =
-    useState([
-
-      {
-        role: 'assistant',
-
-        content:
-          "Hi! I'm RYCe, your Route Your Career guide. Tell me what you're studying, what you're interested in, or what you're confused about — I'll help you explore your options."
-      }
-
-    ]);
-
-
-  const [
-    input,
-    setInput
-  ] =
-    useState('');
-
-
-  const [
-    loading,
-    setLoading
-  ] =
-    useState(false);
-
-
-  const [
-    leadCaptured,
-    setLeadCaptured
-  ] =
-    useState(false);
-
-
-  const [
-    showLeadForm,
-    setShowLeadForm
-  ] =
-    useState(false);
-
-
-  const [
-    lead,
-    setLead
-  ] =
-    useState({
-
-      name: '',
-
-      phone: '',
-
-      country: '',
-
-      neet_score: ''
-
-    });
-
-
-  const sessionRef =
-    useRef(
-      newSessionId()
-    );
-
-
-  const scrollRef =
-    useRef(null);
-
-
-
-  /* =======================================================
-     AUTO SCROLL
-  ======================================================= */
-
-  useEffect(() => {
-
-    if (
-      scrollRef.current
-    ) {
-
-      scrollRef.current.scrollTop =
-        scrollRef.current.scrollHeight;
-
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      content:
+        "Hi! I'm RYCe, your Route Your Career guide. Tell me what you're studying, what you're interested in, or what you're confused about — I'll help you explore your options."
     }
-
-  }, [
-    messages,
-    open,
-    showLeadForm
   ]);
 
+  const [input, setInput] = useState('');
+
+  const [loading, setLoading] = useState(false);
+
+  const [leadCaptured, setLeadCaptured] = useState(false);
+
+  const [showLeadForm, setShowLeadForm] = useState(false);
+
+  const [lead, setLead] = useState({
+    name: '',
+    phone: '',
+    country: '',
+    neet_score: ''
+  });
+
+  const sessionRef = useRef(newSessionId());
+
+  const scrollRef = useRef(null);
 
 
-  /* =======================================================
-     SEND MESSAGE
-  ======================================================= */
+  /* =========================================================
+     AUTO SCROLL
+  ========================================================= */
 
-  const send =
-    async text => {
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop =
+        scrollRef.current.scrollHeight;
+    }
+  }, [messages, open, showLeadForm]);
 
 
-      const msg =
-        (text ?? input)
-          .trim();
+  /* =========================================================
+     SEND CHAT MESSAGE
+  ========================================================= */
 
+  const send = async (text) => {
+    const msg = (text ?? input).trim();
 
-      if (
-        !msg ||
-        loading
-      ) {
+    if (!msg || loading) {
+      return;
+    }
 
-        return;
+    setInput('');
 
+    setMessages((current) => [
+      ...current,
+      {
+        role: 'user',
+        content: msg
       }
+    ]);
 
+    setLoading(true);
 
-      setInput('');
+    try {
+      const res = await sendChat(
+        sessionRef.current,
+        msg
+      );
 
+      setMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          content: res.reply
+        }
+      ]);
 
-      setMessages(
-        current => [
+      /*
+        Show counsellor form only after the student
+        has actually used the assistant for a while.
+      */
 
-          ...current,
+      if (!leadCaptured && !showLeadForm) {
+        setMessages((current) => {
+          const turns = current.filter(
+            (message) => message.role === 'user'
+          ).length;
 
-          {
-            role: 'user',
-            content: msg
+          if (turns >= 2) {
+            setTimeout(() => {
+              setShowLeadForm(true);
+            }, 500);
           }
 
-        ]
-      );
-
-
-      setLoading(
-        true
-      );
-
-
-      try {
-
-
-        const res =
-          await sendChat(
-
-            sessionRef.current,
-
-            msg
-
-          );
-
-
-        setMessages(
-          current => [
-
-            ...current,
-
-            {
-              role: 'assistant',
-              content: res.reply
-            }
-
-          ]
-        );
-
-
-        if (
-          !leadCaptured &&
-          !showLeadForm
-        ) {
-
-
-          setMessages(
-            current => {
-
-
-              const turns =
-                current.filter(
-                  message =>
-                    message.role ===
-                    'user'
-                ).length;
-
-
-              if (
-                turns >= 2
-              ) {
-
-                setTimeout(
-                  () => {
-
-                    setShowLeadForm(
-                      true
-                    );
-
-                  },
-                  500
-                );
-
-              }
-
-
-              return current;
-
-            }
-          );
-
-        }
-
-
-      }
-      catch (
-        error
-      ) {
-
-
-        setMessages(
-          current => [
-
-            ...current,
-
-            {
-
-              role:
-                'assistant',
-
-              content:
-                'I could not connect for a moment. Please try again, or continue with our counsellor on WhatsApp.'
-
-            }
-
-          ]
-        );
-
-
-      }
-      finally {
-
-
-        setLoading(
-          false
-        );
-
-
-      }
-
-    };
-
-
-
-  /* =======================================================
-     LEAD FORM
-  ======================================================= */
-
-  const submitLead =
-    async event => {
-
-
-      event.preventDefault();
-
-
-      if (
-        !lead.name ||
-        !lead.phone
-      ) {
-
-        return;
-
-      }
-
-
-      try {
-
-
-        await captureChatLead({
-
-          session_id:
-            sessionRef.current,
-
-          ...lead
-
+          return current;
         });
-
-
-        setLeadCaptured(
-          true
-        );
-
-
-        setShowLeadForm(
-          false
-        );
-
-
-        setMessages(
-          current => [
-
-            ...current,
-
-            {
-
-              role:
-                'assistant',
-
-              content:
-                `Thanks, ${lead.name.split(' ')[0]}! Your details have been received. A Route Your Career counsellor can contact you on ${lead.phone}. You can continue chatting with me here too.`
-
-            }
-
-          ]
-        );
-
-
       }
-      catch (
+    } catch (error) {
+      console.error('Chat failed:', error);
+
+      setMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          content:
+            'I could not connect for a moment. Please try again, or continue with our counsellor on WhatsApp.'
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  /* =========================================================
+     CAPTURE COUNSELLING LEAD
+  ========================================================= */
+
+  const submitLead = async (event) => {
+    event.preventDefault();
+
+    if (!lead.name || !lead.phone) {
+      return;
+    }
+
+    try {
+      await captureChatLead({
+        session_id: sessionRef.current,
+        ...lead
+      });
+
+      setLeadCaptured(true);
+
+      setShowLeadForm(false);
+
+      setMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          content:
+            `Thanks, ${lead.name.split(' ')[0]}! Your details have been received. ` +
+            `A Route Your Career counsellor can contact you on ${lead.phone}. ` +
+            `You can continue chatting with me here too.`
+        }
+      ]);
+    } catch (error) {
+      console.error(
+        'Lead capture failed:',
         error
-      ) {
+      );
+    }
+  };
 
 
-        console.error(
-          'Lead capture failed:',
-          error
-        );
-
-
-      }
-
-    };
-
-
+  /* =========================================================
+     UI
+  ========================================================= */
 
   return (
-
     <>
 
+      {/* =====================================================
+          DESKTOP CLOSED ASSISTANT
 
-      {/* ===================================================
-          CLOSED DESKTOP RYCe ASSISTANT
-      =================================================== */}
+          IMPORTANT:
+          Compact floating launcher.
+          Does not use the previous large white card.
+      ===================================================== */}
 
       {!open && (
-
         <div
           className="
             hidden
-            xl:block
+            xl:flex
 
             fixed
 
-            right-5
-            bottom-[92px]
+            right-6
+            bottom-[82px]
 
             z-40
 
-            w-[235px]
+            items-end
+            gap-2
           "
         >
 
-
           {/* =================================================
-              MASCOT + GLOBE
+              RYCe VISUAL
           ================================================= */}
 
-          <div
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label="Open RYCe career guide"
             className="
               relative
-              h-[185px]
 
-              pointer-events-none
+              w-[112px]
+              h-[108px]
+
+              shrink-0
+
+              bg-transparent
+              border-0
+
+              cursor-pointer
+
+              transition-transform
+              duration-200
+
+              hover:-translate-y-1
             "
           >
-
 
             {/* GLOBE */}
 
@@ -473,61 +284,58 @@ export default function AiChatWidget() {
               className="
                 absolute
 
-                right-[-4px]
-                bottom-[0px]
+                right-0
+                bottom-0
 
-                w-[118px]
+                w-[76px]
                 h-auto
 
                 object-contain
 
-                drop-shadow-lg
+                drop-shadow-md
 
                 z-0
               "
             />
 
 
-            {/* STUDENT */}
+            {/* STUDENT MASCOT */}
 
             <img
               src="/ryce-student.png"
-              alt="RYCe career guide"
+              alt=""
+              aria-hidden="true"
               className="
                 absolute
 
-                left-[6px]
-                bottom-[-3px]
+                left-0
+                bottom-0
 
-                w-[142px]
+                w-[74px]
                 h-auto
 
                 object-contain
 
-                drop-shadow-xl
+                drop-shadow-lg
 
                 z-10
               "
             />
 
-
-          </div>
-
+          </button>
 
 
           {/* =================================================
-              WHITE CARD
+              SMALL RYCe CARD
           ================================================= */}
 
-          <div
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
             className="
-              relative
+              w-[172px]
 
-              z-20
-
-              -mt-3
-
-              rounded-[22px]
+              rounded-[18px]
 
               bg-white
 
@@ -536,173 +344,208 @@ export default function AiChatWidget() {
 
               shadow-xl
 
-              overflow-hidden
+              px-4
+              py-3
+
+              text-left
+
+              transition-all
+              duration-200
+
+              hover:-translate-y-0.5
+              hover:shadow-2xl
             "
           >
 
+            {/* LABEL */}
 
             <div
               className="
-                px-5
-                pt-5
-                pb-4
+                text-[8px]
+
+                mono
+                uppercase
+
+                tracking-[0.20em]
+
+                text-coral
+
+                font-semibold
+              "
+            >
+              ASK RYCe
+            </div>
+
+
+            {/* TITLE */}
+
+            <div
+              className="
+                mt-1
+
+                serif
+
+                text-[17px]
+
+                leading-tight
+
+                text-ink
+
+                font-medium
+              "
+            >
+              Need guidance?
+            </div>
+
+
+            {/* SHORT DESCRIPTION */}
+
+            <div
+              className="
+                mt-1
+
+                text-[10px]
+
+                leading-[1.4]
+
+                text-ink/50
+              "
+            >
+              Careers · courses · abroad
+            </div>
+
+
+            {/* CTA */}
+
+            <div
+              className="
+                mt-2.5
+
+                flex
+                items-center
+                justify-between
+
+                text-[10px]
+
+                font-bold
+
+                text-ink
               "
             >
 
-
-              <div
-                className="
-                  text-[9px]
-
-                  mono
-                  uppercase
-
-                  tracking-[0.20em]
-
-                  text-coral
-
-                  font-semibold
-                "
-              >
-                ASK RYCe
-              </div>
-
-
-
-              <div
-                className="
-                  mt-1.5
-
-                  serif
-
-                  text-[20px]
-
-                  leading-tight
-
-                  text-ink
-
-                  font-medium
-                "
-              >
-                Your career guide.
-              </div>
-
-
-
-              <p
-                className="
-                  mt-2
-
-                  text-[11px]
-
-                  leading-[1.55]
-
-                  text-ink/60
-                "
-              >
-                Quick guidance on careers,
-                courses and studying abroad.
-              </p>
-
-
-
-              <button
-                type="button"
-                onClick={() =>
-                  setOpen(
-                    true
-                  )
-                }
-                className="
-                  mt-4
-
-                  w-full
-
-                  rounded-full
-
-                  bg-ink
-                  hover:bg-forest
-
-                  text-cream
-
-                  px-4
-                  py-2.5
-
-                  text-[11px]
-
-                  font-bold
-
-                  flex
-                  items-center
-                  justify-center
-                  gap-2
-
-                  transition
-                "
-              >
-
+              <span>
                 Ask RYCe
+              </span>
 
-                <ArrowRight className="w-3.5 h-3.5" />
-
-              </button>
-
-
-
-              <div
+              <ArrowRight
                 className="
-                  mt-3
-
-                  flex
-                  justify-center
-                  items-center
-                  gap-2
-
-                  text-[9px]
-
-                  text-ink/40
+                  w-3.5
+                  h-3.5
                 "
-              >
-
-                <span
-                  className="
-                    w-1.5
-                    h-1.5
-
-                    rounded-full
-
-                    bg-emerald-500
-                  "
-                />
-
-                AI guidance available
-
-              </div>
-
+              />
 
             </div>
 
 
-          </div>
+            {/* STATUS */}
 
+            <div
+              className="
+                mt-2
+
+                flex
+                items-center
+                gap-1.5
+
+                text-[8px]
+
+                text-ink/35
+              "
+            >
+
+              <span
+                className="
+                  w-1.5
+                  h-1.5
+
+                  rounded-full
+
+                  bg-emerald-500
+                "
+              />
+
+              AI career guidance
+
+            </div>
+
+          </button>
 
         </div>
-
       )}
 
 
+      {/* =====================================================
+          MOBILE CLOSED ASSISTANT
+      ===================================================== */}
 
-      {/* ===================================================
+      {!open && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="
+            xl:hidden
+
+            fixed
+
+            bottom-[76px]
+            right-4
+
+            z-50
+
+            inline-flex
+            items-center
+            gap-2
+
+            rounded-full
+
+            bg-coral
+
+            text-white
+
+            px-4
+            py-3
+
+            text-[12px]
+
+            font-bold
+
+            shadow-xl
+
+            hover:bg-[#d94a26]
+
+            transition
+          "
+        >
+
+          <Bot className="h-4 w-4" />
+
+          Ask RYCe
+
+        </button>
+      )}
+
+
+      {/* =====================================================
           FULL CHAT WINDOW
-      =================================================== */}
+      ===================================================== */}
 
       {open && (
-
         <div
           className="
             fixed
 
-            bottom-24
+            bottom-[82px]
+
             right-4
             sm:right-6
 
@@ -727,16 +570,12 @@ export default function AiChatWidget() {
             flex-col
           "
           style={{
-
-            maxHeight:
-              '76vh'
-
+            maxHeight: '76vh'
           }}
         >
 
-
           {/* =================================================
-              HEADER
+              CHAT HEADER
           ================================================= */}
 
           <div
@@ -753,9 +592,9 @@ export default function AiChatWidget() {
             "
           >
 
+            {/* BOT ICON */}
 
             <div className="relative">
-
 
               <div
                 className="
@@ -778,6 +617,7 @@ export default function AiChatWidget() {
               </div>
 
 
+              {/* ONLINE DOT */}
 
               <span
                 className="
@@ -798,13 +638,12 @@ export default function AiChatWidget() {
                 "
               />
 
-
             </div>
 
 
+            {/* HEADER TEXT */}
 
             <div className="flex-1">
-
 
               <div
                 className="
@@ -826,7 +665,7 @@ export default function AiChatWidget() {
                   mono
                   uppercase
 
-                  tracking-[0.16em]
+                  tracking-[0.14em]
 
                   text-coral
                 "
@@ -834,18 +673,14 @@ export default function AiChatWidget() {
                 Career · MBBS · Management · Study Abroad
               </div>
 
-
             </div>
 
 
+            {/* CLOSE */}
 
             <button
               type="button"
-              onClick={() =>
-                setOpen(
-                  false
-                )
-              }
+              onClick={() => setOpen(false)}
               aria-label="Close guidance"
               className="
                 h-9
@@ -863,6 +698,8 @@ export default function AiChatWidget() {
 
                 hover:text-cream
                 hover:bg-white/10
+
+                transition
               "
             >
 
@@ -870,9 +707,7 @@ export default function AiChatWidget() {
 
             </button>
 
-
           </div>
-
 
 
           {/* =================================================
@@ -880,9 +715,7 @@ export default function AiChatWidget() {
           ================================================= */}
 
           <div
-            ref={
-              scrollRef
-            }
+            ref={scrollRef}
             className="
               flex-1
 
@@ -896,29 +729,22 @@ export default function AiChatWidget() {
             "
           >
 
+            {/* MESSAGES */}
 
             {messages.map(
-              (
-                message,
-                index
-              ) => (
-
+              (message, index) => (
                 <div
-                  key={
-                    index
-                  }
+                  key={index}
                   className={`
                     flex
 
                     ${
-                      message.role ===
-                      'user'
+                      message.role === 'user'
                         ? 'justify-end'
                         : 'justify-start'
                     }
                   `}
                 >
-
 
                   <div
                     className={`
@@ -934,15 +760,12 @@ export default function AiChatWidget() {
                       leading-relaxed
 
                       ${
-                        message.role ===
-                        'user'
-
+                        message.role === 'user'
                           ? `
                             bg-ink
                             text-cream
                             rounded-br-md
                           `
-
                           : `
                             bg-white
                             border
@@ -958,22 +781,17 @@ export default function AiChatWidget() {
 
                   </div>
 
-
                 </div>
-
               )
             )}
 
 
-
             {/* =================================================
-                TYPING
+                LOADING
             ================================================= */}
 
             {loading && (
-
               <div className="flex justify-start">
-
 
                 <div
                   className="
@@ -996,22 +814,16 @@ export default function AiChatWidget() {
                   RYCe is thinking…
                 </div>
 
-
               </div>
-
             )}
-
 
 
             {/* =================================================
                 STARTER QUESTIONS
             ================================================= */}
 
-            {messages.length <=
-              1 && (
-
+            {messages.length <= 1 && (
               <div className="pt-2">
-
 
                 <div
                   className="
@@ -1031,72 +843,56 @@ export default function AiChatWidget() {
                 </div>
 
 
+                <div
+                  className="
+                    flex
+                    flex-wrap
+                    gap-1.5
+                  "
+                >
 
-                <div className="flex flex-wrap gap-1.5">
+                  {STARTERS.map((starter) => (
+                    <button
+                      type="button"
+                      key={starter}
+                      onClick={() => send(starter)}
+                      className="
+                        text-[11px]
+                        text-left
 
+                        rounded-xl
 
-                  {STARTERS.map(
-                    starter => (
+                        border
+                        border-ink/10
 
-                      <button
-                        type="button"
-                        key={
-                          starter
-                        }
-                        onClick={() =>
-                          send(
-                            starter
-                          )
-                        }
-                        className="
-                          text-[11px]
-                          text-left
+                        bg-white
 
-                          rounded-xl
+                        px-3
+                        py-2
 
-                          border
-                          border-ink/10
+                        hover:bg-ink
+                        hover:text-cream
 
-                          bg-white
-
-                          px-3
-                          py-2
-
-                          hover:bg-ink
-                          hover:text-cream
-
-                          transition
-                        "
-                      >
-
-                        {starter}
-
-                      </button>
-
-                    )
-                  )}
-
+                        transition
+                      "
+                    >
+                      {starter}
+                    </button>
+                  ))}
 
                 </div>
 
-
               </div>
-
             )}
 
 
-
             {/* =================================================
-                LEAD FORM
+                LEAD CAPTURE FORM
             ================================================= */}
 
-            {showLeadForm &&
-             !leadCaptured && (
-
+            {showLeadForm && !leadCaptured && (
               <form
-                onSubmit={
-                  submitLead
-                }
+                onSubmit={submitLead}
                 className="
                   mt-3
 
@@ -1113,9 +909,7 @@ export default function AiChatWidget() {
                 "
               >
 
-
                 <div>
-
 
                   <div
                     className="
@@ -1129,7 +923,7 @@ export default function AiChatWidget() {
                       text-coral
                     "
                   >
-                    Need human guidance?
+                    Want personal guidance?
                   </div>
 
 
@@ -1139,36 +933,37 @@ export default function AiChatWidget() {
 
                       text-[12px]
 
+                      leading-relaxed
+
                       text-ink/60
                     "
                   >
-                    Leave your details if you'd like
-                    one of our counsellors to contact you.
+                    Leave your details only if you'd like a
+                    counsellor to contact you.
                   </div>
-
 
                 </div>
 
 
+                {/* INPUTS */}
 
-                <div className="grid grid-cols-2 gap-2">
+                <div
+                  className="
+                    grid
+                    grid-cols-2
+                    gap-2
+                  "
+                >
 
+                  {/* NAME */}
 
                   <input
-                    value={
-                      lead.name
-                    }
-                    onChange={
-                      event =>
-
-                        setLead({
-
-                          ...lead,
-
-                          name:
-                            event.target.value
-
-                        })
+                    value={lead.name}
+                    onChange={(event) =>
+                      setLead({
+                        ...lead,
+                        name: event.target.value
+                      })
                     }
                     placeholder="Your name"
                     className="
@@ -1183,26 +978,23 @@ export default function AiChatWidget() {
                       py-2.5
 
                       text-[12px]
+
+                      outline-none
+
+                      focus:border-coral
                     "
                   />
 
 
+                  {/* PHONE */}
 
                   <input
-                    value={
-                      lead.phone
-                    }
-                    onChange={
-                      event =>
-
-                        setLead({
-
-                          ...lead,
-
-                          phone:
-                            event.target.value
-
-                        })
+                    value={lead.phone}
+                    onChange={(event) =>
+                      setLead({
+                        ...lead,
+                        phone: event.target.value
+                      })
                     }
                     placeholder="WhatsApp"
                     className="
@@ -1217,26 +1009,23 @@ export default function AiChatWidget() {
                       py-2.5
 
                       text-[12px]
+
+                      outline-none
+
+                      focus:border-coral
                     "
                   />
 
 
+                  {/* INTEREST */}
 
                   <input
-                    value={
-                      lead.country
-                    }
-                    onChange={
-                      event =>
-
-                        setLead({
-
-                          ...lead,
-
-                          country:
-                            event.target.value
-
-                        })
+                    value={lead.country}
+                    onChange={(event) =>
+                      setLead({
+                        ...lead,
+                        country: event.target.value
+                      })
                     }
                     placeholder="Country / course interest"
                     className="
@@ -1253,16 +1042,24 @@ export default function AiChatWidget() {
                       py-2.5
 
                       text-[12px]
+
+                      outline-none
+
+                      focus:border-coral
                     "
                   />
-
 
                 </div>
 
 
+                {/* FORM BUTTONS */}
 
-                <div className="flex gap-2">
-
+                <div
+                  className="
+                    flex
+                    gap-2
+                  "
+                >
 
                   <button
                     type="submit"
@@ -1272,6 +1069,7 @@ export default function AiChatWidget() {
                       rounded-xl
 
                       bg-coral
+
                       hover:bg-[#d94a26]
 
                       text-white
@@ -1281,19 +1079,18 @@ export default function AiChatWidget() {
                       font-bold
 
                       py-2.5
+
+                      transition
                     "
                   >
                     Request counsellor
                   </button>
 
 
-
                   <button
                     type="button"
                     onClick={() =>
-                      setShowLeadForm(
-                        false
-                      )
+                      setShowLeadForm(false)
                     }
                     className="
                       px-3
@@ -1308,21 +1105,16 @@ export default function AiChatWidget() {
                     Skip
                   </button>
 
-
                 </div>
 
-
               </form>
-
             )}
-
 
           </div>
 
 
-
           {/* =================================================
-              COMPOSER
+              MESSAGE COMPOSER
           ================================================= */}
 
           <div
@@ -1336,37 +1128,22 @@ export default function AiChatWidget() {
             "
           >
 
-
             <form
-              onSubmit={
-                event => {
-
-                  event.preventDefault();
-
-                  send();
-
-                }
-              }
+              onSubmit={(event) => {
+                event.preventDefault();
+                send();
+              }}
               className="
                 flex
-
                 items-center
-
                 gap-2
               "
             >
 
-
               <input
-                value={
-                  input
-                }
-                onChange={
-                  event =>
-
-                    setInput(
-                      event.target.value
-                    )
+                value={input}
+                onChange={(event) =>
+                  setInput(event.target.value)
                 }
                 placeholder="Ask RYCe anything..."
                 className="
@@ -1384,11 +1161,11 @@ export default function AiChatWidget() {
 
                   text-[13px]
 
-                  focus:outline-none
+                  outline-none
+
                   focus:border-forest
                 "
               />
-
 
 
               <button
@@ -1397,6 +1174,7 @@ export default function AiChatWidget() {
                   loading ||
                   !input.trim()
                 }
+                aria-label="Send message"
                 className="
                   h-10
                   w-10
@@ -1404,6 +1182,7 @@ export default function AiChatWidget() {
                   rounded-full
 
                   bg-coral
+
                   hover:bg-[#d94a26]
 
                   text-white
@@ -1412,6 +1191,8 @@ export default function AiChatWidget() {
                   place-items-center
 
                   disabled:opacity-40
+
+                  transition
                 "
               >
 
@@ -1419,10 +1200,12 @@ export default function AiChatWidget() {
 
               </button>
 
-
             </form>
 
 
+            {/* =================================================
+                CHAT FOOTER LINKS
+            ================================================= */}
 
             <div
               className="
@@ -1437,6 +1220,7 @@ export default function AiChatWidget() {
               "
             >
 
+              {/* WHATSAPP */}
 
               <a
                 href={`https://wa.me/${brand.whatsapp.replace(
@@ -1467,6 +1251,7 @@ export default function AiChatWidget() {
               </a>
 
 
+              {/* PHONE */}
 
               <a
                 href={`tel:${brand.phone}`}
@@ -1491,76 +1276,17 @@ export default function AiChatWidget() {
 
               </a>
 
-
             </div>
-
 
           </div>
 
-
         </div>
-
       )}
 
 
-
-      {/* ===================================================
-          MOBILE ASK RYCe
-      =================================================== */}
-
-      {!open && (
-
-        <button
-          type="button"
-          onClick={() =>
-            setOpen(
-              true
-            )
-          }
-          className="
-            xl:hidden
-
-            fixed
-
-            bottom-[78px]
-            right-4
-
-            z-50
-
-            inline-flex
-            items-center
-            gap-2
-
-            rounded-full
-
-            bg-coral
-
-            text-white
-
-            px-4
-            py-3
-
-            text-[12px]
-
-            font-bold
-
-            shadow-xl
-          "
-        >
-
-          <Bot className="h-4 w-4" />
-
-          Ask RYCe
-
-        </button>
-
-      )}
-
-
-
-      {/* ===================================================
-          WHATSAPP
-      =================================================== */}
+      {/* =====================================================
+          WHATSAPP FLOATING BUTTON
+      ===================================================== */}
 
       <a
         href={`https://wa.me/${brand.whatsapp.replace(
@@ -1586,6 +1312,7 @@ export default function AiChatWidget() {
           rounded-full
 
           bg-emerald-500
+
           hover:bg-emerald-400
 
           text-slate-900
@@ -1605,19 +1332,12 @@ export default function AiChatWidget() {
 
         <MessageCircle className="h-5 w-5" />
 
-
         <span className="hidden sm:inline">
-
           WhatsApp us
-
         </span>
-
 
       </a>
 
-
     </>
-
   );
-
 }
