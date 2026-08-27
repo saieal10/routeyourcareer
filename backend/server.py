@@ -8280,15 +8280,22 @@ async def lead_stats_public():
 
 
 # =========================================================
-# ROUTER
+# ROUTERS
 # =========================================================
+
 country_pages_router = create_country_pages_router(
     db=db,
     require_admin=require_admin,
 )
 
+# Main API routes
 app.include_router(
     api_router
+)
+
+# Country page routes
+app.include_router(
+    country_pages_router
 )
 
 
