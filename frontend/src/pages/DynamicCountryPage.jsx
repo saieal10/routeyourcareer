@@ -27,6 +27,10 @@ const API_URL =
   'https://routeyourcareer.onrender.com';
 
 
+/* =========================================================
+   HELPERS
+========================================================= */
+
 function titleCase(value) {
   return String(value || '')
     .replace(/-/g, ' ')
@@ -37,6 +41,7 @@ function titleCase(value) {
 
 
 function money(value, currency) {
+
   if (
     value === null ||
     value === undefined ||
@@ -70,6 +75,10 @@ function money(value, currency) {
 }
 
 
+/* =========================================================
+   UNIVERSITY CARD
+========================================================= */
+
 function UniversityCard({
   university,
   courses
@@ -97,19 +106,46 @@ function UniversityCard({
 
   return (
 
-    <article className="rounded-[28px] bg-white border border-ink/10 overflow-hidden card-lift flex flex-col">
+    <article
+      className="
+        rounded-[28px]
+        bg-white
+        border
+        border-ink/10
+        overflow-hidden
+        card-lift
+        flex
+        flex-col
+      "
+    >
 
       {/* IMAGE */}
 
-      <div className="relative aspect-[16/10] bg-ink/5 overflow-hidden">
+      <div
+        className="
+          relative
+          aspect-[16/10]
+          bg-ink/5
+          overflow-hidden
+        "
+      >
 
         <img
           src={image}
           alt={university.name}
-          className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+          className="
+            w-full
+            h-full
+            object-cover
+            transition-transform
+            duration-700
+            hover:scale-105
+          "
           onError={event => {
+
             event.currentTarget.src =
               'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=1200&q=80';
+
           }}
         />
 
@@ -120,7 +156,20 @@ function UniversityCard({
 
       <div className="p-5 flex flex-col flex-1">
 
-        <div className="flex items-center gap-2 text-[9px] mono uppercase tracking-widest text-coral">
+        <div
+          className="
+            flex
+            items-center
+            gap-2
+
+            text-[9px]
+            mono
+            uppercase
+            tracking-widest
+
+            text-coral
+          "
+        >
 
           <MapPin className="h-3.5 w-3.5" />
 
@@ -129,19 +178,30 @@ function UniversityCard({
         </div>
 
 
-        <h3 className="serif text-2xl mt-2 leading-tight">
-
+        <h3
+          className="
+            serif
+            text-2xl
+            mt-2
+            leading-tight
+          "
+        >
           {university.name}
-
         </h3>
 
 
         {university.overview && (
 
-          <p className="mt-3 text-[11px] leading-relaxed text-ink/50 line-clamp-3">
-
+          <p
+            className="
+              mt-3
+              text-[11px]
+              leading-relaxed
+              text-ink/50
+              line-clamp-3
+            "
+          >
             {university.overview}
-
           </p>
 
         )}
@@ -151,10 +211,16 @@ function UniversityCard({
 
         <div className="mt-5">
 
-          <div className="text-[9px] mono uppercase tracking-widest text-ink/35">
-
+          <div
+            className="
+              text-[9px]
+              mono
+              uppercase
+              tracking-widest
+              text-ink/35
+            "
+          >
             Programme
-
           </div>
 
 
@@ -173,8 +239,8 @@ function UniversityCard({
               university.duration ||
               'Duration to verify'}
 
-            {primaryCourse?.medium ||
-            university.medium
+            {(primaryCourse?.medium ||
+              university.medium)
               ? ` · ${
                   primaryCourse?.medium ||
                   university.medium
@@ -188,12 +254,27 @@ function UniversityCard({
 
         {/* TUITION */}
 
-        <div className="mt-5 rounded-2xl bg-cream border border-ink/10 p-4">
+        <div
+          className="
+            mt-5
+            rounded-2xl
+            bg-cream
+            border
+            border-ink/10
+            p-4
+          "
+        >
 
-          <div className="text-[9px] mono uppercase tracking-widest text-ink/35">
-
+          <div
+            className="
+              text-[9px]
+              mono
+              uppercase
+              tracking-widest
+              text-ink/35
+            "
+          >
             Tuition / year
-
           </div>
 
 
@@ -202,6 +283,7 @@ function UniversityCard({
             {money(
               primaryCourse?.tuition_fee_year ??
                 university.tuition_fee_year,
+
               primaryCourse?.currency ??
                 university.currency
             )}
@@ -210,6 +292,7 @@ function UniversityCard({
 
 
           {primaryCourse?.tuition_fee_inr && (
+
             <div className="mt-1 text-[10px] text-ink/45">
 
               Approx. ₹
@@ -218,6 +301,7 @@ function UniversityCard({
               ).toLocaleString('en-IN')}
 
             </div>
+
           )}
 
         </div>
@@ -229,10 +313,25 @@ function UniversityCard({
 
           <Link
             to="/build-my-route"
-            className="inline-flex items-center gap-2 rounded-full bg-ink text-cream px-4 py-2.5 text-[11px] font-semibold"
+            className="
+              inline-flex
+              items-center
+              gap-2
+
+              rounded-full
+
+              bg-ink
+              text-cream
+
+              px-4
+              py-2.5
+
+              text-[11px]
+              font-semibold
+            "
           >
 
-            Compare Route
+            Career Guide
 
             <ArrowUpRight className="h-3.5 w-3.5" />
 
@@ -241,11 +340,24 @@ function UniversityCard({
 
           <Link
             to="/start-application"
-            className="inline-flex items-center gap-2 rounded-full border border-ink/15 px-4 py-2.5 text-[11px] font-semibold"
+            className="
+              inline-flex
+              items-center
+              gap-2
+
+              rounded-full
+
+              border
+              border-ink/15
+
+              px-4
+              py-2.5
+
+              text-[11px]
+              font-semibold
+            "
           >
-
             Start Application
-
           </Link>
 
         </div>
@@ -259,6 +371,9 @@ function UniversityCard({
 }
 
 
+/* =========================================================
+   PAGE
+========================================================= */
 
 export default function DynamicCountryPage() {
 
@@ -270,11 +385,18 @@ export default function DynamicCountryPage() {
     titleCase(country);
 
 
+  /* =======================================================
+     STATE
+  ======================================================= */
+
   const [universities, setUniversities] =
     useState([]);
 
   const [courses, setCourses] =
     useState([]);
+
+  const [countryPage, setCountryPage] =
+    useState(null);
 
   const [loading, setLoading] =
     useState(true);
@@ -282,6 +404,10 @@ export default function DynamicCountryPage() {
   const [error, setError] =
     useState('');
 
+
+  /* =======================================================
+     LOAD COUNTRY
+  ======================================================= */
 
   useEffect(() => {
 
@@ -299,27 +425,46 @@ export default function DynamicCountryPage() {
 
         const [
           universityResponse,
-          courseResponse
+          courseResponse,
+          countryPageResponse
         ] = await Promise.all([
 
           fetch(
-            `${API_URL}/api/universities`
+            `${API_URL}/api/universities?country=${encodeURIComponent(
+              countryName
+            )}`
           ),
 
           fetch(
-            `${API_URL}/api/courses`
+            `${API_URL}/api/courses?country=${encodeURIComponent(
+              countryName
+            )}`
+          ),
+
+          fetch(
+            `${API_URL}/api/country-pages/${encodeURIComponent(
+              country
+            )}`
           )
 
         ]);
 
 
-        if (
-          !universityResponse.ok ||
-          !courseResponse.ok
-        ) {
+        /* Universities + courses are required */
+
+        if (!universityResponse.ok) {
 
           throw new Error(
-            'Could not load country data.'
+            'Could not load universities.'
+          );
+
+        }
+
+
+        if (!courseResponse.ok) {
+
+          throw new Error(
+            'Could not load programmes.'
           );
 
         }
@@ -328,8 +473,31 @@ export default function DynamicCountryPage() {
         const universityData =
           await universityResponse.json();
 
+
         const courseData =
           await courseResponse.json();
+
+
+        /*
+        -------------------------------------------------------
+        COUNTRY PAGE
+
+        404 is allowed.
+
+        It simply means the admin has not added a hero yet.
+        -------------------------------------------------------
+        */
+
+        let pageData =
+          null;
+
+
+        if (countryPageResponse.ok) {
+
+          pageData =
+            await countryPageResponse.json();
+
+        }
 
 
         const universityList =
@@ -346,76 +514,31 @@ export default function DynamicCountryPage() {
               [];
 
 
-        const filteredUniversities =
-          universityList.filter(
-            item => {
-
-              const sameCountry =
-                String(
-                  item.country || ''
-                )
-                  .trim()
-                  .toLowerCase() ===
-                countryName
-                  .trim()
-                  .toLowerCase();
-
-
-              const published =
-                String(
-                  item.status || ''
-                )
-                  .trim()
-                  .toLowerCase() ===
-                'published';
-
-
-              return (
-                sameCountry &&
-                published
-              );
-
-            }
-          );
-
-
-        const universityIds =
-          new Set(
-            filteredUniversities.map(
-              item => item.id
-            )
-          );
-
-
-        const filteredCourses =
-          courseList.filter(
-            course =>
-              universityIds.has(
-                course.university_id
-              ) &&
-              String(
-                course.status || ''
-              )
-                .trim()
-                .toLowerCase() ===
-                'published'
-          );
-
-
         if (!cancelled) {
 
           setUniversities(
-            filteredUniversities
+            universityList
           );
 
           setCourses(
-            filteredCourses
+            courseList
+          );
+
+          setCountryPage(
+            pageData
           );
 
         }
 
       }
+
       catch (err) {
+
+        console.error(
+          'Country page load error:',
+          err
+        );
+
 
         if (!cancelled) {
 
@@ -427,6 +550,7 @@ export default function DynamicCountryPage() {
         }
 
       }
+
       finally {
 
         if (!cancelled) {
@@ -445,22 +569,57 @@ export default function DynamicCountryPage() {
       cancelled = true;
     };
 
-  }, [countryName]);
+  }, [
+    country,
+    countryName
+  ]);
 
+
+  /* =======================================================
+     STUDY TRACK
+  ======================================================= */
 
   const stream =
     useMemo(() => {
 
-      const first =
-        universities[0];
-
       return (
-        first?.stream ||
+        countryPage?.stream ||
+        universities[0]?.stream ||
         'International Study'
       );
 
-    }, [universities]);
+    }, [
+      countryPage,
+      universities
+    ]);
 
+
+  /* =======================================================
+     HERO CONTENT
+  ======================================================= */
+
+  const heroImage =
+    countryPage?.hero_image_url ||
+    null;
+
+
+  const headline =
+    countryPage?.headline ||
+    (
+      stream === 'MBBS'
+        ? `Study MBBS in ${countryName}.`
+        : `Study in ${countryName}.`
+    );
+
+
+  const description =
+    countryPage?.description ||
+    `Explore published universities and programmes currently available through Route Your Career. Compare location, programme, duration and tuition before building your route.`;
+
+
+  /* =======================================================
+     PAGE TITLE
+  ======================================================= */
 
   useEffect(() => {
 
@@ -480,84 +639,432 @@ export default function DynamicCountryPage() {
       <Navbar />
 
 
-      {/* HERO */}
+      {/* ===================================================
+          HERO
+      =================================================== */}
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-12">
+      <section
+        className="
+          max-w-7xl
+          mx-auto
 
-        <div className="max-w-4xl">
+          px-4
+          sm:px-6
 
-          <div className="text-[10px] mono uppercase tracking-[0.2em] text-coral">
+          pt-10
+          sm:pt-14
 
-            {stream} · {countryName}
+          pb-10
+          sm:pb-12
+        "
+      >
+
+        <div
+          className={`
+            grid
+
+            gap-8
+            lg:gap-12
+
+            items-center
+
+            ${
+              heroImage
+                ? 'lg:grid-cols-[0.88fr_1.12fr]'
+                : 'grid-cols-1'
+            }
+          `}
+        >
+
+
+          {/* =================================================
+              HERO TEXT
+          ================================================= */}
+
+          <div
+            className={
+              heroImage
+                ? ''
+                : 'max-w-4xl'
+            }
+          >
+
+            <div
+              className="
+                text-[10px]
+
+                mono
+                uppercase
+
+                tracking-[0.20em]
+
+                text-coral
+              "
+            >
+
+              {stream} · {countryName}
+
+            </div>
+
+
+            <h1
+              className="
+                serif
+
+                text-5xl
+                sm:text-6xl
+                lg:text-[72px]
+
+                leading-[0.96]
+
+                mt-4
+              "
+            >
+
+              {headline}
+
+            </h1>
+
+
+            <p
+              className="
+                mt-5
+
+                text-[14px]
+                sm:text-[15px]
+
+                leading-relaxed
+
+                text-ink/60
+
+                max-w-2xl
+              "
+            >
+
+              {description}
+
+            </p>
+
+
+            <div
+              className="
+                mt-7
+
+                flex
+                flex-wrap
+
+                gap-3
+              "
+            >
+
+              <Link
+                to="/build-my-route"
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+
+                  rounded-full
+
+                  bg-ink
+                  hover:bg-forest
+
+                  text-cream
+
+                  px-5
+                  py-3
+
+                  text-[12px]
+                  font-semibold
+
+                  transition
+                "
+              >
+
+                <Route className="h-4 w-4" />
+
+                Career Guide
+
+              </Link>
+
+
+              <Link
+                to="/start-application"
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+
+                  rounded-full
+
+                  border
+                  border-ink/15
+
+                  bg-white
+
+                  px-5
+                  py-3
+
+                  text-[12px]
+                  font-semibold
+
+                  hover:border-coral
+
+                  transition
+                "
+              >
+
+                Start Application
+
+                <ArrowUpRight className="h-3.5 w-3.5" />
+
+              </Link>
+
+            </div>
 
           </div>
 
 
-          <h1 className="serif text-5xl sm:text-6xl lg:text-7xl leading-[0.95] mt-4">
+          {/* =================================================
+              HERO IMAGE
+          ================================================= */}
 
-            Study in {countryName}.
+          {heroImage && (
 
-          </h1>
+            <div className="relative">
+
+              <div
+                className="
+                  relative
+
+                  rounded-[30px]
+
+                  overflow-hidden
+
+                  bg-ink/5
+
+                  aspect-[16/10]
+
+                  shadow-sm
+
+                  border
+                  border-ink/10
+                "
+              >
+
+                <img
+                  src={heroImage}
+                  alt={`Study in ${countryName}`}
+                  className="
+                    absolute
+                    inset-0
+
+                    w-full
+                    h-full
+
+                    object-cover
+                  "
+                  onError={event => {
+
+                    console.error(
+                      'Hero image failed:',
+                      heroImage
+                    );
+
+                    event.currentTarget.style.display =
+                      'none';
+
+                  }}
+                />
 
 
-          <p className="mt-5 text-[14px] sm:text-[15px] leading-relaxed text-ink/60 max-w-3xl">
+                {/* GRADIENT */}
 
-            Explore published universities and programmes
-            currently available through Route Your Career.
+                <div
+                  className="
+                    absolute
+                    inset-x-0
+                    bottom-0
 
-            Compare location, programme, duration and tuition
-            before building your route.
+                    h-[38%]
 
-          </p>
+                    bg-gradient-to-t
+                    from-black/45
+                    via-black/10
+                    to-transparent
 
-
-          <div className="mt-7 flex flex-wrap gap-3">
-
-            <Link
-              to="/build-my-route"
-              className="inline-flex items-center gap-2 rounded-full bg-ink text-cream px-5 py-3 text-[12px] font-semibold"
-            >
-
-              <Route className="h-4 w-4" />
-
-              Build My Route
-
-            </Link>
+                    pointer-events-none
+                  "
+                />
 
 
-            <Link
-              to="/start-application"
-              className="inline-flex items-center gap-2 rounded-full border border-ink/15 bg-white px-5 py-3 text-[12px] font-semibold"
-            >
+                {/* COUNTRY LABEL */}
 
-              Start Application
+                <div
+                  className="
+                    absolute
 
-            </Link>
+                    left-5
+                    bottom-5
+                  "
+                >
 
-          </div>
+                  <div
+                    className="
+                      rounded-full
+
+                      bg-white/90
+
+                      backdrop-blur
+
+                      px-4
+                      py-2
+
+                      text-[9px]
+
+                      mono
+                      uppercase
+
+                      tracking-widest
+
+                      text-ink
+
+                      shadow-sm
+                    "
+                  >
+
+                    Explore {countryName}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {/* CORAL ACCENT */}
+
+              <div
+                className="
+                  absolute
+
+                  -bottom-3
+                  -left-3
+
+                  hidden
+                  sm:block
+
+                  rounded-2xl
+
+                  bg-coral
+
+                  text-white
+
+                  px-4
+                  py-3
+
+                  shadow-lg
+                "
+              >
+
+                <div
+                  className="
+                    text-[8px]
+
+                    mono
+                    uppercase
+
+                    tracking-widest
+                  "
+                >
+                  Route Your Career
+                </div>
+
+
+                <div
+                  className="
+                    text-[11px]
+
+                    font-semibold
+
+                    mt-1
+                  "
+                >
+                  Compare before you apply
+                </div>
+
+              </div>
+
+            </div>
+
+          )}
 
         </div>
 
       </section>
 
 
-
-      {/* STATS */}
+      {/* ===================================================
+          STATS
+      =================================================== */}
 
       {!loading &&
         universities.length > 0 && (
 
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
+          <section
+            className="
+              max-w-7xl
+              mx-auto
 
-            <div className="grid sm:grid-cols-3 rounded-3xl bg-white border border-ink/10 overflow-hidden">
+              px-4
+              sm:px-6
 
-              <div className="p-5 border-r border-ink/10">
+              pb-12
+            "
+          >
 
-                <div className="text-[9px] mono uppercase tracking-widest text-ink/35">
+            <div
+              className="
+                grid
+                sm:grid-cols-3
 
+                rounded-3xl
+
+                bg-white
+
+                border
+                border-ink/10
+
+                overflow-hidden
+              "
+            >
+
+
+              <div
+                className="
+                  p-5
+                  sm:p-6
+
+                  sm:border-r
+                  border-ink/10
+                "
+              >
+
+                <div
+                  className="
+                    text-[9px]
+
+                    mono
+                    uppercase
+
+                    tracking-widest
+
+                    text-ink/35
+                  "
+                >
                   Universities
-
                 </div>
+
 
                 <div className="serif text-3xl mt-1">
 
@@ -568,13 +1075,35 @@ export default function DynamicCountryPage() {
               </div>
 
 
-              <div className="p-5 border-r border-ink/10">
+              <div
+                className="
+                  p-5
+                  sm:p-6
 
-                <div className="text-[9px] mono uppercase tracking-widest text-ink/35">
+                  border-t
+                  sm:border-t-0
 
+                  sm:border-r
+
+                  border-ink/10
+                "
+              >
+
+                <div
+                  className="
+                    text-[9px]
+
+                    mono
+                    uppercase
+
+                    tracking-widest
+
+                    text-ink/35
+                  "
+                >
                   Published programmes
-
                 </div>
+
 
                 <div className="serif text-3xl mt-1">
 
@@ -585,13 +1114,31 @@ export default function DynamicCountryPage() {
               </div>
 
 
-              <div className="p-5">
+              <div
+                className="
+                  p-5
+                  sm:p-6
 
-                <div className="text-[9px] mono uppercase tracking-widest text-ink/35">
+                  border-t
+                  sm:border-t-0
+                "
+              >
 
+                <div
+                  className="
+                    text-[9px]
+
+                    mono
+                    uppercase
+
+                    tracking-widest
+
+                    text-ink/35
+                  "
+                >
                   Study track
-
                 </div>
+
 
                 <div className="serif text-2xl mt-1">
 
@@ -601,6 +1148,7 @@ export default function DynamicCountryPage() {
 
               </div>
 
+
             </div>
 
           </section>
@@ -608,65 +1156,145 @@ export default function DynamicCountryPage() {
         )}
 
 
+      {/* ===================================================
+          UNIVERSITIES
+      =================================================== */}
 
-      {/* UNIVERSITIES */}
+      <section
+        className="
+          max-w-7xl
+          mx-auto
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
+          px-4
+          sm:px-6
 
-        <div className="flex items-end justify-between gap-4 flex-wrap">
+          pb-20
+        "
+      >
 
-          <div>
+        <div>
 
-            <div className="text-[10px] mono uppercase tracking-widest text-coral flex items-center gap-2">
+          <div
+            className="
+              text-[10px]
 
-              <Building2 className="h-4 w-4" />
+              mono
+              uppercase
 
-              Universities
+              tracking-widest
 
-            </div>
+              text-coral
 
+              flex
+              items-center
+              gap-2
+            "
+          >
 
-            <h2 className="serif text-4xl sm:text-5xl mt-2">
+            <Building2 className="h-4 w-4" />
 
-              Explore universities in {countryName}.
-
-            </h2>
+            Universities
 
           </div>
+
+
+          <h2
+            className="
+              serif
+
+              text-4xl
+              sm:text-5xl
+
+              mt-2
+            "
+          >
+
+            Explore universities in {countryName}.
+
+          </h2>
 
         </div>
 
 
+        {/* LOADING */}
 
         {loading && (
 
-          <div className="mt-8 rounded-3xl bg-white border border-ink/10 p-10 text-center text-[13px] text-ink/50">
+          <div
+            className="
+              mt-8
 
+              rounded-3xl
+
+              bg-white
+
+              border
+              border-ink/10
+
+              p-10
+
+              text-center
+
+              text-[13px]
+
+              text-ink/50
+            "
+          >
             Loading universities…
-
           </div>
 
         )}
 
 
+        {/* ERROR */}
 
         {error && (
 
-          <div className="mt-8 rounded-3xl bg-red-50 border border-red-200 p-6 text-[12px] text-red-700">
+          <div
+            className="
+              mt-8
 
+              rounded-3xl
+
+              bg-red-50
+
+              border
+              border-red-200
+
+              p-6
+
+              text-[12px]
+
+              text-red-700
+            "
+          >
             {error}
-
           </div>
 
         )}
 
 
+        {/* EMPTY */}
 
         {!loading &&
           !error &&
           universities.length === 0 && (
 
-            <div className="mt-8 rounded-3xl bg-white border border-ink/10 p-8 sm:p-10">
+            <div
+              className="
+                mt-8
+
+                rounded-3xl
+
+                bg-white
+
+                border
+                border-ink/10
+
+                p-8
+                sm:p-10
+              "
+            >
 
               <GraduationCap className="h-7 w-7 text-coral" />
 
@@ -678,21 +1306,48 @@ export default function DynamicCountryPage() {
               </h3>
 
 
-              <p className="mt-2 text-[12px] text-ink/55 max-w-xl">
+              <p
+                className="
+                  mt-2
+
+                  text-[12px]
+
+                  text-ink/55
+
+                  max-w-xl
+                "
+              >
 
                 There are currently no published university
-                records for {countryName}. Contact RYC or use
-                Build My Route to discuss available options.
+                records for {countryName}. Use Career Guide
+                to discuss available options.
 
               </p>
 
 
               <Link
                 to="/build-my-route"
-                className="mt-5 inline-flex items-center gap-2 rounded-full bg-ink text-cream px-5 py-3 text-[11px] font-semibold"
+                className="
+                  mt-5
+
+                  inline-flex
+                  items-center
+                  gap-2
+
+                  rounded-full
+
+                  bg-ink
+                  text-cream
+
+                  px-5
+                  py-3
+
+                  text-[11px]
+                  font-semibold
+                "
               >
 
-                Build My Route
+                Career Guide
 
               </Link>
 
@@ -701,12 +1356,24 @@ export default function DynamicCountryPage() {
           )}
 
 
+        {/* UNIVERSITY GRID */}
 
         {!loading &&
           !error &&
           universities.length > 0 && (
 
-            <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div
+              className="
+                mt-8
+
+                grid
+
+                md:grid-cols-2
+                lg:grid-cols-3
+
+                gap-5
+              "
+            >
 
               {universities.map(
                 university => (
@@ -727,7 +1394,21 @@ export default function DynamicCountryPage() {
 
         {/* NOTE */}
 
-        <div className="mt-8 flex items-start gap-2 text-[10px] text-ink/40 max-w-3xl">
+        <div
+          className="
+            mt-8
+
+            flex
+            items-start
+            gap-2
+
+            text-[10px]
+
+            text-ink/40
+
+            max-w-3xl
+          "
+        >
 
           <WalletCards className="h-4 w-4 shrink-0" />
 
