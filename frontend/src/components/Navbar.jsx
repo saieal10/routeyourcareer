@@ -40,7 +40,7 @@ export default function Navbar() {
 
 
   /* =========================================================
-     MANAGEMENT LINKS
+     MANAGEMENT
   ========================================================= */
 
   const managementLinks = [
@@ -63,10 +63,6 @@ export default function Navbar() {
   ];
 
 
-  /* =========================================================
-     ACTIVE LINK
-  ========================================================= */
-
   const isActive = (path) => {
 
     if (path === '/') {
@@ -76,10 +72,6 @@ export default function Navbar() {
     return location.pathname.startsWith(path);
   };
 
-
-  /* =========================================================
-     CLOSE MOBILE MENU
-  ========================================================= */
 
   const closeMobile = () => {
     setMobileOpen(false);
@@ -98,9 +90,7 @@ export default function Navbar() {
           <div className="h-[78px] flex items-center justify-between gap-5">
 
 
-            {/* =================================================
-                LOGO
-            ================================================= */}
+            {/* LOGO */}
 
             <Link
               to="/"
@@ -135,15 +125,13 @@ export default function Navbar() {
 
 
             {/* =================================================
-                DESKTOP NAVIGATION
+                DESKTOP
             ================================================= */}
 
             <nav className="hidden xl:flex items-center gap-1 text-[13px]">
 
 
-              {/* =================================================
-                  MBBS DROPDOWN
-              ================================================= */}
+              {/* MBBS */}
 
               <div
                 className="relative"
@@ -178,8 +166,14 @@ export default function Navbar() {
 
                           <Link
                             key={country.slug}
-                            to={`/country/${country.slug}`}
+
+                            /* IMPORTANT:
+                               NEW DATABASE COUNTRY ROUTE
+                            */
+                            to={`/countries/${country.slug}`}
+
                             onClick={closeMobile}
+
                             className="flex items-center justify-between px-4 py-2.5 hover:bg-cream transition"
                           >
 
@@ -204,9 +198,7 @@ export default function Navbar() {
               </div>
 
 
-              {/* =================================================
-                  MANAGEMENT DROPDOWN
-              ================================================= */}
+              {/* MANAGEMENT */}
 
               <div
                 className="relative"
@@ -264,15 +256,12 @@ export default function Navbar() {
               </div>
 
 
-              {/* =================================================
-                  CAREER GUIDE
-              ================================================= */}
+              {/* CAREER GUIDE */}
 
               <Link
                 to="/build-my-route"
                 className={`
                   rounded-full px-3 py-2 transition
-
                   ${
                     isActive('/build-my-route')
                       ? 'bg-ink text-cream'
@@ -284,15 +273,12 @@ export default function Navbar() {
               </Link>
 
 
-              {/* =================================================
-                  QUIZ
-              ================================================= */}
+              {/* QUIZ */}
 
               <Link
                 to="/quiz"
                 className={`
                   rounded-full px-3 py-2 transition
-
                   ${
                     isActive('/quiz')
                       ? 'bg-ink text-cream'
@@ -304,63 +290,42 @@ export default function Navbar() {
               </Link>
 
 
-              {/* =================================================
-                  CALCULATOR
-              ================================================= */}
+              {/* CALCULATOR */}
 
               <Link
                 to="/calculator"
-                className={`
-                  rounded-full px-3 py-2 transition
-
-                  ${
-                    isActive('/calculator')
-                      ? 'bg-ink text-cream'
-                      : 'hover:bg-ink/5'
-                  }
-                `}
+                className="rounded-full px-3 py-2 hover:bg-ink/5 transition"
               >
                 Calculator
               </Link>
 
 
-              {/* =================================================
-                  BLOG
-
-                  Blog is currently a section on the homepage.
-              ================================================= */}
+              {/* BLOG */}
 
               <a
                 href="/#blog"
-                className="rounded-full px-3 py-2 transition hover:bg-ink/5"
+                className="rounded-full px-3 py-2 hover:bg-ink/5 transition"
               >
                 Blog
               </a>
 
 
-              {/* =================================================
-                  STATES
-
-                  States is currently a section on the homepage.
-              ================================================= */}
+              {/* STATES */}
 
               <a
                 href="/#states"
-                className="rounded-full px-3 py-2 transition hover:bg-ink/5"
+                className="rounded-full px-3 py-2 hover:bg-ink/5 transition"
               >
                 States
               </a>
 
 
-              {/* =================================================
-                  TRACK APPLICATION
-              ================================================= */}
+              {/* TRACK APPLICATION */}
 
               <Link
                 to="/track-application"
                 className={`
                   rounded-full px-3 py-2 transition
-
                   ${
                     isActive('/track-application')
                       ? 'bg-ink text-cream'
@@ -374,9 +339,7 @@ export default function Navbar() {
             </nav>
 
 
-            {/* =================================================
-                DESKTOP RIGHT SIDE
-            ================================================= */}
+            {/* RIGHT */}
 
             <div className="hidden xl:flex items-center gap-4 shrink-0">
 
@@ -400,9 +363,7 @@ export default function Navbar() {
             </div>
 
 
-            {/* =================================================
-                MOBILE MENU BUTTON
-            ================================================= */}
+            {/* MOBILE BUTTON */}
 
             <button
               type="button"
@@ -425,7 +386,7 @@ export default function Navbar() {
 
 
         {/* ===================================================
-            MOBILE NAVIGATION
+            MOBILE MENU
         =================================================== */}
 
         {mobileOpen && (
@@ -434,10 +395,6 @@ export default function Navbar() {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
 
-
-              {/* =================================================
-                  CAREER GUIDE
-              ================================================= */}
 
               <Link
                 to="/build-my-route"
@@ -450,9 +407,7 @@ export default function Navbar() {
               </Link>
 
 
-              {/* =================================================
-                  MBBS MOBILE
-              ================================================= */}
+              {/* MOBILE MBBS */}
 
               <div className="mt-3 border border-ink/10 rounded-2xl bg-white overflow-hidden">
 
@@ -480,8 +435,12 @@ export default function Navbar() {
 
                       <Link
                         key={country.slug}
-                        to={`/country/${country.slug}`}
+
+                        /* DATABASE COUNTRY ROUTE */
+                        to={`/countries/${country.slug}`}
+
                         onClick={closeMobile}
+
                         className="block px-4 py-3 text-[13px] border-b border-ink/5 last:border-0"
                       >
                         MBBS in {country.name}
@@ -496,9 +455,7 @@ export default function Navbar() {
               </div>
 
 
-              {/* =================================================
-                  MANAGEMENT MOBILE
-              ================================================= */}
+              {/* MOBILE MANAGEMENT */}
 
               <div className="mt-3 border border-ink/10 rounded-2xl bg-white overflow-hidden">
 
@@ -528,21 +485,7 @@ export default function Navbar() {
                         key={item.name}
                         to={item.path}
                         onClick={closeMobile}
-                        className={`
-                          block
-                          px-4
-                          py-3
-                          text-[13px]
-                          border-b
-                          border-ink/5
-                          last:border-0
-
-                          ${
-                            item.name === 'Italy — Course Finder'
-                              ? 'text-coral font-semibold'
-                              : ''
-                          }
-                        `}
+                        className="block px-4 py-3 text-[13px] border-b border-ink/5 last:border-0"
                       >
                         {item.name}
                       </Link>
@@ -556,12 +499,9 @@ export default function Navbar() {
               </div>
 
 
-              {/* =================================================
-                  OTHER MOBILE LINKS
-              ================================================= */}
+              {/* OTHER LINKS */}
 
               <div className="mt-3 rounded-2xl border border-ink/10 bg-white overflow-hidden">
-
 
                 <Link
                   to="/quiz"
@@ -572,17 +512,6 @@ export default function Navbar() {
                 </Link>
 
 
-                <Link
-                  to="/calculator"
-                  onClick={closeMobile}
-                  className="block px-4 py-3.5 border-b border-ink/5"
-                >
-                  Calculator
-                </Link>
-
-
-                {/* BLOG */}
-
                 <a
                   href="/#blog"
                   onClick={closeMobile}
@@ -591,8 +520,6 @@ export default function Navbar() {
                   Blog
                 </a>
 
-
-                {/* STATES */}
 
                 <a
                   href="/#states"
@@ -614,10 +541,6 @@ export default function Navbar() {
               </div>
 
 
-              {/* =================================================
-                  PHONE
-              ================================================= */}
-
               <a
                 href={`tel:${brand.phone}`}
                 className="mt-5 block text-center text-[13px] font-semibold"
@@ -625,10 +548,6 @@ export default function Navbar() {
                 {brand.phoneDisplay}
               </a>
 
-
-              {/* =================================================
-                  START APPLICATION
-              ================================================= */}
 
               <Link
                 to="/start-application"
