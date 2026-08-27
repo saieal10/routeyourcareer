@@ -14,6 +14,7 @@ import {
   Copy,
   Eye,
   GraduationCap,
+  Image as ImageIcon,
   LayoutDashboard,
   LogOut,
   Mail,
@@ -87,6 +88,17 @@ const EMPTY_UNIVERSITY = {
   image_url: '',
   overview: '',
   featured: false,
+  status: 'draft'
+};
+
+
+const EMPTY_COUNTRY_PAGE = {
+  country: 'Georgia',
+  slug: 'georgia',
+  stream: 'MBBS',
+  hero_image_url: '',
+  headline: '',
+  description: '',
   status: 'draft'
 };
 
@@ -422,6 +434,15 @@ export default function AdminDashboard() {
   });
   const [openUniversityCountries, setOpenUniversityCountries] = useState({});
 
+  // COUNTRY PAGE HERO SETTINGS
+  const [countryPages, setCountryPages] = useState([]);
+  const [loadingCountryPages, setLoadingCountryPages] = useState(false);
+  const [countryPageEditorOpen, setCountryPageEditorOpen] = useState(false);
+  const [editingCountryPageId, setEditingCountryPageId] = useState(null);
+  const [countryPageForm, setCountryPageForm] = useState(EMPTY_COUNTRY_PAGE);
+  const [countryPageError, setCountryPageError] = useState('');
+  const [savingCountryPage, setSavingCountryPage] = useState(false);
+
   const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [courseEditorOpen, setCourseEditorOpen] = useState(false);
@@ -556,6 +577,22 @@ export default function AdminDashboard() {
     }
   }, [user]);
 
+  const loadCountryPages = useCallback(async () => {
+    if (!user) return;
+
+    setLoadingCountryPages(true);
+    setCountryPageError('');
+
+    try {
+      const data = await adminFetch('/api/admin/country-pages');
+      setCountryPages(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setCountryPageError(e.message || 'Could not load country pages.');
+    } finally {
+      setLoadingCountryPages(false);
+    }
+  }, [user]);
+
   const loadCourses = useCallback(async () => {
     if (!user) return;
     setLoadingCourses(true);
@@ -580,6 +617,7 @@ export default function AdminDashboard() {
     loadNewsletter();
     loadBlogs();
     loadUniversities();
+    loadCountryPages();
     loadCourses();
   }, [
     user,
@@ -587,6 +625,7 @@ export default function AdminDashboard() {
     loadNewsletter,
     loadBlogs,
     loadUniversities,
+    loadCountryPages,
     loadCourses
   ]);
 
@@ -1284,6 +1323,108 @@ export default function AdminDashboard() {
   };
 
   // =====================================================
+  // COUNTRY PAGES / HERO IMAGES
+  // =====================================================
+
+  const openNewCountryPage = () => {
+    setEditingCountryPageId(null);
+    setCountryPageForm({ ...EMPTY_COUNTRY_PAGE });
+    setCountryPageError('');
+    setCountryPageEditorOpen(true);
+  };
+
+  const openEditCountryPage = item => {
+    setEditingCountryPageId(item.id);
+    setCountryPageError('');
+    setCountryPageForm({
+      country: item.country || '',
+      slug: item.slug || '',
+      stream: item.stream || 'MBBS',
+      hero_image_url: item.hero_image_url || '',
+      headline: item.headline || '',
+      description: item.description || '',
+      status: item.status || 'draft'
+    });
+    setCountryPageEditorOpen(true);
+  };
+
+  const saveCountryPage = async status => {
+    setCountryPageError('');
+
+    if (!countryPageForm.country.trim()) {
+      setCountryPageError('Country is required.');
+      return;
+    }
+
+    if (!countryPageForm.hero_image_url.trim()) {
+      setCountryPageError('Hero image URL is required.');
+      return;
+    }
+
+    const payload = {
+      country: countryPageForm.country.trim(),
+      slug: slugify(countryPageForm.slug || countryPageForm.country),
+      stream: countryPageForm.stream || 'MBBS',
+      hero_image_url: countryPageForm.hero_image_url.trim(),
+      headline: countryPageForm.headline.trim() || null,
+      description: countryPageForm.description.trim() || null,
+      status
+    };
+
+    setSavingCountryPage(true);
+
+    try {
+      if (editingCountryPageId) {
+        await adminFetch(`/api/admin/country-pages/${editingCountryPageId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await adminFetch('/api/admin/country-pages', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+      }
+
+      await loadCountryPages();
+      setCountryPageEditorOpen(false);
+    } catch (e) {
+      setCountryPageError(e.message || 'Could not save country page.');
+    } finally {
+      setSavingCountryPage(false);
+    }
+  };
+
+  const toggleCountryPageStatus = async item => {
+    try {
+      await adminFetch(`/api/admin/country-pages/${item.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          status: item.status === 'published' ? 'draft' : 'published'
+        })
+      });
+      await loadCountryPages();
+    } catch (e) {
+      setCountryPageError(e.message || 'Could not update country page.');
+    }
+  };
+
+  const deleteCountryPage = async item => {
+    if (!window.confirm(`Delete country page settings for "${item.country}"?`)) {
+      return;
+    }
+
+    try {
+      await adminFetch(`/api/admin/country-pages/${item.id}`, {
+        method: 'DELETE'
+      });
+      await loadCountryPages();
+    } catch (e) {
+      setCountryPageError(e.message || 'Could not delete country page.');
+    }
+  };
+
+  // =====================================================
   // UNIVERSITY MASTER
   // =====================================================
 
@@ -1789,6 +1930,7 @@ export default function AdminDashboard() {
     loadNewsletter();
     loadBlogs();
     loadUniversities();
+    loadCountryPages();
     loadCourses();
   };
 
@@ -1830,6 +1972,7 @@ export default function AdminDashboard() {
     ['newsletter', 'Newsletter', Mail],
     ['blogs', 'Blogs', BookOpen],
     ['universities', 'Universities', GraduationCap],
+    ['country_pages', 'Country Pages', ImageIcon],
     ['courses', 'Courses', FileText]
   ];
 
@@ -2432,6 +2575,147 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+          </>
+        )}
+
+        {/* COUNTRY PAGES */}
+        {section === 'country_pages' && (
+          <>
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                  Destination Design
+                </div>
+
+                <h1 className="serif text-4xl sm:text-5xl mt-1">
+                  Country Pages.
+                </h1>
+
+                <p className="mt-2 text-[13px] text-ink/60 max-w-2xl">
+                  Add one hero image and optional headline for each destination. University images remain separate.
+                </p>
+              </div>
+
+              <button
+                onClick={openNewCountryPage}
+                className="inline-flex items-center gap-2 rounded-full bg-coral text-white px-5 py-3 text-[13px] font-bold"
+              >
+                <Plus className="h-4 w-4" />
+                Add Country Page
+              </button>
+            </div>
+
+            {countryPageError && !countryPageEditorOpen && (
+              <div className="mt-4 rounded-xl bg-red-50 text-red-700 p-3 text-[12px]">
+                {countryPageError}
+              </div>
+            )}
+
+            {loadingCountryPages && (
+              <div className="mt-6 rounded-3xl bg-white border border-ink/10 p-8 text-center text-ink/50">
+                Loading country pages…
+              </div>
+            )}
+
+            {!loadingCountryPages && countryPages.length === 0 && (
+              <div className="mt-6 rounded-3xl bg-white border border-ink/10 p-8 text-center">
+                <ImageIcon className="h-7 w-7 text-coral mx-auto" />
+                <div className="serif text-2xl mt-3">No country heroes yet.</div>
+                <p className="mt-2 text-[12px] text-ink/50">
+                  Add Georgia first, publish it, then repeat for other countries.
+                </p>
+              </div>
+            )}
+
+            {!loadingCountryPages && countryPages.length > 0 && (
+              <div className="mt-6 grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {countryPages.map(item => (
+                  <article
+                    key={item.id}
+                    className="rounded-3xl bg-white border border-ink/10 overflow-hidden"
+                  >
+                    <div className="aspect-[16/9] bg-ink/5 overflow-hidden">
+                      {item.hero_image_url ? (
+                        <img
+                          src={item.hero_image_url}
+                          alt={item.country}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full grid place-items-center text-ink/30">
+                          <ImageIcon className="h-8 w-8" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[9px] mono uppercase tracking-widest text-coral">
+                          {item.stream || 'MBBS'}
+                        </span>
+
+                        <span
+                          className={`rounded-full px-2 py-1 text-[9px] font-semibold ${
+                            item.status === 'published'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-amber-50 text-amber-700'
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      </div>
+
+                      <h3 className="serif text-2xl mt-2">{item.country}</h3>
+
+                      <div className="mt-1 text-[10px] text-ink/40">
+                        /countries/{item.slug}
+                      </div>
+
+                      {item.headline && (
+                        <p className="mt-3 text-[12px] text-ink/60 line-clamp-2">
+                          {item.headline}
+                        </p>
+                      )}
+
+                      <div className="mt-5 flex items-center gap-2">
+                        <button
+                          onClick={() => openEditCountryPage(item)}
+                          className="h-9 w-9 rounded-full border border-ink/10 grid place-items-center hover:bg-cream"
+                          aria-label={`Edit ${item.country}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          onClick={() => toggleCountryPageStatus(item)}
+                          className="rounded-full border border-ink/10 px-3 py-2 text-[10px] font-semibold hover:bg-cream"
+                        >
+                          {item.status === 'published' ? 'Unpublish' : 'Publish'}
+                        </button>
+
+                        <a
+                          href={`/countries/${item.slug}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-9 w-9 rounded-full border border-ink/10 grid place-items-center hover:bg-cream"
+                          aria-label={`View ${item.country} page`}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </a>
+
+                        <button
+                          onClick={() => deleteCountryPage(item)}
+                          className="ml-auto h-9 w-9 rounded-full border border-red-200 text-red-600 grid place-items-center hover:bg-red-50"
+                          aria-label={`Delete ${item.country}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </>
         )}
 
@@ -3626,6 +3910,176 @@ export default function AdminDashboard() {
               className="rounded-full bg-coral text-white px-5 py-3 text-[12px] font-bold"
             >
               {savingBlog ? 'Saving…' : 'Publish'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* COUNTRY PAGE EDITOR */}
+      {countryPageEditorOpen && (
+        <Modal
+          title={editingCountryPageId ? 'Edit country page' : 'Add country page'}
+          subtitle="One country-level hero image. This does not replace university images."
+          onClose={() => setCountryPageEditorOpen(false)}
+        >
+          {countryPageError && (
+            <div className="mb-4 rounded-xl bg-red-50 text-red-700 p-3 text-[12px]">
+              {countryPageError}
+            </div>
+          )}
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Country *">
+              <input
+                value={countryPageForm.country}
+                onChange={e =>
+                  setCountryPageForm(old => ({
+                    ...old,
+                    country: e.target.value,
+                    slug:
+                      editingCountryPageId && old.slug
+                        ? old.slug
+                        : slugify(e.target.value)
+                  }))
+                }
+                placeholder="Georgia"
+                className={inputClass}
+              />
+            </Field>
+
+            <Field label="Study track">
+              <select
+                value={countryPageForm.stream}
+                onChange={e =>
+                  setCountryPageForm(old => ({
+                    ...old,
+                    stream: e.target.value
+                  }))
+                }
+                className={inputClass}
+              >
+                <option>MBBS</option>
+                <option>Management</option>
+                <option>Other</option>
+              </select>
+            </Field>
+
+            <Field label="Slug" hint="Example: georgia → /countries/georgia">
+              <input
+                value={countryPageForm.slug}
+                onChange={e =>
+                  setCountryPageForm(old => ({
+                    ...old,
+                    slug: e.target.value
+                  }))
+                }
+                className={inputClass}
+              />
+            </Field>
+
+            <Field label="Status">
+              <select
+                value={countryPageForm.status}
+                onChange={e =>
+                  setCountryPageForm(old => ({
+                    ...old,
+                    status: e.target.value
+                  }))
+                }
+                className={inputClass}
+              >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </Field>
+          </div>
+
+          <div className="mt-4">
+            <Field
+              label="Hero image URL *"
+              hint="Paste a direct public JPG, PNG or WebP URL. Recommended landscape image: about 1600 × 900 px."
+            >
+              <input
+                value={countryPageForm.hero_image_url}
+                onChange={e =>
+                  setCountryPageForm(old => ({
+                    ...old,
+                    hero_image_url: e.target.value
+                  }))
+                }
+                placeholder="https://.../georgia-hero.jpg"
+                className={inputClass}
+              />
+            </Field>
+          </div>
+
+          {countryPageForm.hero_image_url && (
+            <div className="mt-4 rounded-2xl overflow-hidden border border-ink/10 bg-white">
+              <div className="aspect-[16/9] bg-ink/5">
+                <img
+                  src={countryPageForm.hero_image_url}
+                  alt="Country hero preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <Field
+              label="Headline"
+              hint="Optional. Leave blank and the website can generate a default heading."
+            >
+              <input
+                value={countryPageForm.headline}
+                onChange={e =>
+                  setCountryPageForm(old => ({
+                    ...old,
+                    headline: e.target.value
+                  }))
+                }
+                placeholder="Study MBBS in Georgia."
+                className={inputClass}
+              />
+            </Field>
+          </div>
+
+          <div className="mt-4">
+            <Field
+              label="Description"
+              hint="Optional short introduction below the country heading."
+            >
+              <textarea
+                value={countryPageForm.description}
+                onChange={e =>
+                  setCountryPageForm(old => ({
+                    ...old,
+                    description: e.target.value
+                  }))
+                }
+                placeholder="Explore published universities, fees and programmes in Georgia."
+                className={textareaClass}
+              />
+            </Field>
+          </div>
+
+          <div className="mt-6 flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => saveCountryPage('draft')}
+              disabled={savingCountryPage}
+              className="rounded-full border border-ink/15 px-5 py-3 text-[12px] font-semibold disabled:opacity-50"
+            >
+              Save draft
+            </button>
+
+            <button
+              type="button"
+              onClick={() => saveCountryPage('published')}
+              disabled={savingCountryPage}
+              className="rounded-full bg-coral text-white px-5 py-3 text-[12px] font-bold disabled:opacity-50"
+            >
+              {savingCountryPage ? 'Saving…' : 'Publish'}
             </button>
           </div>
         </Modal>
