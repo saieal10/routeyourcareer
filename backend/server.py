@@ -27,7 +27,7 @@ from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Literal
 
 from notifier import notify_new_lead
-
+from country_pages import create_country_pages_router
 
 # =========================================================
 # CONFIGURATION
@@ -8282,6 +8282,10 @@ async def lead_stats_public():
 # =========================================================
 # ROUTER
 # =========================================================
+country_pages_router = create_country_pages_router(
+    db=db,
+    require_admin=require_admin,
+)
 
 app.include_router(
     api_router
