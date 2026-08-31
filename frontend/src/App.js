@@ -9,94 +9,102 @@ import {
   Navigate
 } from 'react-router-dom';
 
+
+/* =========================================================
+   MAIN PAGES
+========================================================= */
+
 import Home from './pages/Home';
 
+
+/* =========================================================
+   COUNTRY PAGES
+========================================================= */
+
+import CountryGeorgia from './pages/CountryGeorgia';
 import CountryItaly from './pages/CountryItaly';
+import CountryUzbekistan from './pages/CountryUzbekistan';
 
 import DynamicCountryPage from './pages/DynamicCountryPage';
 
 import ItalyCourses from './pages/ItalyCourses';
 
+import CountryDetail from './pages/CountryDetail';
+
+
+/* =========================================================
+   ABOUT + FAQ
+========================================================= */
+
+import About from './pages/About';
+import FAQPage from './pages/FAQPage';
+
+
+/* =========================================================
+   BLOG + QUIZ
+========================================================= */
+
+import BlogPost from './pages/BlogPost';
+import CourseFinderQuiz from './pages/CourseFinderQuiz';
+
+
+/* =========================================================
+   ADMIN
+========================================================= */
+
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AuthCallback from './pages/AuthCallback';
 
-import CountryDetail from './pages/CountryDetail';
-import BlogPost from './pages/BlogPost';
-import CourseFinderQuiz from './pages/CourseFinderQuiz';
+
+/* =========================================================
+   V2 PAGES
+========================================================= */
 
 import BuildMyRoute from './pages/BuildMyRoute';
 import TrackApplication from './pages/TrackApplication';
 import StartApplication from './pages/StartApplication';
 
+
+/* =========================================================
+   UI
+========================================================= */
+
 import { Toaster } from './components/ui/toaster';
 
 
 /* =========================================================
-   OLD COUNTRY URL REDIRECTOR
+   LEGACY COUNTRY ROUTER
+
+   Keeps old links such as:
+
+   /country/ge
+   /country/it
+   /country/uz
+   /country/ru
+
+   working.
 ========================================================= */
 
-function LegacyCountryRoute() {
+function DynamicCountryRoute() {
 
-  const location = useLocation();
+  const location =
+    useLocation();
+
 
   const code =
     location.pathname
       .split('/')
-      .filter(Boolean)[1]
-      ?.toLowerCase();
+      .filter(Boolean)[1];
 
 
-  const oldCodeMap = {
+  /* GEORGIA */
 
-    ge: 'georgia',
-    georgia: 'georgia',
-
-    ru: 'russia',
-    russia: 'russia',
-
-    uz: 'uzbekistan',
-    uzbekistan: 'uzbekistan',
-
-    am: 'armenia',
-    armenia: 'armenia',
-
-    tj: 'tajikistan',
-    tajikistan: 'tajikistan',
-
-    kz: 'kazakhstan',
-    kazakhstan: 'kazakhstan',
-
-    kg: 'kyrgyzstan',
-    kyrgyzstan: 'kyrgyzstan',
-
-    md: 'moldova',
-    moldova: 'moldova',
-
-    eg: 'egypt',
-    egypt: 'egypt',
-
-    ie: 'ireland',
-    ireland: 'ireland',
-
-    np: 'nepal',
-    nepal: 'nepal',
-
-    it: 'italy',
-    italy: 'italy'
-
-  };
-
-
-  const country =
-    oldCodeMap[code];
-
-
-  if (country) {
+  if (code === 'ge') {
 
     return (
       <Navigate
-        to={`/countries/${country}`}
+        to="/countries/georgia"
         replace
       />
     );
@@ -104,25 +112,76 @@ function LegacyCountryRoute() {
   }
 
 
+  /* ITALY */
+
+  if (code === 'it') {
+
+    return (
+      <Navigate
+        to="/countries/italy"
+        replace
+      />
+    );
+
+  }
+
+
+  /* UZBEKISTAN */
+
+  if (code === 'uz') {
+
+    return (
+      <Navigate
+        to="/countries/uzbekistan"
+        replace
+      />
+    );
+
+  }
+
+
+  /* RUSSIA */
+
+  if (code === 'ru') {
+
+    return (
+      <Navigate
+        to="/countries/russia"
+        replace
+      />
+    );
+
+  }
+
+
+  /* FALLBACK FOR OLD COUNTRY LINKS */
+
   return <CountryDetail />;
 
 }
 
 
 /* =========================================================
-   ROUTER
+   APP ROUTER
 ========================================================= */
 
 function AppRouter() {
 
-  const location = useLocation();
+  const location =
+    useLocation();
 
 
-  /* GOOGLE CALLBACK */
+  /* =======================================================
+     GOOGLE AUTH CALLBACK
+
+     Keeps your existing Google Admin login callback working.
+  ======================================================= */
 
   if (
     location.hash &&
-    location.hash.includes('session_id=')
+    location.hash.includes(
+      'session_id='
+    )
   ) {
 
     return <AuthCallback />;
@@ -135,7 +194,9 @@ function AppRouter() {
     <Routes>
 
 
-      {/* HOME */}
+      {/* ===================================================
+          HOME
+      =================================================== */}
 
       <Route
         path="/"
@@ -143,7 +204,29 @@ function AppRouter() {
       />
 
 
-      {/* MBBS HOME SECTION */}
+      {/* ===================================================
+          ABOUT ROUTE YOUR CAREER
+      =================================================== */}
+
+      <Route
+        path="/about"
+        element={<About />}
+      />
+
+
+      {/* ===================================================
+          FAQ
+      =================================================== */}
+
+      <Route
+        path="/faq"
+        element={<FAQPage />}
+      />
+
+
+      {/* ===================================================
+          PRIMARY STUDY TRACKS
+      =================================================== */}
 
       <Route
         path="/mbbs"
@@ -156,8 +239,6 @@ function AppRouter() {
       />
 
 
-      {/* MANAGEMENT HOME SECTION */}
-
       <Route
         path="/management"
         element={
@@ -169,7 +250,9 @@ function AppRouter() {
       />
 
 
-      {/* APPLICATION */}
+      {/* ===================================================
+          START APPLICATION
+      =================================================== */}
 
       <Route
         path="/start-application"
@@ -177,7 +260,12 @@ function AppRouter() {
       />
 
 
-      {/* CAREER GUIDE */}
+      {/* ===================================================
+          CAREER GUIDE
+
+          URL stays /build-my-route for compatibility.
+          Navbar can display the name "Career Guide".
+      =================================================== */}
 
       <Route
         path="/build-my-route"
@@ -185,7 +273,9 @@ function AppRouter() {
       />
 
 
-      {/* TRACK */}
+      {/* ===================================================
+          TRACK APPLICATION
+      =================================================== */}
 
       <Route
         path="/track-application"
@@ -194,11 +284,16 @@ function AppRouter() {
 
 
       {/* ===================================================
-          ITALY SPECIAL PAGE
+          DEDICATED COUNTRY PAGES
 
-          Italy remains custom because it has its own
-          management / tuition-free design.
+          These preserve your existing custom pages.
       =================================================== */}
+
+      <Route
+        path="/countries/georgia"
+        element={<CountryGeorgia />}
+      />
+
 
       <Route
         path="/countries/italy"
@@ -206,7 +301,21 @@ function AppRouter() {
       />
 
 
-      {/* ITALY COURSE FINDER */}
+      <Route
+        path="/countries/uzbekistan"
+        element={<CountryUzbekistan />}
+      />
+
+
+      {/* ===================================================
+          ITALY COURSE FINDER
+
+          IMPORTANT:
+          Keep this ABOVE /countries/:country.
+
+          Otherwise "italy/courses" can interfere with
+          dynamic country routing.
+      =================================================== */}
 
       <Route
         path="/countries/italy/courses"
@@ -215,23 +324,22 @@ function AppRouter() {
 
 
       {/* ===================================================
-          ALL OTHER COUNTRIES
+          UNIVERSAL DYNAMIC COUNTRY PAGE
 
-          IMPORTANT:
+          Countries added through Admin can use this.
 
-          Georgia
-          Uzbekistan
-          Russia
-          Armenia
-          Tajikistan
-          Kazakhstan
-          Kyrgyzstan
-          Moldova
-          Egypt
-          Ireland
-          Nepal
+          Examples:
 
-          ALL use MongoDB/Admin data.
+          /countries/russia
+          /countries/philippines
+          /countries/kazakhstan
+          /countries/kyrgyzstan
+          /countries/armenia
+          /countries/germany
+          /countries/australia
+
+          DynamicCountryPage loads the country information,
+          hero and published universities from your backend.
       =================================================== */}
 
       <Route
@@ -240,15 +348,19 @@ function AppRouter() {
       />
 
 
-      {/* OLD LINKS */}
+      {/* ===================================================
+          LEGACY COUNTRY ROUTES
+      =================================================== */}
 
       <Route
         path="/country/:code"
-        element={<LegacyCountryRoute />}
+        element={<DynamicCountryRoute />}
       />
 
 
-      {/* BLOG POSTS */}
+      {/* ===================================================
+          BLOG POSTS
+      =================================================== */}
 
       <Route
         path="/blog/:slug"
@@ -256,7 +368,9 @@ function AppRouter() {
       />
 
 
-      {/* QUIZ */}
+      {/* ===================================================
+          COURSE / CAREER QUIZ
+      =================================================== */}
 
       <Route
         path="/quiz"
@@ -264,7 +378,9 @@ function AppRouter() {
       />
 
 
-      {/* ADMIN */}
+      {/* ===================================================
+          ADMIN DASHBOARD
+      =================================================== */}
 
       <Route
         path="/admin"
@@ -272,11 +388,19 @@ function AppRouter() {
       />
 
 
+      {/* ===================================================
+          ADMIN LOGIN
+      =================================================== */}
+
       <Route
         path="/admin/login"
         element={<AdminLogin />}
       />
 
+
+      {/* ===================================================
+          ADMIN GOOGLE AUTH CALLBACK
+      =================================================== */}
 
       <Route
         path="/admin/callback"
@@ -284,7 +408,11 @@ function AppRouter() {
       />
 
 
-      {/* FALLBACK */}
+      {/* ===================================================
+          FALLBACK
+
+          Any completely unknown URL returns home.
+      =================================================== */}
 
       <Route
         path="*"
@@ -305,7 +433,7 @@ function AppRouter() {
 
 
 /* =========================================================
-   APP
+   MAIN APP
 ========================================================= */
 
 function App() {
