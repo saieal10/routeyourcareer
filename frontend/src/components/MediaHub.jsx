@@ -90,7 +90,10 @@ function VideoCard({
 
           <img
             src={item.thumbnail_url}
-            alt={item.title || 'Route Your Career video'}
+            alt={
+              item.title ||
+              'Route Your Career video'
+            }
             loading="lazy"
 
             className="
@@ -150,7 +153,7 @@ function VideoCard({
         />
 
 
-        {/* PLAY */}
+        {/* PLAY BUTTON */}
 
         <div
           className="
@@ -200,7 +203,7 @@ function VideoCard({
         </div>
 
 
-        {/* LABEL */}
+        {/* VIDEO TYPE */}
 
         <div
           className="
@@ -462,8 +465,7 @@ function MediaRow({
             ? -amount
             : amount,
 
-        behavior:
-          'smooth'
+        behavior: 'smooth'
 
       });
 
@@ -994,7 +996,11 @@ export default function MediaHub() {
     return (
 
       <section
+        id="stories"
+
         className="
+          scroll-mt-28
+
           max-w-7xl
           mx-auto
 
@@ -1037,6 +1043,8 @@ export default function MediaHub() {
       id="stories"
 
       className="
+        scroll-mt-28
+
         bg-cream
 
         py-8
@@ -1109,6 +1117,10 @@ export default function MediaHub() {
         </div>
 
 
+        {/* =================================================
+            ERROR
+        ================================================= */}
+
         {error && (
 
           <div
@@ -1137,9 +1149,7 @@ export default function MediaHub() {
 
 
         {/* =================================================
-            ROW 1
-
-            STUDENT TESTIMONIALS
+            ROW 1 — STUDENT TESTIMONIALS
         ================================================= */}
 
         <MediaRow
@@ -1165,9 +1175,7 @@ export default function MediaHub() {
 
 
         {/* =================================================
-            ROW 2
-
-            YOUTUBE
+            ROW 2 — YOUTUBE
         ================================================= */}
 
         <MediaRow
