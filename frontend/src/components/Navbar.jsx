@@ -226,7 +226,7 @@ export default function Navbar() {
       title: 'Undergraduate',
       description:
         'Bachelor’s and undergraduate study pathways.',
-      path: '/management?level=undergraduate',
+      path: '/management#undergraduate',
       icon: GraduationCap
     },
 
@@ -234,7 +234,7 @@ export default function Navbar() {
       title: 'Postgraduate',
       description:
         'Master’s and postgraduate study pathways.',
-      path: '/management?level=postgraduate',
+      path: '/management#postgraduate',
       icon: BookOpen
     }
 
@@ -391,12 +391,21 @@ export default function Navbar() {
 
   }, [
     location.pathname,
-    location.search
+    location.search,
+    location.hash
   ]);
 
 
   /* =======================================================
      HASH SCROLL
+
+     Handles:
+     /#stories
+     /about#why-ryc
+     /about#promise
+     /about#presence
+     /management#undergraduate
+     /management#postgraduate
   ======================================================= */
 
   useEffect(() => {
@@ -429,7 +438,7 @@ export default function Navbar() {
 
         }
 
-      }, 200);
+      }, 250);
 
 
     return () =>
@@ -645,7 +654,7 @@ export default function Navbar() {
 
 
             {/* =================================================
-                MBBS
+                MBBS ABROAD
             ================================================= */}
 
             <div
@@ -735,7 +744,7 @@ export default function Navbar() {
                   >
 
 
-                    {/* HEADER */}
+                    {/* MBBS HEADER */}
 
                     <div
                       className="
@@ -794,7 +803,7 @@ export default function Navbar() {
                     </div>
 
 
-                    {/* DYNAMIC COUNTRIES */}
+                    {/* DYNAMIC ADMIN COUNTRIES */}
 
                     <div
                       className="
@@ -1139,7 +1148,12 @@ export default function Navbar() {
                                 `}
                               >
 
-                                <Icon className="h-4 w-4" />
+                                <Icon
+                                  className="
+                                    h-4
+                                    w-4
+                                  "
+                                />
 
                               </div>
 
@@ -1301,7 +1315,7 @@ export default function Navbar() {
                   >
 
 
-                    {/* EXPLORE TITLE */}
+                    {/* EXPLORE HEADER */}
 
                     <div
                       className="
@@ -1381,7 +1395,7 @@ export default function Navbar() {
                     </div>
 
 
-                    {/* 3 COLUMNS */}
+                    {/* EXPLORE COLUMNS */}
 
                     <div
                       className="
@@ -1595,7 +1609,7 @@ export default function Navbar() {
                     </div>
 
 
-                    {/* EXPLORE FOOTER */}
+                    {/* EXPLORE CTA */}
 
                     <div
                       className="
@@ -1750,7 +1764,7 @@ export default function Navbar() {
 
 
           {/* =================================================
-              RIGHT ACTIONS
+              DESKTOP RIGHT ACTIONS
           ================================================= */}
 
           <div
@@ -1889,11 +1903,21 @@ export default function Navbar() {
 
             {mobileOpen ? (
 
-              <X className="h-5 w-5" />
+              <X
+                className="
+                  h-5
+                  w-5
+                "
+              />
 
             ) : (
 
-              <Menu className="h-5 w-5" />
+              <Menu
+                className="
+                  h-5
+                  w-5
+                "
+              />
 
             )}
 
@@ -1905,7 +1929,7 @@ export default function Navbar() {
 
 
       {/* ===================================================
-          MOBILE MENU
+          MOBILE NAVIGATION
       =================================================== */}
 
       {mobileOpen && (
@@ -2241,7 +2265,12 @@ export default function Navbar() {
                             "
                           >
 
-                            <Icon className="h-4 w-4" />
+                            <Icon
+                              className="
+                                h-4
+                                w-4
+                              "
+                            />
 
                           </div>
 
@@ -2381,7 +2410,9 @@ export default function Navbar() {
                   {exploreGroups.map(
                     group => (
 
-                      <div key={group.heading}>
+                      <div
+                        key={group.heading}
+                      >
 
                         <div
                           className="
@@ -2710,7 +2741,7 @@ export default function Navbar() {
 
 
             {/* =================================================
-                MOBILE APPLICATION CTA
+                MOBILE START APPLICATION
             ================================================= */}
 
             <Link
