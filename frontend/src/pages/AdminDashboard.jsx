@@ -29,7 +29,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   Link2,
-  CheckCircle2
+  CheckCircle2,
+  PlayCircle
 } from 'lucide-react';
 
 const BACKEND_URL =
@@ -99,6 +100,19 @@ const EMPTY_COUNTRY_PAGE = {
   hero_image_url: '',
   headline: '',
   description: '',
+  status: 'draft'
+};
+
+
+const EMPTY_MEDIA = {
+  title: '',
+  youtube_url: '',
+  type: 'youtube',
+  description: '',
+  student_name: '',
+  university: '',
+  country: '',
+  sort_order: 0,
   status: 'draft'
 };
 
@@ -443,6 +457,15 @@ export default function AdminDashboard() {
   const [countryPageError, setCountryPageError] = useState('');
   const [savingCountryPage, setSavingCountryPage] = useState(false);
 
+  // YOUTUBE + TESTIMONIAL MEDIA
+  const [mediaItems, setMediaItems] = useState([]);
+  const [loadingMedia, setLoadingMedia] = useState(false);
+  const [mediaEditorOpen, setMediaEditorOpen] = useState(false);
+  const [editingMediaId, setEditingMediaId] = useState(null);
+  const [mediaForm, setMediaForm] = useState(EMPTY_MEDIA);
+  const [mediaError, setMediaError] = useState('');
+  const [savingMedia, setSavingMedia] = useState(false);
+
   const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [courseEditorOpen, setCourseEditorOpen] = useState(false);
@@ -593,6 +616,21 @@ export default function AdminDashboard() {
     }
   }, [user]);
 
+  const loadMedia = useCallback(async () => {
+    if (!user) return;
+    setLoadingMedia(true);
+    setMediaError('');
+
+    try {
+      const data = await adminFetch('/api/admin/media');
+      setMediaItems(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setMediaError(e.message || 'Could not load media.');
+    } finally {
+      setLoadingMedia(false);
+    }
+  }, [user]);
+
   const loadCourses = useCallback(async () => {
     if (!user) return;
     setLoadingCourses(true);
@@ -618,6 +656,7 @@ export default function AdminDashboard() {
     loadBlogs();
     loadUniversities();
     loadCountryPages();
+    loadMedia();
     loadCourses();
   }, [
     user,
@@ -626,6 +665,7 @@ export default function AdminDashboard() {
     loadBlogs,
     loadUniversities,
     loadCountryPages,
+    loadMedia,
     loadCourses
   ]);
 
@@ -1425,6 +1465,119 @@ export default function AdminDashboard() {
   };
 
   // =====================================================
+  // MEDIA LIBRARY
+  // =====================================================
+
+  const openNewMedia = () => {
+    setEditingMediaId(null);
+    setMediaForm({ ...EMPTY_MEDIA });
+    setMediaError('');
+    setMediaEditorOpen(true);
+  };
+
+  const openEditMedia = item => {
+    setEditingMediaId(item.id);
+    setMediaError('');
+    setMediaForm({
+      title: item.title || '',
+      youtube_url: item.youtube_url || '',
+      type: item.type || 'youtube',
+      description: item.description || '',
+      student_name: item.student_name || '',
+      university: item.university || '',
+      country: item.country || '',
+      sort_order: item.sort_order ?? 0,
+      status: item.status || 'draft'
+    });
+    setMediaEditorOpen(true);
+  };
+
+  const saveMedia = async status => {
+    setMediaError('');
+
+    if (!mediaForm.title.trim()) {
+      setMediaError('Video title is required.');
+      return;
+    }
+
+    if (!mediaForm.youtube_url.trim()) {
+      setMediaError('YouTube URL is required.');
+      return;
+    }
+
+    const payload = {
+      title: mediaForm.title.trim(),
+      youtube_url: mediaForm.youtube_url.trim(),
+      type: mediaForm.type,
+      description: mediaForm.description.trim() || null,
+      student_name:
+        mediaForm.type === 'testimonial'
+          ? mediaForm.student_name.trim() || null
+          : null,
+      university:
+        mediaForm.type === 'testimonial'
+          ? mediaForm.university.trim() || null
+          : null,
+      country:
+        mediaForm.type === 'testimonial'
+          ? mediaForm.country.trim() || null
+          : null,
+      sort_order: Number(mediaForm.sort_order) || 0,
+      status
+    };
+
+    setSavingMedia(true);
+
+    try {
+      if (editingMediaId) {
+        await adminFetch(`/api/admin/media/${editingMediaId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await adminFetch('/api/admin/media', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+      }
+
+      await loadMedia();
+      setMediaEditorOpen(false);
+    } catch (e) {
+      setMediaError(e.message || 'Could not save media.');
+    } finally {
+      setSavingMedia(false);
+    }
+  };
+
+  const toggleMediaStatus = async item => {
+    try {
+      await adminFetch(`/api/admin/media/${item.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          status: item.status === 'published' ? 'draft' : 'published'
+        })
+      });
+      await loadMedia();
+    } catch (e) {
+      setMediaError(e.message || 'Could not update media.');
+    }
+  };
+
+  const deleteMedia = async item => {
+    if (!window.confirm(`Delete "${item.title}"?`)) return;
+
+    try {
+      await adminFetch(`/api/admin/media/${item.id}`, {
+        method: 'DELETE'
+      });
+      await loadMedia();
+    } catch (e) {
+      setMediaError(e.message || 'Could not delete media.');
+    }
+  };
+
+  // =====================================================
   // UNIVERSITY MASTER
   // =====================================================
 
@@ -1931,6 +2084,7 @@ export default function AdminDashboard() {
     loadBlogs();
     loadUniversities();
     loadCountryPages();
+    loadMedia();
     loadCourses();
   };
 
@@ -1973,6 +2127,7 @@ export default function AdminDashboard() {
     ['blogs', 'Blogs', BookOpen],
     ['universities', 'Universities', GraduationCap],
     ['country_pages', 'Country Pages', ImageIcon],
+    ['media', 'Media', PlayCircle],
     ['courses', 'Courses', FileText]
   ];
 
@@ -2720,6 +2875,178 @@ export default function AdminDashboard() {
         )}
 
         {/* UNIVERSITIES */}
+        {/* MEDIA LIBRARY */}
+        {section === 'media' && (
+          <>
+            <div className="flex flex-wrap justify-between gap-4 items-end">
+              <div>
+                <div className="text-[10px] mono uppercase tracking-widest text-coral">
+                  YouTube + Testimonials
+                </div>
+                <h1 className="serif text-4xl sm:text-5xl mt-1">
+                  Media library.
+                </h1>
+                <p className="mt-2 text-[13px] text-ink/60 max-w-2xl">
+                  Paste a YouTube link once, choose whether it is an RYC guide
+                  or a student testimonial, and publish it to the website.
+                </p>
+              </div>
+
+              <button
+                onClick={openNewMedia}
+                className="rounded-full bg-coral text-white px-5 py-3 text-[12px] font-bold inline-flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add video
+              </button>
+            </div>
+
+            {mediaError && (
+              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-[12px] text-red-700">
+                {mediaError}
+              </div>
+            )}
+
+            <div className="mt-7 grid sm:grid-cols-3 gap-3">
+              {[
+                ['Total media', mediaItems.length],
+                ['RYC videos', mediaItems.filter(x => x.type === 'youtube').length],
+                ['Testimonials', mediaItems.filter(x => x.type === 'testimonial').length]
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-2xl bg-white border border-ink/10 p-4">
+                  <div className="text-[9px] mono uppercase tracking-widest text-ink/40">
+                    {label}
+                  </div>
+                  <div className="serif text-3xl mt-1">{value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-3xl bg-white border border-ink/10 overflow-hidden">
+              <div className="p-4 sm:p-5 border-b border-ink/10 flex items-center justify-between gap-3">
+                <div>
+                  <div className="font-bold text-[14px]">All videos</div>
+                  <div className="text-[11px] text-ink/45 mt-1">
+                    Lower display order appears first.
+                  </div>
+                </div>
+
+                <button
+                  onClick={loadMedia}
+                  className="h-9 w-9 rounded-full border border-ink/10 grid place-items-center"
+                  title="Refresh media"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loadingMedia ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+
+              {loadingMedia && (
+                <div className="p-8 text-center text-[13px] text-ink/50">
+                  Loading media…
+                </div>
+              )}
+
+              {!loadingMedia && mediaItems.length === 0 && (
+                <div className="p-10 text-center">
+                  <PlayCircle className="h-8 w-8 mx-auto text-ink/25" />
+                  <div className="font-bold mt-3">No videos yet</div>
+                  <div className="text-[12px] text-ink/45 mt-1">
+                    Click Add video to publish your first YouTube video or testimonial.
+                  </div>
+                </div>
+              )}
+
+              <div className="divide-y divide-ink/10">
+                {mediaItems.map(item => (
+                  <div
+                    key={item.id}
+                    className="p-4 sm:p-5 grid md:grid-cols-[180px_1fr_auto] gap-4 items-center"
+                  >
+                    <div className="aspect-video rounded-xl overflow-hidden bg-cream border border-ink/10">
+                      {item.thumbnail_url ? (
+                        <img
+                          src={item.thumbnail_url}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full grid place-items-center">
+                          <PlayCircle className="h-7 w-7 text-ink/25" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="font-bold text-[14px]">{item.title}</div>
+
+                        <span className={`rounded-full px-2 py-1 text-[9px] mono uppercase tracking-widest ${
+                          item.type === 'testimonial'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-coral/10 text-coral'
+                        }`}>
+                          {item.type === 'testimonial' ? 'Testimonial' : 'RYC video'}
+                        </span>
+
+                        <span className={`rounded-full px-2 py-1 text-[9px] mono uppercase tracking-widest ${
+                          item.status === 'published'
+                            ? 'bg-ink text-cream'
+                            : 'bg-cream text-ink/50'
+                        }`}>
+                          {item.status}
+                        </span>
+                      </div>
+
+                      {item.description && (
+                        <div className="text-[12px] text-ink/55 mt-2 line-clamp-2">
+                          {item.description}
+                        </div>
+                      )}
+
+                      {item.type === 'testimonial' && (
+                        <div className="text-[11px] text-ink/45 mt-2">
+                          {[item.student_name, item.university, item.country]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                      )}
+
+                      <div className="text-[10px] text-ink/35 mt-2">
+                        Display order: {item.sort_order ?? 0}
+                      </div>
+                    </div>
+
+                    <div className="flex md:flex-col gap-2">
+                      <button
+                        onClick={() => openEditMedia(item)}
+                        className="rounded-full border border-ink/15 px-3 py-2 text-[11px] font-semibold inline-flex items-center justify-center gap-1"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => toggleMediaStatus(item)}
+                        className="rounded-full border border-ink/15 px-3 py-2 text-[11px] font-semibold"
+                      >
+                        {item.status === 'published' ? 'Unpublish' : 'Publish'}
+                      </button>
+
+                      <button
+                        onClick={() => deleteMedia(item)}
+                        className="rounded-full border border-red-200 text-red-600 px-3 py-2 text-[11px] font-semibold inline-flex items-center justify-center gap-1"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
         {section === 'universities' && (
           <>
             <div className="flex flex-wrap items-end justify-between gap-4">
@@ -4610,6 +4937,173 @@ export default function AdminDashboard() {
       )}
 
       {/* COURSE EDITOR */}
+      {mediaEditorOpen && (
+        <Modal
+          title={editingMediaId ? 'Edit media' : 'Add video'}
+          subtitle="Paste a YouTube link and choose where it belongs on the website."
+          onClose={() => setMediaEditorOpen(false)}
+        >
+          {mediaError && (
+            <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-[12px] text-red-700">
+              {mediaError}
+            </div>
+          )}
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <Field label="YouTube URL">
+                <input
+                  value={mediaForm.youtube_url}
+                  onChange={e =>
+                    setMediaForm(old => ({
+                      ...old,
+                      youtube_url: e.target.value
+                    }))
+                  }
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+
+            <div className="sm:col-span-2">
+              <Field label="Video title">
+                <input
+                  value={mediaForm.title}
+                  onChange={e =>
+                    setMediaForm(old => ({
+                      ...old,
+                      title: e.target.value
+                    }))
+                  }
+                  placeholder="MBBS in Georgia explained"
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+
+            <Field label="Media type">
+              <select
+                value={mediaForm.type}
+                onChange={e =>
+                  setMediaForm(old => ({
+                    ...old,
+                    type: e.target.value
+                  }))
+                }
+                className={inputClass}
+              >
+                <option value="youtube">RYC YouTube Video</option>
+                <option value="testimonial">Student Testimonial</option>
+              </select>
+            </Field>
+
+            <Field
+              label="Display order"
+              hint="0 appears before 1, 1 before 2, and so on."
+            >
+              <input
+                type="number"
+                value={mediaForm.sort_order}
+                onChange={e =>
+                  setMediaForm(old => ({
+                    ...old,
+                    sort_order: e.target.value
+                  }))
+                }
+                className={inputClass}
+              />
+            </Field>
+
+            <div className="sm:col-span-2">
+              <Field label="Short description">
+                <textarea
+                  value={mediaForm.description}
+                  onChange={e =>
+                    setMediaForm(old => ({
+                      ...old,
+                      description: e.target.value
+                    }))
+                  }
+                  placeholder="Optional short description shown with the video."
+                  className={textareaClass}
+                />
+              </Field>
+            </div>
+          </div>
+
+          {mediaForm.type === 'testimonial' && (
+            <div className="mt-5 rounded-2xl bg-white border border-ink/10 p-4">
+              <div className="text-[10px] mono uppercase tracking-widest text-coral mb-4">
+                Student testimonial details
+              </div>
+
+              <div className="grid sm:grid-cols-3 gap-4">
+                <Field label="Student name">
+                  <input
+                    value={mediaForm.student_name}
+                    onChange={e =>
+                      setMediaForm(old => ({
+                        ...old,
+                        student_name: e.target.value
+                      }))
+                    }
+                    placeholder="Student name"
+                    className={inputClass}
+                  />
+                </Field>
+
+                <Field label="University">
+                  <input
+                    value={mediaForm.university}
+                    onChange={e =>
+                      setMediaForm(old => ({
+                        ...old,
+                        university: e.target.value
+                      }))
+                    }
+                    placeholder="University"
+                    className={inputClass}
+                  />
+                </Field>
+
+                <Field label="Country">
+                  <input
+                    value={mediaForm.country}
+                    onChange={e =>
+                      setMediaForm(old => ({
+                        ...old,
+                        country: e.target.value
+                      }))
+                    }
+                    placeholder="Georgia"
+                    className={inputClass}
+                  />
+                </Field>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 flex flex-wrap justify-end gap-2">
+            <button
+              onClick={() => saveMedia('draft')}
+              disabled={savingMedia}
+              className="rounded-full border border-ink/15 px-5 py-3 text-[12px] font-semibold"
+            >
+              Save draft
+            </button>
+
+            <button
+              onClick={() => saveMedia('published')}
+              disabled={savingMedia}
+              className="rounded-full bg-coral text-white px-5 py-3 text-[12px] font-bold"
+            >
+              {savingMedia ? 'Saving…' : 'Publish'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
       {courseEditorOpen && (
         <Modal
           title={editingCourseId ? 'Edit course' : 'Add course'}
