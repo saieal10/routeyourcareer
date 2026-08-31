@@ -3,13 +3,16 @@ import React from 'react';
 import AnnouncementBar from '../components/AnnouncementBar';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
+import CountryMarquee from '../components/CountryMarquee';
 import Programs from '../components/Programs';
 import FeaturedCountries from '../components/FeaturedCountries';
+import ManagementCountries from '../components/ManagementCountries';
+import MediaHub from '../components/MediaHub';
+import FeeCalculator from '../components/FeeCalculator';
 import CTABanner from '../components/CTABanner';
+import Newsletter from '../components/Newsletter';
 import Footer from '../components/Footer';
 import AiChatWidget from '../components/AiChatWidget';
-
-import MediaHub from '../components/MediaHub';
 
 
 export default function Home() {
@@ -18,46 +21,58 @@ export default function Home() {
 
     <div className="min-h-screen bg-cream text-ink">
 
-      {/* TOP */}
-
       <AnnouncementBar />
 
       <Navbar />
 
-
-      {/* 1. HERO */}
-
       <Hero />
 
+      <CountryMarquee />
 
-      {/* 2. TWO STUDY ROUTES
-          Medical Education + Management
-      */}
+
+      {/* MAIN STUDY ROUTES */}
 
       <Programs />
 
 
-      {/* 3. POPULAR / FEATURED DESTINATIONS */}
+      {/* MBBS DESTINATIONS */}
 
       <FeaturedCountries />
 
 
-      {/* 4. YOUTUBE + TESTIMONIALS */}
+      {/* MANAGEMENT DESTINATIONS */}
+
+      <ManagementCountries />
+
+
+      {/* 
+        NEW DYNAMIC SECTION
+
+        Left:
+        Student testimonials
+
+        Right:
+        RYC YouTube videos
+
+        Everything comes from Admin → Media.
+      */}
 
       <MediaHub />
 
 
-      {/* 5. FINAL CTA */}
+      {/* FEE / BUDGET TOOL */}
+
+      <FeeCalculator />
+
+
+      {/* FINAL CTA */}
 
       <CTABanner />
 
 
-      {/* FOOTER */}
+      <Newsletter />
 
       <Footer />
-
-
-      {/* FLOATING AI GUIDE */}
 
       <AiChatWidget />
 
