@@ -13,16 +13,33 @@ import {
   ChevronDown,
   Menu,
   X,
-  ArrowUpRight
+  ArrowUpRight,
+  Building2,
+  CircleHelp,
+  MapPin,
+  Scale,
+  ShieldCheck,
+  Youtube,
+  UsersRound,
+  Compass,
+  BookOpen
 } from 'lucide-react';
 
 import { brand } from '../mock';
 
 
+/* =========================================================
+   API
+========================================================= */
+
 const API_URL =
   import.meta.env.VITE_API_URL ||
   'https://routeyourcareer.onrender.com';
 
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function slugify(value) {
   return String(value || '')
@@ -33,44 +50,59 @@ function slugify(value) {
 }
 
 
+/* =========================================================
+   NAVBAR
+========================================================= */
+
 export default function Navbar() {
 
   const location =
     useLocation();
 
+
+  /* =======================================================
+     STATE
+  ======================================================= */
+
   const [
     mobileOpen,
     setMobileOpen
-  ] =
-    useState(false);
+  ] = useState(false);
+
 
   const [
     mbbsOpen,
     setMbbsOpen
-  ] =
-    useState(false);
+  ] = useState(false);
+
 
   const [
     managementOpen,
     setManagementOpen
-  ] =
-    useState(false);
+  ] = useState(false);
+
+
+  const [
+    exploreOpen,
+    setExploreOpen
+  ] = useState(false);
+
 
   const [
     universities,
     setUniversities
-  ] =
-    useState([]);
+  ] = useState([]);
 
 
-  /* =========================================================
-     LOAD PUBLISHED UNIVERSITIES
-  ========================================================= */
+  /* =======================================================
+     LOAD PUBLISHED MBBS UNIVERSITIES
+
+     Countries are generated from your Admin database.
+  ======================================================= */
 
   useEffect(() => {
 
-    let cancelled =
-      false;
+    let cancelled = false;
 
 
     async function loadCountries() {
@@ -128,14 +160,14 @@ export default function Navbar() {
   }, []);
 
 
-  /* =========================================================
-     DYNAMIC MBBS COUNTRY LIST
-  ========================================================= */
+  /* =======================================================
+     DYNAMIC MBBS COUNTRIES
+  ======================================================= */
 
   const mbbsCountries =
     useMemo(() => {
 
-      const map =
+      const countryMap =
         new Map();
 
 
@@ -158,9 +190,9 @@ export default function Navbar() {
             country.toLowerCase();
 
 
-          if (!map.has(key)) {
+          if (!countryMap.has(key)) {
 
-            map.set(
+            countryMap.set(
               key,
               {
                 name: country,
@@ -175,7 +207,7 @@ export default function Navbar() {
 
 
       return Array.from(
-        map.values()
+        countryMap.values()
       ).sort(
         (a, b) =>
           a.name.localeCompare(
@@ -188,60 +220,146 @@ export default function Navbar() {
     ]);
 
 
-  /* =========================================================
-     MANAGEMENT LINKS
-  ========================================================= */
+  /* =======================================================
+     MANAGEMENT
+  ======================================================= */
 
   const managementLinks = [
 
     {
-      name:
-        'Management Abroad',
-
-      path:
-        '/management'
+      name: 'Management Abroad',
+      description: 'Explore international business programmes',
+      path: '/management'
     },
 
     {
-      name:
-        'Italy — Course Finder',
-
-      path:
-        '/countries/italy/courses'
+      name: 'Italy — UG + PG',
+      description: 'Explore universities and programmes in Italy',
+      path: '/countries/italy'
     },
 
     {
-      name:
-        'Undergraduate Management',
-
-      path:
-        '/management?level=undergraduate'
-    },
-
-    {
-      name:
-        'Postgraduate Management',
-
-      path:
-        '/management?level=postgraduate'
+      name: 'Italy Course Finder',
+      description: 'Search available Italian programmes',
+      path: '/countries/italy/courses'
     }
 
   ];
 
 
-  /* =========================================================
-     ACTIVE STATE
-  ========================================================= */
+  /* =======================================================
+     EXPLORE MENU
+  ======================================================= */
+
+  const exploreGroups = [
+
+    {
+      title: 'About Route Your Career',
+
+      items: [
+
+        {
+          name: 'About Us',
+          description: 'Who we are and how RYC works',
+          path: '/about',
+          icon: Building2
+        },
+
+        {
+          name: 'Why Route Your Career',
+          description: 'Our approach to student guidance',
+          path: '/about#why-ryc',
+          icon: ShieldCheck
+        },
+
+        {
+          name: 'Our Promise',
+          description: 'Transparency and student-first guidance',
+          path: '/about#promise',
+          icon: UsersRound
+        }
+
+      ]
+
+    },
+
+    {
+      title: 'Explore',
+
+      items: [
+
+        {
+          name: 'Compare Study Options',
+          description: 'Compare destinations before choosing',
+          path: '/compare',
+          icon: Scale
+        },
+
+        {
+          name: 'Countries & Destinations',
+          description: 'Explore available study destinations',
+          path: '/countries',
+          icon: Compass
+        },
+
+        {
+          name: 'Our Presence in India',
+          description: 'RYC guidance network across India',
+          path: '/about#presence',
+          icon: MapPin
+        }
+
+      ]
+
+    },
+
+    {
+      title: 'Help & Resources',
+
+      items: [
+
+        {
+          name: 'FAQ',
+          description: 'Straight answers to common questions',
+          path: '/faq',
+          icon: CircleHelp
+        },
+
+        {
+          name: 'Student Stories',
+          description: 'Watch student experiences and testimonials',
+          path: '/student-stories',
+          icon: UsersRound
+        },
+
+        {
+          name: 'YouTube',
+          description: 'Guides, updates and study-abroad videos',
+          path: 'https://www.youtube.com/@route_your_career',
+          external: true,
+          icon: Youtube
+        }
+
+      ]
+
+    }
+
+  ];
+
+
+  /* =======================================================
+     ACTIVE
+  ======================================================= */
 
   const isActive =
     path => {
 
-      if (
-        path === '/'
-      ) {
+      if (path === '/') {
+
         return (
           location.pathname === '/'
         );
+
       }
 
 
@@ -254,27 +372,33 @@ export default function Navbar() {
     };
 
 
-  /* =========================================================
-     CLOSE MOBILE
-  ========================================================= */
+  /* =======================================================
+     CLOSE EVERYTHING
+  ======================================================= */
+
+  const closeMenus =
+    () => {
+
+      setMbbsOpen(false);
+      setManagementOpen(false);
+      setExploreOpen(false);
+
+    };
+
 
   const closeMobile =
     () => {
 
-      setMobileOpen(
-        false
-      );
+      setMobileOpen(false);
 
-      setMbbsOpen(
-        false
-      );
-
-      setManagementOpen(
-        false
-      );
+      closeMenus();
 
     };
 
+
+  /* =======================================================
+     UI
+  ======================================================= */
 
   return (
     <>
@@ -286,7 +410,6 @@ export default function Navbar() {
           z-50
 
           bg-cream/95
-
           backdrop-blur
 
           border-b
@@ -312,7 +435,7 @@ export default function Navbar() {
               items-center
               justify-between
 
-              gap-5
+              gap-4
             "
           >
 
@@ -323,7 +446,11 @@ export default function Navbar() {
 
             <Link
               to="/"
-              onClick={closeMobile}
+
+              onClick={
+                closeMobile
+              }
+
               className="
                 flex
                 items-center
@@ -436,7 +563,7 @@ export default function Navbar() {
 
                 items-center
 
-                gap-1
+                gap-0.5
 
                 text-[13px]
               "
@@ -444,27 +571,28 @@ export default function Navbar() {
 
 
               {/* ===============================================
-                  MBBS DROPDOWN
+                  MBBS
               =============================================== */}
 
               <div
                 className="relative"
 
-                onMouseEnter={() =>
-                  setMbbsOpen(
-                    true
-                  )
-                }
+                onMouseEnter={() => {
+
+                  closeMenus();
+
+                  setMbbsOpen(true);
+
+                }}
 
                 onMouseLeave={() =>
-                  setMbbsOpen(
-                    false
-                  )
+                  setMbbsOpen(false)
                 }
               >
 
                 <button
                   type="button"
+
                   className="
                     flex
                     items-center
@@ -504,7 +632,7 @@ export default function Navbar() {
 
                       pt-2
 
-                      w-[250px]
+                      w-[260px]
                     "
                   >
 
@@ -517,7 +645,7 @@ export default function Navbar() {
 
                         bg-white
 
-                        shadow-xl
+                        shadow-2xl
 
                         overflow-hidden
                       "
@@ -553,8 +681,7 @@ export default function Navbar() {
                         "
                       >
 
-                        {mbbsCountries.length ===
-                        0 ? (
+                        {mbbsCountries.length === 0 ? (
 
                           <div
                             className="
@@ -582,7 +709,7 @@ export default function Navbar() {
                                 to={`/countries/${country.slug}`}
 
                                 onClick={
-                                  closeMobile
+                                  closeMenus
                                 }
 
                                 className="
@@ -639,21 +766,22 @@ export default function Navbar() {
               <div
                 className="relative"
 
-                onMouseEnter={() =>
-                  setManagementOpen(
-                    true
-                  )
-                }
+                onMouseEnter={() => {
+
+                  closeMenus();
+
+                  setManagementOpen(true);
+
+                }}
 
                 onMouseLeave={() =>
-                  setManagementOpen(
-                    false
-                  )
+                  setManagementOpen(false)
                 }
               >
 
                 <button
                   type="button"
+
                   className="
                     flex
                     items-center
@@ -693,7 +821,7 @@ export default function Navbar() {
 
                       pt-2
 
-                      w-[270px]
+                      w-[300px]
                     "
                   >
 
@@ -706,7 +834,7 @@ export default function Navbar() {
 
                         bg-white
 
-                        shadow-xl
+                        shadow-2xl
 
                         overflow-hidden
 
@@ -727,38 +855,334 @@ export default function Navbar() {
                             }
 
                             onClick={
-                              closeMobile
+                              closeMenus
                             }
 
-                            className={`
+                            className="
                               block
 
                               rounded-xl
 
                               px-3
-                              py-2.5
+                              py-3
+
+                              hover:bg-cream
 
                               transition
-
-                              ${
-                                item.name ===
-                                'Italy — Course Finder'
-
-                                  ? `
-                                    bg-coral/5
-                                    text-coral
-                                    font-semibold
-                                    hover:bg-coral/10
-                                  `
-
-                                  : `
-                                    hover:bg-cream
-                                  `
-                              }
-                            `}
+                            "
                           >
-                            {item.name}
+
+                            <div
+                              className="
+                                text-[12px]
+
+                                font-semibold
+
+                                text-ink
+                              "
+                            >
+                              {item.name}
+                            </div>
+
+
+                            <div
+                              className="
+                                mt-0.5
+
+                                text-[10px]
+
+                                text-ink/45
+                              "
+                            >
+                              {item.description}
+                            </div>
+
                           </Link>
+
+                        )
+                      )}
+
+                    </div>
+
+                  </div>
+
+                )}
+
+              </div>
+
+
+              {/* ===============================================
+                  EXPLORE MEGA DROPDOWN
+              =============================================== */}
+
+              <div
+                className="relative"
+
+                onMouseEnter={() => {
+
+                  closeMenus();
+
+                  setExploreOpen(true);
+
+                }}
+
+                onMouseLeave={() =>
+                  setExploreOpen(false)
+                }
+              >
+
+                <button
+                  type="button"
+
+                  className="
+                    flex
+                    items-center
+                    gap-1
+
+                    rounded-full
+
+                    px-3
+                    py-2
+
+                    hover:bg-ink/5
+
+                    transition
+                  "
+                >
+
+                  Explore
+
+                  <ChevronDown
+                    className="
+                      h-3.5
+                      w-3.5
+                    "
+                  />
+
+                </button>
+
+
+                {exploreOpen && (
+
+                  <div
+                    className="
+                      absolute
+
+                      left-1/2
+                      -translate-x-1/2
+
+                      top-full
+
+                      pt-2
+
+                      w-[720px]
+                    "
+                  >
+
+                    <div
+                      className="
+                        grid
+                        grid-cols-3
+
+                        gap-2
+
+                        rounded-[24px]
+
+                        border
+                        border-ink/10
+
+                        bg-white
+
+                        p-4
+
+                        shadow-2xl
+                      "
+                    >
+
+                      {exploreGroups.map(
+                        group => (
+
+                          <div
+                            key={
+                              group.title
+                            }
+                          >
+
+                            <div
+                              className="
+                                px-2
+                                pb-2
+
+                                text-[8px]
+
+                                mono
+                                uppercase
+
+                                tracking-[0.18em]
+
+                                text-coral
+                              "
+                            >
+                              {group.title}
+                            </div>
+
+
+                            <div className="space-y-1">
+
+                              {group.items.map(
+                                item => {
+
+                                  const Icon =
+                                    item.icon;
+
+
+                                  const content = (
+
+                                    <>
+                                      <div
+                                        className="
+                                          h-8
+                                          w-8
+
+                                          shrink-0
+
+                                          rounded-xl
+
+                                          bg-cream
+
+                                          grid
+                                          place-items-center
+                                        "
+                                      >
+
+                                        <Icon
+                                          className="
+                                            h-3.5
+                                            w-3.5
+
+                                            text-forest
+                                          "
+                                        />
+
+                                      </div>
+
+
+                                      <div>
+
+                                        <div
+                                          className="
+                                            text-[11px]
+
+                                            font-semibold
+
+                                            text-ink
+                                          "
+                                        >
+                                          {item.name}
+                                        </div>
+
+
+                                        <div
+                                          className="
+                                            mt-0.5
+
+                                            text-[9px]
+
+                                            leading-relaxed
+
+                                            text-ink/45
+                                          "
+                                        >
+                                          {item.description}
+                                        </div>
+
+                                      </div>
+                                    </>
+
+                                  );
+
+
+                                  if (item.external) {
+
+                                    return (
+
+                                      <a
+                                        key={
+                                          item.name
+                                        }
+
+                                        href={
+                                          item.path
+                                        }
+
+                                        target="_blank"
+
+                                        rel="noreferrer"
+
+                                        className="
+                                          flex
+                                          items-start
+                                          gap-2.5
+
+                                          rounded-xl
+
+                                          px-2
+                                          py-2.5
+
+                                          hover:bg-cream
+
+                                          transition
+                                        "
+                                      >
+                                        {content}
+                                      </a>
+
+                                    );
+
+                                  }
+
+
+                                  return (
+
+                                    <Link
+                                      key={
+                                        item.name
+                                      }
+
+                                      to={
+                                        item.path
+                                      }
+
+                                      onClick={
+                                        closeMenus
+                                      }
+
+                                      className="
+                                        flex
+                                        items-start
+                                        gap-2.5
+
+                                        rounded-xl
+
+                                        px-2
+                                        py-2.5
+
+                                        hover:bg-cream
+
+                                        transition
+                                      "
+                                    >
+                                      {content}
+                                    </Link>
+
+                                  );
+
+                                }
+                              )}
+
+                            </div>
+
+                          </div>
 
                         )
                       )}
@@ -778,6 +1202,7 @@ export default function Navbar() {
 
               <Link
                 to="/build-my-route"
+
                 className={`
                   rounded-full
 
@@ -806,10 +1231,13 @@ export default function Navbar() {
               </Link>
 
 
-              {/* QUIZ */}
+              {/* ===============================================
+                  QUIZ
+              =============================================== */}
 
               <Link
                 to="/quiz"
+
                 className={`
                   rounded-full
 
@@ -838,29 +1266,13 @@ export default function Navbar() {
               </Link>
 
 
-              {/* CALCULATOR */}
+              {/* ===============================================
+                  BLOG
+              =============================================== */}
 
               <Link
-                to="/calculator"
-                className="
-                  rounded-full
+                to="/blog"
 
-                  px-3
-                  py-2
-
-                  hover:bg-ink/5
-
-                  transition
-                "
-              >
-                Calculator
-              </Link>
-
-
-              {/* BLOG */}
-
-              <a
-                href="/#blog"
                 className="
                   rounded-full
 
@@ -873,32 +1285,16 @@ export default function Navbar() {
                 "
               >
                 Blog
-              </a>
+              </Link>
 
 
-              {/* STATES */}
-
-              <a
-                href="/#states"
-                className="
-                  rounded-full
-
-                  px-3
-                  py-2
-
-                  hover:bg-ink/5
-
-                  transition
-                "
-              >
-                States
-              </a>
-
-
-              {/* TRACK */}
+              {/* ===============================================
+                  TRACK
+              =============================================== */}
 
               <Link
                 to="/track-application"
+
                 className={`
                   rounded-full
 
@@ -930,7 +1326,7 @@ export default function Navbar() {
 
 
             {/* =================================================
-                RIGHT SIDE
+                DESKTOP RIGHT
             ================================================= */}
 
             <div
@@ -940,7 +1336,7 @@ export default function Navbar() {
 
                 items-center
 
-                gap-4
+                gap-3
 
                 shrink-0
               "
@@ -948,10 +1344,11 @@ export default function Navbar() {
 
               <a
                 href={`tel:${brand.phone}`}
-                className="
-                  text-[13px]
 
-                  text-ink/70
+                className="
+                  text-[12px]
+
+                  text-ink/65
 
                   hover:text-coral
 
@@ -964,6 +1361,7 @@ export default function Navbar() {
 
               <Link
                 to="/start-application"
+
                 className="
                   inline-flex
                   items-center
@@ -1003,7 +1401,7 @@ export default function Navbar() {
 
 
             {/* =================================================
-                MOBILE MENU BUTTON
+                MOBILE BUTTON
             ================================================= */}
 
             <button
@@ -1138,10 +1536,10 @@ export default function Navbar() {
                 className="
                   mt-3
 
+                  rounded-2xl
+
                   border
                   border-ink/10
-
-                  rounded-2xl
 
                   bg-white
 
@@ -1162,7 +1560,6 @@ export default function Navbar() {
                     w-full
 
                     flex
-
                     items-center
                     justify-between
 
@@ -1174,7 +1571,6 @@ export default function Navbar() {
                 >
 
                   MBBS Abroad
-
 
                   <ChevronDown
                     className={`
@@ -1258,10 +1654,10 @@ export default function Navbar() {
                 className="
                   mt-3
 
+                  rounded-2xl
+
                   border
                   border-ink/10
-
-                  rounded-2xl
 
                   bg-white
 
@@ -1282,7 +1678,6 @@ export default function Navbar() {
                     w-full
 
                     flex
-
                     items-center
                     justify-between
 
@@ -1294,7 +1689,6 @@ export default function Navbar() {
                 >
 
                   Management
-
 
                   <ChevronDown
                     className={`
@@ -1345,15 +1739,36 @@ export default function Navbar() {
                             px-4
                             py-3
 
-                            text-[13px]
-
                             border-b
                             border-ink/5
 
                             last:border-0
                           "
                         >
-                          {item.name}
+
+                          <div
+                            className="
+                              text-[12px]
+
+                              font-semibold
+                            "
+                          >
+                            {item.name}
+                          </div>
+
+
+                          <div
+                            className="
+                              text-[10px]
+
+                              text-ink/45
+
+                              mt-0.5
+                            "
+                          >
+                            {item.description}
+                          </div>
+
                         </Link>
 
                       )
@@ -1366,7 +1781,246 @@ export default function Navbar() {
               </div>
 
 
-              {/* OTHER LINKS */}
+              {/* =============================================
+                  MOBILE EXPLORE
+              ============================================= */}
+
+              <div
+                className="
+                  mt-3
+
+                  rounded-2xl
+
+                  border
+                  border-ink/10
+
+                  bg-white
+
+                  overflow-hidden
+                "
+              >
+
+                <button
+                  type="button"
+
+                  onClick={() =>
+                    setExploreOpen(
+                      !exploreOpen
+                    )
+                  }
+
+                  className="
+                    w-full
+
+                    flex
+                    items-center
+                    justify-between
+
+                    px-4
+                    py-4
+
+                    font-semibold
+                  "
+                >
+
+                  Explore
+
+                  <ChevronDown
+                    className={`
+                      h-4
+                      w-4
+
+                      transition-transform
+
+                      ${
+                        exploreOpen
+                          ? 'rotate-180'
+                          : ''
+                      }
+                    `}
+                  />
+
+                </button>
+
+
+                {exploreOpen && (
+
+                  <div
+                    className="
+                      border-t
+                      border-ink/10
+
+                      p-2
+                    "
+                  >
+
+                    {exploreGroups.map(
+                      group => (
+
+                        <div
+                          key={
+                            group.title
+                          }
+
+                          className="
+                            mb-4
+                            last:mb-0
+                          "
+                        >
+
+                          <div
+                            className="
+                              px-2
+                              py-2
+
+                              text-[8px]
+
+                              mono
+                              uppercase
+
+                              tracking-widest
+
+                              text-coral
+                            "
+                          >
+                            {group.title}
+                          </div>
+
+
+                          {group.items.map(
+                            item => {
+
+                              const Icon =
+                                item.icon;
+
+
+                              if (item.external) {
+
+                                return (
+
+                                  <a
+                                    key={
+                                      item.name
+                                    }
+
+                                    href={
+                                      item.path
+                                    }
+
+                                    target="_blank"
+
+                                    rel="noreferrer"
+
+                                    className="
+                                      flex
+                                      items-center
+                                      gap-3
+
+                                      rounded-xl
+
+                                      px-3
+                                      py-3
+
+                                      hover:bg-cream
+                                    "
+                                  >
+
+                                    <Icon
+                                      className="
+                                        h-4
+                                        w-4
+
+                                        text-forest
+                                      "
+                                    />
+
+                                    <span
+                                      className="
+                                        text-[12px]
+
+                                        font-semibold
+                                      "
+                                    >
+                                      {item.name}
+                                    </span>
+
+                                  </a>
+
+                                );
+
+                              }
+
+
+                              return (
+
+                                <Link
+                                  key={
+                                    item.name
+                                  }
+
+                                  to={
+                                    item.path
+                                  }
+
+                                  onClick={
+                                    closeMobile
+                                  }
+
+                                  className="
+                                    flex
+                                    items-center
+                                    gap-3
+
+                                    rounded-xl
+
+                                    px-3
+                                    py-3
+
+                                    hover:bg-cream
+                                  "
+                                >
+
+                                  <Icon
+                                    className="
+                                      h-4
+                                      w-4
+
+                                      text-forest
+                                    "
+                                  />
+
+                                  <span
+                                    className="
+                                      text-[12px]
+
+                                      font-semibold
+                                    "
+                                  >
+                                    {item.name}
+                                  </span>
+
+                                </Link>
+
+                              );
+
+                            }
+                          )}
+
+                        </div>
+
+                      )
+                    )}
+
+                  </div>
+
+                )}
+
+              </div>
+
+
+              {/* =============================================
+                  BASIC LINKS
+              ============================================= */}
 
               <div
                 className="
@@ -1404,8 +2058,8 @@ export default function Navbar() {
                 </Link>
 
 
-                <a
-                  href="/#blog"
+                <Link
+                  to="/blog"
 
                   onClick={
                     closeMobile
@@ -1422,28 +2076,7 @@ export default function Navbar() {
                   "
                 >
                   Blog
-                </a>
-
-
-                <a
-                  href="/#states"
-
-                  onClick={
-                    closeMobile
-                  }
-
-                  className="
-                    block
-
-                    px-4
-                    py-3.5
-
-                    border-b
-                    border-ink/5
-                  "
-                >
-                  States
-                </a>
+                </Link>
 
 
                 <Link
@@ -1466,8 +2099,11 @@ export default function Navbar() {
               </div>
 
 
+              {/* PHONE */}
+
               <a
                 href={`tel:${brand.phone}`}
+
                 className="
                   mt-5
 
@@ -1483,6 +2119,8 @@ export default function Navbar() {
                 {brand.phoneDisplay}
               </a>
 
+
+              {/* START */}
 
               <Link
                 to="/start-application"
