@@ -5,7 +5,6 @@ import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import CountryMarquee from '../components/CountryMarquee';
 import Programs from '../components/Programs';
-import FeaturedCountries from '../components/FeaturedCountries';
 import ManagementCountries from '../components/ManagementCountries';
 import MediaHub from '../components/MediaHub';
 import FeeCalculator from '../components/FeeCalculator';
@@ -30,49 +29,64 @@ export default function Home() {
       <CountryMarquee />
 
 
-      {/* MAIN STUDY ROUTES */}
+      {/* ===================================================
+          02 — CHOOSE YOUR STUDY TRACK
+
+          Medical Education + Management
+      =================================================== */}
 
       <Programs />
 
 
-      {/* MBBS DESTINATIONS */}
+      {/* ===================================================
+          STUDENT TESTIMONIALS + RYC YOUTUBE
 
-      <FeaturedCountries />
-
-
-      {/* MANAGEMENT DESTINATIONS */}
-
-      <ManagementCountries />
-
-
-      {/* 
-        NEW DYNAMIC SECTION
-
-        Left:
-        Student testimonials
-
-        Right:
-        RYC YouTube videos
-
-        Everything comes from Admin → Media.
-      */}
+          Moved directly after "Choose your study track"
+      =================================================== */}
 
       <MediaHub />
 
 
-      {/* FEE / BUDGET TOOL */}
+      {/* ===================================================
+          MANAGEMENT ABROAD
+
+          KEEP THIS SECTION
+      =================================================== */}
+
+      <ManagementCountries />
+
+
+      {/* ===================================================
+          FEE / BUDGET TOOL
+      =================================================== */}
 
       <FeeCalculator />
 
 
-      {/* FINAL CTA */}
+      {/* ===================================================
+          FINAL CTA
+      =================================================== */}
 
       <CTABanner />
 
 
+      {/* ===================================================
+          NEWSLETTER
+      =================================================== */}
+
       <Newsletter />
 
+
+      {/* ===================================================
+          FOOTER
+      =================================================== */}
+
       <Footer />
+
+
+      {/* ===================================================
+          FLOATING RYCe GUIDANCE BOT
+      =================================================== */}
 
       <AiChatWidget />
 
