@@ -1,2793 +1,1401 @@
-import React, { useEffect, useMemo, useState } from 'react';
-
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Link,
-  useLocation
-} from 'react-router-dom';
-
-import {
-  ArrowRight,
-  ArrowUpRight,
-  BookOpen,
-  BriefcaseBusiness,
   ChevronDown,
-  CircleHelp,
-  Compass,
-  FileCheck2,
   GraduationCap,
-  MapPin,
-  Menu,
-  MessageSquareQuote,
-  Newspaper,
-  PlayCircle,
-  Route,
-  ShieldCheck,
+  BriefcaseBusiness,
+  Compass,
   Sparkles,
-  Target,
-  X
+  ShieldCheck,
+  MapPin,
+  MessageSquareQuote,
+  Youtube,
+  Search,
+  Newspaper,
+  CircleHelp,
+  Route,
+  FileText,
+  ExternalLink,
+  Menu,
+  X,
 } from 'lucide-react';
 
-
-/* =========================================================
-   API
-========================================================= */
-
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  'https://routeyourcareer.onrender.com';
-
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function slugify(value) {
-
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-}
-
-
-/* =========================================================
-   NAVBAR
-========================================================= */
-
 export default function Navbar() {
-
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const [mobileOpen, setMobileOpen] =
-    useState(false);
+  const [activeMenu, setActiveMenu] = useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const [mbbsOpen, setMbbsOpen] =
-    useState(false);
+  const navRef = useRef(null);
 
-  const [managementOpen, setManagementOpen] =
-    useState(false);
-
-  const [exploreOpen, setExploreOpen] =
-    useState(false);
-
-  const [universities, setUniversities] =
-    useState([]);
-
-
-  /* =======================================================
-     LOAD MBBS COUNTRIES FROM ADMIN
-  ======================================================= */
-
-  useEffect(() => {
-
-    let cancelled = false;
-
-
-    async function loadCountries() {
-
-      try {
-
-        const response = await fetch(
-          `${API_URL}/api/universities?stream=MBBS`
-        );
-
-
-        if (!response.ok) {
-
-          throw new Error(
-            'Could not load MBBS countries'
-          );
-
-        }
-
-
-        const data =
-          await response.json();
-
-
-        if (!cancelled) {
-
-          setUniversities(
-            Array.isArray(data)
-              ? data
-              : []
-          );
-
-        }
-
-      }
-
-      catch (error) {
-
-        console.error(
-          'Navbar MBBS countries error:',
-          error
-        );
-
-      }
-
-    }
-
-
-    loadCountries();
-
-
-    return () => {
-
-      cancelled = true;
-
-    };
-
-  }, []);
-
-
-  /* =======================================================
-     BUILD UNIQUE COUNTRY LIST
-  ======================================================= */
-
-  const mbbsCountries =
-    useMemo(() => {
-
-      const map = new Map();
-
-
-      universities.forEach(
-        university => {
-
-          const country =
-            String(
-              university.country || ''
-            ).trim();
-
-
-          if (!country) {
-            return;
-          }
-
-
-          const key =
-            country.toLowerCase();
-
-
-          if (!map.has(key)) {
-
-            map.set(
-              key,
-              {
-                name: country,
-                slug: slugify(country)
-              }
-            );
-
-          }
-
-        }
-      );
-
-
-      return Array
-        .from(map.values())
-        .sort(
-          (a, b) =>
-            a.name.localeCompare(
-              b.name
-            )
-        );
-
-    }, [universities]);
-
-
-  /* =======================================================
-     MANAGEMENT MENU
-  ======================================================= */
-
-  const managementLinks = [
-
-    {
-      title: 'Management Abroad',
-      description:
-        'Explore global undergraduate and postgraduate options.',
-      path: '/management',
-      icon: BriefcaseBusiness
-    },
-
-    {
-      title: 'Italy Course Finder',
-      description:
-        'Search UG and PG programmes available in Italy.',
-      path: '/countries/italy/courses',
-      icon: Compass,
-      featured: true
-    },
-
-    {
-      title: 'Undergraduate',
-      description:
-        'Bachelor’s and undergraduate study pathways.',
-      path: '/management#undergraduate',
-      icon: GraduationCap
-    },
-
-    {
-      title: 'Postgraduate',
-      description:
-        'Master’s and postgraduate study pathways.',
-      path: '/management#postgraduate',
-      icon: BookOpen
-    }
-
-  ];
-
-
-  /* =======================================================
-     EXPLORE MENU
-  ======================================================= */
-
-  const exploreGroups = [
-
-    {
-      heading: 'About',
-
-      links: [
-
-        {
-          title: 'About Us',
-          description:
-            'Who we are and how Route Your Career works.',
-          path: '/about',
-          icon: Sparkles
-        },
-
-        {
-          title: 'Why Choose RYC',
-          description:
-            'Our approach to student guidance.',
-          path: '/about#why-ryc',
-          icon: ShieldCheck
-        },
-
-        {
-          title: 'Our Promise',
-          description:
-            'What you can expect from our guidance.',
-          path: '/about#promise',
-          icon: Target
-        },
-
-        {
-          title: 'Our Presence',
-          description:
-            'Explore our support network and locations.',
-          path: '/about#presence',
-          icon: MapPin
-        }
-
-      ]
-    },
-
-
-    {
-      heading: 'Student Experience',
-
-      links: [
-
-        {
-          title: 'Student Testimonials',
-          description:
-            'Watch experiences shared by students.',
-          path: '/#stories',
-          icon: MessageSquareQuote
-        },
-
-        {
-          title: 'RYC on YouTube',
-          description:
-            'Watch university guides and education videos.',
-          url:
-            'https://www.youtube.com/@route_your_career',
-          icon: PlayCircle,
-          external: true
-        }
-
-      ]
-    },
-
-
-    {
-      heading: 'Resources',
-
-      links: [
-
-        {
-          title: 'Blogs',
-          description:
-            'MBBS, management and study-abroad guides.',
-          path: '/blogs',
-          icon: Newspaper
-        },
-
-        {
-          title: 'FAQ',
-          description:
-            'Answers to common student questions.',
-          path: '/faq',
-          icon: CircleHelp
-        },
-
-        {
-          title: 'Career Guide',
-          description:
-            'Build a study route around your goals.',
-          path: '/build-my-route',
-          icon: Route
-        },
-
-        {
-          title: 'Course Finder Quiz',
-          description:
-            'Get a starting point for your study options.',
-          path: '/quiz',
-          icon: Compass
-        }
-
-      ]
-    }
-
-  ];
-
-
-  /* =======================================================
-     CLOSE EVERYTHING
-  ======================================================= */
+  // =========================================================
+  // CLOSE ALL MENUS
+  // =========================================================
 
   const closeAll = () => {
-
+    setActiveMenu(null);
     setMobileOpen(false);
-
-    setMbbsOpen(false);
-
-    setManagementOpen(false);
-
-    setExploreOpen(false);
-
   };
 
+  // =========================================================
+  // TOGGLE DESKTOP DROPDOWN
+  // =========================================================
 
-  /* =======================================================
-     CLOSE MENU WHEN ROUTE CHANGES
-  ======================================================= */
+  const toggleMenu = (menu) => {
+    setActiveMenu((current) => (current === menu ? null : menu));
+  };
 
-  useEffect(() => {
+  // =========================================================
+  // NORMAL NAVIGATION
+  // =========================================================
 
-    setMobileOpen(false);
+  const goTo = (path) => {
+    closeAll();
+    navigate(path);
 
-    setMbbsOpen(false);
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    }, 50);
+  };
 
-    setManagementOpen(false);
+  // =========================================================
+  // ABOUT PAGE SECTION NAVIGATION
+  //
+  // IMPORTANT:
+  // This fixes:
+  // Explore -> Why RYC
+  // Explore -> Our Promise
+  // Explore -> Our Presence
+  // =========================================================
 
-    setExploreOpen(false);
+  const goToSection = (path, sectionId) => {
+    closeAll();
 
-  }, [
-    location.pathname,
-    location.search,
-    location.hash
-  ]);
+    // Already on same page
+    if (location.pathname === path) {
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
 
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
 
-  /* =======================================================
-     HASH SCROLL
+          window.history.replaceState(
+            null,
+            '',
+            `${path}#${sectionId}`
+          );
+        }
+      }, 100);
 
-     Handles:
-     /#stories
-     /about#why-ryc
-     /about#promise
-     /about#presence
-     /management#undergraduate
-     /management#postgraduate
-  ======================================================= */
-
-  useEffect(() => {
-
-    if (!location.hash) {
       return;
     }
 
+    // Going to another page
+    navigate(`${path}#${sectionId}`);
+  };
 
-    const id =
-      location.hash.replace(
-        '#',
-        ''
+  // =========================================================
+  // SCROLL TO HASH AFTER PAGE LOAD
+  // =========================================================
+
+  useEffect(() => {
+    if (!location.hash) return;
+
+    const sectionId = location.hash.replace('#', '');
+
+    const timer = setTimeout(() => {
+      const element = document.getElementById(sectionId);
+
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [location.pathname, location.hash]);
+
+  // =========================================================
+  // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
+  // =========================================================
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        navRef.current &&
+        !navRef.current.contains(event.target)
+      ) {
+        setActiveMenu(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener(
+        'mousedown',
+        handleOutsideClick
       );
+    };
+  }, []);
 
+  // =========================================================
+  // ESC KEY
+  // =========================================================
 
-    const timer =
-      setTimeout(() => {
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setActiveMenu(null);
+        setMobileOpen(false);
+      }
+    };
 
-        const element =
-          document.getElementById(id);
+    document.addEventListener('keydown', handleEscape);
 
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
-        if (element) {
+  // =========================================================
+  // MBBS COUNTRIES
+  //
+  // These can later be loaded dynamically from admin.
+  // Keep your current working country URLs here.
+  // =========================================================
 
-          element.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
+  const mbbsCountries = [
+    {
+      name: 'Georgia',
+      description: 'European medical education',
+      path: '/countries/georgia',
+      flag: '🇬🇪',
+    },
+    {
+      name: 'Uzbekistan',
+      description: 'Affordable MBBS pathway',
+      path: '/countries/uzbekistan',
+      flag: '🇺🇿',
+    },
+    {
+      name: 'Russia',
+      description: 'Established medical universities',
+      path: '/countries/russia',
+      flag: '🇷🇺',
+    },
+    {
+      name: 'Philippines',
+      description: 'Explore medical universities',
+      path: '/countries/philippines',
+      flag: '🇵🇭',
+    },
+  ];
 
-        }
+  // =========================================================
+  // MANAGEMENT COUNTRIES
+  // =========================================================
 
-      }, 250);
+  const managementCountries = [
+    'Italy',
+    'United Kingdom',
+    'Germany',
+    'United States',
+    'Australia',
+    'Spain',
+    'UAE',
+    'Singapore',
+  ];
 
+  // =========================================================
+  // REUSABLE EXPLORE ITEM
+  // =========================================================
 
-    return () =>
-      clearTimeout(timer);
+  const ExploreItem = ({
+    icon: Icon,
+    title,
+    description,
+    onClick,
+  }) => {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="
+          group
+          w-full
+          flex
+          items-start
+          gap-3
+          rounded-2xl
+          p-3
+          text-left
+          transition-all
+          duration-200
+          hover:bg-[#f5f1e9]
+        "
+      >
+        <div
+          className="
+            flex
+            h-10
+            w-10
+            shrink-0
+            items-center
+            justify-center
+            rounded-xl
+            bg-[#f3efe7]
+            text-[#0d1824]
+            transition
+            group-hover:bg-[#0d1824]
+            group-hover:text-white
+          "
+        >
+          <Icon size={17} strokeWidth={1.8} />
+        </div>
 
-  }, [
-    location.pathname,
-    location.hash
-  ]);
+        <div className="min-w-0">
+          <div
+            className="
+              text-[13px]
+              font-semibold
+              text-[#0d1824]
+            "
+          >
+            {title}
+          </div>
 
-
-  /* =======================================================
-     DESKTOP LINK STYLE
-  ======================================================= */
-
-  const desktopLink = `
-    inline-flex
-    items-center
-    gap-1.5
-
-    rounded-full
-
-    px-3
-    py-2.5
-
-    text-[12px]
-    font-semibold
-
-    text-ink/65
-
-    hover:text-ink
-    hover:bg-ink/[0.045]
-
-    transition
-  `;
-
+          <div
+            className="
+              mt-1
+              text-[11px]
+              leading-[1.45]
+              text-[#0d1824]/45
+            "
+          >
+            {description}
+          </div>
+        </div>
+      </button>
+    );
+  };
 
   return (
-
     <header
+      ref={navRef}
       className="
         sticky
         top-0
-        z-50
-
+        z-[100]
         border-b
-        border-ink/[0.08]
-
-        bg-cream/90
-
+        border-[#0d1824]/10
+        bg-[#f8f5ee]/95
         backdrop-blur-xl
       "
     >
+      {/* =====================================================
+          DESKTOP / MAIN NAVBAR
+      ===================================================== */}
 
       <div
         className="
-          max-w-[1440px]
           mx-auto
-
-          px-4
-          sm:px-6
-          xl:px-8
+          flex
+          min-h-[80px]
+          max-w-[1500px]
+          items-center
+          justify-between
+          gap-5
+          px-5
+          lg:px-8
+          xl:px-10
         "
       >
+        {/* ===================================================
+            LOGO
+        =================================================== */}
 
-        <div
+        <Link
+          to="/"
+          onClick={closeAll}
           className="
-            min-h-[76px]
-
             flex
+            shrink-0
             items-center
-
             gap-3
           "
         >
-
-
-          {/* =================================================
-              LOGO
-          ================================================= */}
-
-          <Link
-            to="/"
-            onClick={closeAll}
-
+          <div
             className="
-              group
-
+              relative
               flex
+              h-12
+              w-12
               items-center
-              gap-3
-
-              shrink-0
+              justify-center
+              rounded-2xl
+              bg-[#0d1824]
+              text-white
             "
           >
+            <span className="serif text-xl italic">
+              r
+            </span>
 
-            <div className="relative">
+            <span
+              className="
+                absolute
+                -bottom-1
+                -right-1
+                h-3
+                w-3
+                rounded-full
+                border-2
+                border-[#f8f5ee]
+                bg-[#f25f3a]
+              "
+            />
+          </div>
 
-              <div
-                className="
-                  h-11
-                  w-11
-
-                  rounded-[15px]
-
-                  bg-ink
-                  text-cream
-
-                  grid
-                  place-items-center
-
-                  serif
-                  italic
-
-                  text-xl
-
-                  shadow-sm
-
-                  transition-transform
-
-                  group-hover:-rotate-3
-                "
-              >
-                r
-              </div>
-
-
-              <span
-                className="
-                  absolute
-
-                  -bottom-1
-                  -right-1
-
-                  h-4
-                  w-4
-
-                  rounded-full
-
-                  bg-coral
-
-                  border-[3px]
-                  border-cream
-                "
-              />
-
+          <div className="hidden sm:block">
+            <div
+              className="
+                serif
+                whitespace-nowrap
+                text-[22px]
+                leading-none
+                text-[#0d1824]
+              "
+            >
+              Route Your Career
             </div>
-
 
             <div
               className="
-                hidden
-                sm:block
+                mt-2
+                whitespace-nowrap
+                text-[7px]
+                uppercase
+                tracking-[0.32em]
+                text-[#0d1824]/40
               "
             >
-
-              <div
-                className="
-                  serif
-
-                  text-[19px]
-                  xl:text-[20px]
-
-                  leading-none
-
-                  whitespace-nowrap
-                "
-              >
-                Route Your Career
-              </div>
-
-
-              <div
-                className="
-                  mt-1.5
-
-                  text-[7px]
-
-                  mono
-                  uppercase
-
-                  tracking-[0.2em]
-
-                  text-ink/40
-
-                  whitespace-nowrap
-                "
-              >
-                Global Education · Your Route
-              </div>
-
+              Global Education · Your Route
             </div>
+          </div>
+        </Link>
 
-          </Link>
+        {/* ===================================================
+            DESKTOP NAVIGATION
+        =================================================== */}
 
-
+        <nav
+          className="
+            hidden
+            lg:flex
+            items-center
+            gap-1
+          "
+        >
           {/* =================================================
-              DESKTOP NAVIGATION
+              MBBS ABROAD
           ================================================= */}
 
-          <nav
-            className="
-              hidden
-              xl:flex
-
-              items-center
-
-              ml-auto
-
-              gap-0.5
-            "
-          >
-
-
-            {/* =================================================
-                MBBS ABROAD
-            ================================================= */}
-
-            <div
-              className="relative"
-
-              onMouseEnter={() => {
-
-                setMbbsOpen(true);
-
-                setManagementOpen(false);
-
-                setExploreOpen(false);
-
-              }}
-
-              onMouseLeave={() =>
-                setMbbsOpen(false)
-              }
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => toggleMenu('mbbs')}
+              className={`
+                flex
+                items-center
+                gap-2
+                rounded-full
+                px-4
+                py-3
+                text-[13px]
+                font-semibold
+                transition
+                ${
+                  activeMenu === 'mbbs'
+                    ? 'bg-[#eee9df] text-[#0d1824]'
+                    : 'text-[#0d1824]/65 hover:bg-[#f0ece4] hover:text-[#0d1824]'
+                }
+              `}
             >
+              <GraduationCap
+                size={16}
+                className="text-[#f25f3a]"
+              />
 
-              <button
-                type="button"
-                className={desktopLink}
+              MBBS Abroad
+
+              <ChevronDown
+                size={13}
+                className={`
+                  transition-transform
+                  ${
+                    activeMenu === 'mbbs'
+                      ? 'rotate-180'
+                      : ''
+                  }
+                `}
+              />
+            </button>
+
+            {activeMenu === 'mbbs' && (
+              <div
+                className="
+                  absolute
+                  left-0
+                  top-[58px]
+                  w-[410px]
+                  overflow-hidden
+                  rounded-[26px]
+                  border
+                  border-[#0d1824]/10
+                  bg-white
+                  shadow-[0_25px_80px_rgba(13,24,36,0.16)]
+                "
               >
-
-                <GraduationCap
-                  className="
-                    h-3.5
-                    w-3.5
-
-                    text-coral
-                  "
-                />
-
-                MBBS Abroad
-
-
-                <ChevronDown
-                  className={`
-                    h-3
-                    w-3
-
-                    transition-transform
-
-                    ${
-                      mbbsOpen
-                        ? 'rotate-180'
-                        : ''
-                    }
-                  `}
-                />
-
-              </button>
-
-
-              {mbbsOpen && (
-
-                <div
-                  className="
-                    absolute
-
-                    left-0
-                    top-full
-
-                    pt-3
-
-                    w-[330px]
-                  "
-                >
-
+                <div className="p-5">
                   <div
                     className="
-                      overflow-hidden
-
-                      rounded-[24px]
-
-                      border
-                      border-ink/10
-
-                      bg-white/95
-
-                      backdrop-blur-xl
-
-                      shadow-2xl
-                      shadow-black/10
+                      mb-3
+                      text-[8px]
+                      uppercase
+                      tracking-[0.25em]
+                      text-[#f25f3a]
                     "
                   >
+                    Medical destinations
+                  </div>
 
-
-                    {/* MBBS HEADER */}
-
-                    <div
-                      className="
-                        p-5
-
-                        border-b
-                        border-ink/[0.07]
-
-                        bg-cream/50
-                      "
-                    >
-
-                      <div
+                  <div className="grid grid-cols-2 gap-2">
+                    {mbbsCountries.map((country) => (
+                      <button
+                        type="button"
+                        key={country.name}
+                        onClick={() => goTo(country.path)}
                         className="
-                          text-[9px]
-
-                          mono
-                          uppercase
-
-                          tracking-[0.2em]
-
-                          text-coral
-                        "
-                      >
-                        Medical Education
-                      </div>
-
-
-                      <div
-                        className="
-                          serif
-
-                          text-[23px]
-
-                          mt-1
-                        "
-                      >
-                        Study MBBS Abroad
-                      </div>
-
-
-                      <p
-                        className="
-                          mt-1.5
-
-                          text-[11px]
-                          leading-relaxed
-
-                          text-ink/45
-                        "
-                      >
-                        Compare destinations and explore
-                        universities published through RYC.
-                      </p>
-
-                    </div>
-
-
-                    {/* DYNAMIC ADMIN COUNTRIES */}
-
-                    <div
-                      className="
-                        p-2
-
-                        max-h-[390px]
-
-                        overflow-y-auto
-                      "
-                    >
-
-                      {mbbsCountries.length === 0 ? (
-
-                        <div
-                          className="
-                            px-4
-                            py-7
-
-                            text-center
-
-                            text-[11px]
-
-                            text-ink/40
-                          "
-                        >
-                          Loading destinations…
-                        </div>
-
-                      ) : (
-
-                        mbbsCountries.map(
-                          country => (
-
-                            <Link
-                              key={country.slug}
-
-                              to={
-                                `/countries/${country.slug}`
-                              }
-
-                              onClick={closeAll}
-
-                              className="
-                                group/country
-
-                                flex
-                                items-center
-                                justify-between
-
-                                gap-3
-
-                                rounded-xl
-
-                                px-3
-                                py-2.5
-
-                                text-[12px]
-                                font-semibold
-
-                                hover:bg-cream
-
-                                transition
-                              "
-                            >
-
-                              <span>
-                                MBBS in {country.name}
-                              </span>
-
-
-                              <ArrowUpRight
-                                className="
-                                  h-3.5
-                                  w-3.5
-
-                                  text-ink/25
-
-                                  transition
-
-                                  group-hover/country:text-coral
-                                "
-                              />
-
-                            </Link>
-
-                          )
-                        )
-
-                      )}
-
-                    </div>
-
-
-                    {/* MBBS CTA */}
-
-                    <div
-                      className="
-                        p-3
-
-                        border-t
-                        border-ink/[0.07]
-                      "
-                    >
-
-                      <Link
-                        to="/build-my-route"
-                        onClick={closeAll}
-
-                        className="
-                          flex
-                          items-center
-                          justify-between
-
-                          rounded-xl
-
-                          bg-ink
-
-                          px-4
-                          py-3
-
-                          text-[11px]
-                          font-semibold
-
-                          text-cream
-
-                          hover:bg-forest
-
+                          group
+                          rounded-2xl
+                          border
+                          border-[#0d1824]/8
+                          p-4
+                          text-left
                           transition
+                          hover:border-[#f25f3a]/30
+                          hover:bg-[#f8f5ee]
                         "
                       >
-
-                        Not sure which country?
-
-                        <ArrowRight
-                          className="
-                            h-3.5
-                            w-3.5
-                          "
-                        />
-
-                      </Link>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              )}
-
-            </div>
-
-
-            {/* =================================================
-                MANAGEMENT
-            ================================================= */}
-
-            <div
-              className="relative"
-
-              onMouseEnter={() => {
-
-                setManagementOpen(true);
-
-                setMbbsOpen(false);
-
-                setExploreOpen(false);
-
-              }}
-
-              onMouseLeave={() =>
-                setManagementOpen(false)
-              }
-            >
-
-              <button
-                type="button"
-                className={desktopLink}
-              >
-
-                <BriefcaseBusiness
-                  className="
-                    h-3.5
-                    w-3.5
-
-                    text-coral
-                  "
-                />
-
-                Management
-
-
-                <ChevronDown
-                  className={`
-                    h-3
-                    w-3
-
-                    transition-transform
-
-                    ${
-                      managementOpen
-                        ? 'rotate-180'
-                        : ''
-                    }
-                  `}
-                />
-
-              </button>
-
-
-              {managementOpen && (
-
-                <div
-                  className="
-                    absolute
-
-                    left-1/2
-                    -translate-x-1/2
-
-                    top-full
-
-                    pt-3
-
-                    w-[410px]
-                  "
-                >
-
-                  <div
-                    className="
-                      rounded-[24px]
-
-                      border
-                      border-ink/10
-
-                      bg-white/95
-
-                      backdrop-blur-xl
-
-                      p-2
-
-                      shadow-2xl
-                      shadow-black/10
-                    "
-                  >
-
-                    <div
-                      className="
-                        px-3
-                        pt-3
-                        pb-2
-                      "
-                    >
-
-                      <div
-                        className="
-                          text-[9px]
-
-                          mono
-                          uppercase
-
-                          tracking-[0.2em]
-
-                          text-coral
-                        "
-                      >
-                        Business & Management
-                      </div>
-
-
-                      <div
-                        className="
-                          serif
-
-                          text-[22px]
-
-                          mt-1
-                        "
-                      >
-                        Find your global course.
-                      </div>
-
-                    </div>
-
-
-                    <div className="mt-1">
-
-                      {managementLinks.map(
-                        item => {
-
-                          const Icon =
-                            item.icon;
-
-
-                          return (
-
-                            <Link
-                              key={item.title}
-
-                              to={item.path}
-
-                              onClick={closeAll}
-
-                              className={`
-                                group
-
-                                flex
-                                items-center
-
-                                gap-3
-
-                                rounded-2xl
-
-                                p-3
-
-                                transition
-
-                                ${
-                                  item.featured
-                                    ? 'bg-coral/[0.08] hover:bg-coral/[0.13]'
-                                    : 'hover:bg-cream'
-                                }
-                              `}
-                            >
-
-                              <div
-                                className={`
-                                  h-10
-                                  w-10
-
-                                  shrink-0
-
-                                  rounded-xl
-
-                                  grid
-                                  place-items-center
-
-                                  ${
-                                    item.featured
-                                      ? 'bg-coral text-white'
-                                      : 'bg-cream text-ink'
-                                  }
-                                `}
-                              >
-
-                                <Icon
-                                  className="
-                                    h-4
-                                    w-4
-                                  "
-                                />
-
-                              </div>
-
-
-                              <div
-                                className="
-                                  min-w-0
-                                  flex-1
-                                "
-                              >
-
-                                <div
-                                  className="
-                                    text-[12px]
-                                    font-bold
-                                  "
-                                >
-                                  {item.title}
-                                </div>
-
-
-                                <div
-                                  className="
-                                    mt-0.5
-
-                                    text-[10px]
-                                    leading-relaxed
-
-                                    text-ink/45
-                                  "
-                                >
-                                  {item.description}
-                                </div>
-
-                              </div>
-
-
-                              <ArrowUpRight
-                                className="
-                                  h-3.5
-                                  w-3.5
-
-                                  text-ink/20
-
-                                  group-hover:text-coral
-
-                                  transition
-                                "
-                              />
-
-                            </Link>
-
-                          );
-
-                        }
-                      )}
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              )}
-
-            </div>
-
-
-            {/* =================================================
-                EXPLORE
-            ================================================= */}
-
-            <div
-              className="relative"
-
-              onMouseEnter={() => {
-
-                setExploreOpen(true);
-
-                setMbbsOpen(false);
-
-                setManagementOpen(false);
-
-              }}
-
-              onMouseLeave={() =>
-                setExploreOpen(false)
-              }
-            >
-
-              <button
-                type="button"
-                className={desktopLink}
-              >
-
-                <Compass
-                  className="
-                    h-3.5
-                    w-3.5
-
-                    text-coral
-                  "
-                />
-
-                Explore
-
-
-                <ChevronDown
-                  className={`
-                    h-3
-                    w-3
-
-                    transition-transform
-
-                    ${
-                      exploreOpen
-                        ? 'rotate-180'
-                        : ''
-                    }
-                  `}
-                />
-
-              </button>
-
-
-              {exploreOpen && (
-
-                <div
-                  className="
-                    absolute
-
-                    left-1/2
-                    -translate-x-1/2
-
-                    top-full
-
-                    pt-3
-
-                    w-[760px]
-                  "
-                >
-
-                  <div
-                    className="
-                      rounded-[28px]
-
-                      border
-                      border-ink/10
-
-                      bg-white/95
-
-                      backdrop-blur-xl
-
-                      overflow-hidden
-
-                      shadow-2xl
-                      shadow-black/10
-                    "
-                  >
-
-
-                    {/* EXPLORE HEADER */}
-
-                    <div
-                      className="
-                        px-6
-                        pt-5
-                        pb-4
-
-                        border-b
-                        border-ink/[0.07]
-
-                        bg-cream/40
-                      "
-                    >
-
-                      <div
-                        className="
-                          flex
-                          items-end
-                          justify-between
-
-                          gap-6
-                        "
-                      >
-
-                        <div>
-
-                          <div
-                            className="
-                              text-[8px]
-
-                              mono
-                              uppercase
-
-                              tracking-[0.2em]
-
-                              text-coral
-                            "
-                          >
-                            Explore Route Your Career
-                          </div>
-
-
-                          <div
-                            className="
-                              serif
-
-                              mt-1
-
-                              text-[24px]
-                            "
-                          >
-                            Everything you need,
-                            in one place.
-                          </div>
-
+                        <div className="text-xl">
+                          {country.flag}
                         </div>
-
 
                         <div
                           className="
-                            max-w-[220px]
-
-                            text-right
-
-                            text-[9px]
-                            leading-relaxed
-
-                            text-ink/40
+                            mt-2
+                            text-[13px]
+                            font-semibold
+                            text-[#0d1824]
                           "
                         >
-                          Learn about RYC, hear from students
-                          and access useful guidance.
+                          {country.name}
                         </div>
-
-                      </div>
-
-                    </div>
-
-
-                    {/* EXPLORE COLUMNS */}
-
-                    <div
-                      className="
-                        grid
-                        grid-cols-3
-
-                        gap-2
-
-                        p-4
-                      "
-                    >
-
-                      {exploreGroups.map(
-                        group => (
-
-                          <div
-                            key={group.heading}
-
-                            className="
-                              rounded-[20px]
-
-                              p-2
-                            "
-                          >
-
-                            <div
-                              className="
-                                px-2
-                                pb-2
-
-                                text-[8px]
-
-                                mono
-                                uppercase
-
-                                tracking-[0.2em]
-
-                                text-coral
-                              "
-                            >
-                              {group.heading}
-                            </div>
-
-
-                            <div className="space-y-1">
-
-                              {group.links.map(
-                                item => {
-
-                                  const Icon =
-                                    item.icon;
-
-
-                                  const content = (
-
-                                    <>
-
-                                      <div
-                                        className="
-                                          h-9
-                                          w-9
-
-                                          shrink-0
-
-                                          rounded-xl
-
-                                          bg-cream
-
-                                          grid
-                                          place-items-center
-
-                                          text-ink
-
-                                          group-hover:bg-ink
-                                          group-hover:text-cream
-
-                                          transition
-                                        "
-                                      >
-
-                                        <Icon
-                                          className="
-                                            h-4
-                                            w-4
-                                          "
-                                        />
-
-                                      </div>
-
-
-                                      <div
-                                        className="
-                                          min-w-0
-                                        "
-                                      >
-
-                                        <div
-                                          className="
-                                            text-[11px]
-                                            font-bold
-                                          "
-                                        >
-                                          {item.title}
-                                        </div>
-
-
-                                        <div
-                                          className="
-                                            mt-0.5
-
-                                            text-[9px]
-                                            leading-relaxed
-
-                                            text-ink/40
-                                          "
-                                        >
-                                          {item.description}
-                                        </div>
-
-                                      </div>
-
-                                    </>
-
-                                  );
-
-
-                                  if (item.external) {
-
-                                    return (
-
-                                      <a
-                                        key={item.title}
-
-                                        href={item.url}
-
-                                        target="_blank"
-                                        rel="noreferrer"
-
-                                        onClick={closeAll}
-
-                                        className="
-                                          group
-
-                                          flex
-                                          items-start
-
-                                          gap-2.5
-
-                                          rounded-xl
-
-                                          p-2
-
-                                          hover:bg-cream
-
-                                          transition
-                                        "
-                                      >
-
-                                        {content}
-
-                                      </a>
-
-                                    );
-
-                                  }
-
-
-                                  return (
-
-                                    <Link
-                                      key={item.title}
-
-                                      to={item.path}
-
-                                      onClick={closeAll}
-
-                                      className="
-                                        group
-
-                                        flex
-                                        items-start
-
-                                        gap-2.5
-
-                                        rounded-xl
-
-                                        p-2
-
-                                        hover:bg-cream
-
-                                        transition
-                                      "
-                                    >
-
-                                      {content}
-
-                                    </Link>
-
-                                  );
-
-                                }
-                              )}
-
-                            </div>
-
-                          </div>
-
-                        )
-                      )}
-
-                    </div>
-
-
-                    {/* EXPLORE CTA */}
-
-                    <div
-                      className="
-                        flex
-                        items-center
-                        justify-between
-
-                        gap-4
-
-                        border-t
-                        border-ink/[0.07]
-
-                        bg-ink
-
-                        px-6
-                        py-4
-
-                        text-cream
-                      "
-                    >
-
-                      <div>
-
-                        <div
-                          className="
-                            text-[8px]
-
-                            mono
-                            uppercase
-
-                            tracking-[0.2em]
-
-                            text-coral
-                          "
-                        >
-                          Not sure where to begin?
-                        </div>
-
 
                         <div
                           className="
                             mt-1
-
-                            text-[11px]
-
-                            text-cream/60
+                            text-[10px]
+                            leading-relaxed
+                            text-[#0d1824]/45
                           "
                         >
-                          Tell us your goal and build your
-                          study route.
+                          {country.description}
                         </div>
-
-                      </div>
-
-
-                      <Link
-                        to="/build-my-route"
-                        onClick={closeAll}
-
-                        className="
-                          inline-flex
-                          items-center
-                          gap-2
-
-                          rounded-full
-
-                          bg-coral
-
-                          px-4
-                          py-2.5
-
-                          text-[10px]
-                          font-bold
-
-                          text-white
-
-                          hover:bg-white
-                          hover:text-ink
-
-                          transition
-                        "
-                      >
-
-                        Build My Route
-
-                        <ArrowRight
-                          className="
-                            h-3.5
-                            w-3.5
-                          "
-                        />
-
-                      </Link>
-
-                    </div>
-
+                      </button>
+                    ))}
                   </div>
-
                 </div>
 
-              )}
+                <button
+                  type="button"
+                  onClick={() => goTo('/countries')}
+                  className="
+                    flex
+                    w-full
+                    items-center
+                    justify-between
+                    bg-[#0d1824]
+                    px-5
+                    py-4
+                    text-left
+                    text-white
+                  "
+                >
+                  <div>
+                    <div
+                      className="
+                        text-[8px]
+                        uppercase
+                        tracking-[0.22em]
+                        text-[#f25f3a]
+                      "
+                    >
+                      Explore
+                    </div>
 
-            </div>
+                    <div className="mt-1 text-[12px] font-semibold">
+                      View all MBBS destinations
+                    </div>
+                  </div>
 
-
-            {/* =================================================
-                CAREER GUIDE
-            ================================================= */}
-
-            <Link
-              to="/build-my-route"
-              className={desktopLink}
-            >
-
-              <Route
-                className="
-                  h-3.5
-                  w-3.5
-
-                  text-coral
-                "
-              />
-
-              Career Guide
-
-            </Link>
-
-
-            {/* =================================================
-                BLOGS
-            ================================================= */}
-
-            <Link
-              to="/blogs"
-              className={desktopLink}
-            >
-
-              <Newspaper
-                className="
-                  h-3.5
-                  w-3.5
-
-                  text-coral
-                "
-              />
-
-              Blogs
-
-            </Link>
-
-          </nav>
-
-
-          {/* =================================================
-              DESKTOP RIGHT ACTIONS
-          ================================================= */}
-
-          <div
-            className="
-              hidden
-              lg:flex
-
-              items-center
-              gap-2
-
-              ml-auto
-              xl:ml-2
-
-              shrink-0
-            "
-          >
-
-            <Link
-              to="/track-application"
-
-              className="
-                hidden
-                2xl:inline-flex
-
-                items-center
-                gap-2
-
-                rounded-full
-
-                px-3
-                py-2.5
-
-                text-[11px]
-                font-semibold
-
-                text-ink/55
-
-                hover:bg-ink/[0.04]
-                hover:text-ink
-
-                transition
-              "
-            >
-
-              <FileCheck2
-                className="
-                  h-3.5
-                  w-3.5
-                "
-              />
-
-              Track
-
-            </Link>
-
-
-            <Link
-              to="/start-application"
-
-              className="
-                group
-
-                inline-flex
-                items-center
-                gap-2
-
-                rounded-full
-
-                bg-coral
-
-                px-4
-                py-2.5
-
-                text-[11px]
-                font-bold
-
-                text-white
-
-                shadow-sm
-
-                hover:-translate-y-0.5
-                hover:shadow-lg
-
-                transition-all
-              "
-            >
-
-              Start Application
-
-              <ArrowUpRight
-                className="
-                  h-3.5
-                  w-3.5
-                "
-              />
-
-            </Link>
-
+                  <ExternalLink size={15} />
+                </button>
+              </div>
+            )}
           </div>
 
+          {/* =================================================
+              MANAGEMENT
+          ================================================= */}
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => toggleMenu('management')}
+              className={`
+                flex
+                items-center
+                gap-2
+                rounded-full
+                px-4
+                py-3
+                text-[13px]
+                font-semibold
+                transition
+                ${
+                  activeMenu === 'management'
+                    ? 'bg-[#eee9df] text-[#0d1824]'
+                    : 'text-[#0d1824]/65 hover:bg-[#f0ece4] hover:text-[#0d1824]'
+                }
+              `}
+            >
+              <BriefcaseBusiness
+                size={15}
+                className="text-[#f25f3a]"
+              />
+
+              Management
+
+              <ChevronDown
+                size={13}
+                className={`
+                  transition-transform
+                  ${
+                    activeMenu === 'management'
+                      ? 'rotate-180'
+                      : ''
+                  }
+                `}
+              />
+            </button>
+
+            {activeMenu === 'management' && (
+              <div
+                className="
+                  absolute
+                  left-0
+                  top-[58px]
+                  w-[430px]
+                  overflow-hidden
+                  rounded-[26px]
+                  border
+                  border-[#0d1824]/10
+                  bg-white
+                  shadow-[0_25px_80px_rgba(13,24,36,0.16)]
+                "
+              >
+                <div className="p-5">
+                  <div
+                    className="
+                      text-[8px]
+                      uppercase
+                      tracking-[0.25em]
+                      text-[#f25f3a]
+                    "
+                  >
+                    Business & Management
+                  </div>
+
+                  <div
+                    className="
+                      mt-2
+                      serif
+                      text-[25px]
+                      leading-tight
+                      text-[#0d1824]
+                    "
+                  >
+                    Build your international
+                    <br />
+                    business route.
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-2 gap-2">
+                    {managementCountries.map((country) => (
+                      <button
+                        type="button"
+                        key={country}
+                        onClick={() =>
+                          goTo('/management')
+                        }
+                        className="
+                          rounded-xl
+                          border
+                          border-[#0d1824]/8
+                          px-4
+                          py-3
+                          text-left
+                          text-[11px]
+                          font-semibold
+                          text-[#0d1824]/70
+                          transition
+                          hover:border-[#f25f3a]/30
+                          hover:bg-[#f8f5ee]
+                          hover:text-[#0d1824]
+                        "
+                      >
+                        {country}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => goTo('/management')}
+                  className="
+                    flex
+                    w-full
+                    items-center
+                    justify-between
+                    bg-[#0d1824]
+                    px-5
+                    py-4
+                    text-white
+                  "
+                >
+                  <div>
+                    <div
+                      className="
+                        text-[8px]
+                        uppercase
+                        tracking-[0.22em]
+                        text-[#f25f3a]
+                      "
+                    >
+                      UG + PG
+                    </div>
+
+                    <div className="mt-1 text-[12px] font-semibold">
+                      Explore management programmes
+                    </div>
+                  </div>
+
+                  <ExternalLink size={15} />
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* =================================================
-              MOBILE BUTTON
+              EXPLORE MEGA MENU
+          ================================================= */}
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => toggleMenu('explore')}
+              className={`
+                flex
+                items-center
+                gap-2
+                rounded-full
+                px-4
+                py-3
+                text-[13px]
+                font-semibold
+                transition
+                ${
+                  activeMenu === 'explore'
+                    ? 'bg-[#eee9df] text-[#0d1824]'
+                    : 'text-[#0d1824]/65 hover:bg-[#f0ece4] hover:text-[#0d1824]'
+                }
+              `}
+            >
+              <Compass
+                size={15}
+                className="text-[#f25f3a]"
+              />
+
+              Explore
+
+              <ChevronDown
+                size={13}
+                className={`
+                  transition-transform
+                  ${
+                    activeMenu === 'explore'
+                      ? 'rotate-180'
+                      : ''
+                  }
+                `}
+              />
+            </button>
+
+            {activeMenu === 'explore' && (
+              <div
+                className="
+                  absolute
+                  left-1/2
+                  top-[58px]
+                  w-[760px]
+                  -translate-x-1/2
+                  overflow-hidden
+                  rounded-[28px]
+                  border
+                  border-[#0d1824]/10
+                  bg-white/95
+                  shadow-[0_30px_100px_rgba(13,24,36,0.18)]
+                  backdrop-blur-xl
+                "
+              >
+                <div className="grid grid-cols-3 gap-5 p-6">
+                  {/* ABOUT */}
+
+                  <div>
+                    <div
+                      className="
+                        mb-2
+                        px-3
+                        text-[8px]
+                        uppercase
+                        tracking-[0.25em]
+                        text-[#f25f3a]
+                      "
+                    >
+                      About
+                    </div>
+
+                    <ExploreItem
+                      icon={Sparkles}
+                      title="About Us"
+                      description="Meet Route Your Career and our approach."
+                      onClick={() => goTo('/about')}
+                    />
+
+                    <ExploreItem
+                      icon={ShieldCheck}
+                      title="Why RYC"
+                      description="Why students choose our guidance."
+                      onClick={() =>
+                        goToSection('/about', 'why-ryc')
+                      }
+                    />
+
+                    <ExploreItem
+                      icon={FileText}
+                      title="Our Promise"
+                      description="How we approach student guidance."
+                      onClick={() =>
+                        goToSection('/about', 'promise')
+                      }
+                    />
+
+                    <ExploreItem
+                      icon={MapPin}
+                      title="Our Presence"
+                      description="Explore our student support network."
+                      onClick={() =>
+                        goToSection('/about', 'presence')
+                      }
+                    />
+                  </div>
+
+                  {/* DISCOVER */}
+
+                  <div>
+                    <div
+                      className="
+                        mb-2
+                        px-3
+                        text-[8px]
+                        uppercase
+                        tracking-[0.25em]
+                        text-[#f25f3a]
+                      "
+                    >
+                      Discover
+                    </div>
+
+                    <ExploreItem
+                      icon={MessageSquareQuote}
+                      title="Student Stories"
+                      description="Real experiences from students abroad."
+                      onClick={() =>
+                        goTo('/student-stories')
+                      }
+                    />
+
+                    <ExploreItem
+                      icon={Youtube}
+                      title="RYC on YouTube"
+                      description="University guides, explainers and updates."
+                      onClick={() => goTo('/videos')}
+                    />
+
+                    <ExploreItem
+                      icon={Search}
+                      title="Course Finder Quiz"
+                      description="Find a starting point for your study options."
+                      onClick={() => goTo('/quiz')}
+                    />
+                  </div>
+
+                  {/* RESOURCES */}
+
+                  <div>
+                    <div
+                      className="
+                        mb-2
+                        px-3
+                        text-[8px]
+                        uppercase
+                        tracking-[0.25em]
+                        text-[#f25f3a]
+                      "
+                    >
+                      Resources
+                    </div>
+
+                    <ExploreItem
+                      icon={Newspaper}
+                      title="Blogs"
+                      description="MBBS, management and study-abroad guides."
+                      onClick={() => goTo('/blogs')}
+                    />
+
+                    <ExploreItem
+                      icon={CircleHelp}
+                      title="FAQ"
+                      description="Answers to common student questions."
+                      onClick={() => goTo('/faq')}
+                    />
+
+                    <ExploreItem
+                      icon={Route}
+                      title="Career Guide"
+                      description="Build a route around your career goals."
+                      onClick={() =>
+                        goTo('/career-guide')
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* BOTTOM BAR */}
+
+                <div
+                  className="
+                    flex
+                    items-center
+                    justify-between
+                    bg-[#0d1824]
+                    px-6
+                    py-4
+                    text-white
+                  "
+                >
+                  <div>
+                    <div
+                      className="
+                        text-[8px]
+                        uppercase
+                        tracking-[0.23em]
+                        text-[#f25f3a]
+                      "
+                    >
+                      Need direction?
+                    </div>
+
+                    <div
+                      className="
+                        mt-1
+                        text-[11px]
+                        text-white/60
+                      "
+                    >
+                      Build a personalised study route.
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      goTo('/build-my-route')
+                    }
+                    className="
+                      flex
+                      items-center
+                      gap-3
+                      rounded-full
+                      bg-[#f25f3a]
+                      px-5
+                      py-3
+                      text-[11px]
+                      font-bold
+                      text-white
+                      transition
+                      hover:scale-[1.02]
+                    "
+                  >
+                    Build My Route
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* =================================================
+              CAREER GUIDE
           ================================================= */}
 
           <button
             type="button"
-
-            onClick={() =>
-              setMobileOpen(
-                value => !value
-              )
-            }
-
+            onClick={() => goTo('/career-guide')}
             className="
-              ml-auto
-
-              lg:hidden
-
-              h-11
-              w-11
-
               rounded-full
-
-              border
-              border-ink/10
-
-              bg-white/60
-
-              grid
-              place-items-center
+              px-3
+              py-3
+              text-[13px]
+              font-semibold
+              text-[#0d1824]/65
+              transition
+              hover:bg-[#f0ece4]
+              hover:text-[#0d1824]
             "
-
-            aria-label="Toggle navigation"
           >
-
-            {mobileOpen ? (
-
-              <X
-                className="
-                  h-5
-                  w-5
-                "
-              />
-
-            ) : (
-
-              <Menu
-                className="
-                  h-5
-                  w-5
-                "
-              />
-
-            )}
-
+            Career Guide
           </button>
 
-        </div>
+          {/* =================================================
+              BLOGS
+          ================================================= */}
 
-      </div>
-
-
-      {/* ===================================================
-          MOBILE NAVIGATION
-      =================================================== */}
-
-      {mobileOpen && (
-
-        <div
-          className="
-            lg:hidden
-
-            border-t
-            border-ink/[0.08]
-
-            bg-cream
-          "
-        >
-
-          <div
+          <button
+            type="button"
+            onClick={() => goTo('/blogs')}
             className="
-              px-4
-              sm:px-6
-
-              py-4
-
-              max-h-[calc(100vh-76px)]
-
-              overflow-y-auto
+              flex
+              items-center
+              gap-2
+              rounded-full
+              px-3
+              py-3
+              text-[13px]
+              font-semibold
+              text-[#0d1824]/65
+              transition
+              hover:bg-[#f0ece4]
+              hover:text-[#0d1824]
             "
           >
+            <Newspaper
+              size={15}
+              className="text-[#f25f3a]"
+            />
 
+            Blogs
+          </button>
 
-            {/* =================================================
-                MOBILE MBBS
-            ================================================= */}
+          {/* =================================================
+              TRACK APPLICATION
+          ================================================= */}
 
-            <div
-              className="
-                border-b
-                border-ink/10
-              "
-            >
+          <button
+            type="button"
+            onClick={() =>
+              goTo('/track-application')
+            }
+            className="
+              rounded-full
+              px-3
+              py-3
+              text-[13px]
+              font-semibold
+              text-[#0d1824]/55
+              transition
+              hover:bg-[#f0ece4]
+              hover:text-[#0d1824]
+            "
+          >
+            Track
+          </button>
+        </nav>
 
-              <button
-                type="button"
+        {/* ===================================================
+            RIGHT SIDE
+        =================================================== */}
 
-                onClick={() => {
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => goTo('/start-application')}
+            className="
+              hidden
+              sm:flex
+              items-center
+              gap-3
+              rounded-full
+              bg-[#f25f3a]
+              px-5
+              py-3.5
+              text-[12px]
+              font-bold
+              text-white
+              shadow-sm
+              transition
+              hover:-translate-y-0.5
+              hover:shadow-lg
+            "
+          >
+            Start Application
+            <span>↗</span>
+          </button>
 
-                  setMbbsOpen(
-                    value => !value
-                  );
+          {/* MOBILE MENU BUTTON */}
 
-                  setManagementOpen(false);
+          <button
+            type="button"
+            onClick={() =>
+              setMobileOpen((current) => !current)
+            }
+            className="
+              flex
+              h-11
+              w-11
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-[#0d1824]/10
+              text-[#0d1824]
+              lg:hidden
+            "
+          >
+            {mobileOpen ? (
+              <X size={20} />
+            ) : (
+              <Menu size={20} />
+            )}
+          </button>
+        </div>
+      </div>
 
-                  setExploreOpen(false);
+      {/* =====================================================
+          MOBILE NAVIGATION
+      ===================================================== */}
 
-                }}
+      {mobileOpen && (
+        <div
+          className="
+            max-h-[calc(100vh-80px)]
+            overflow-y-auto
+            border-t
+            border-[#0d1824]/10
+            bg-[#f8f5ee]
+            px-5
+            py-5
+            lg:hidden
+          "
+        >
+          <div className="space-y-2">
+            {/* MBBS */}
 
+            <div className="rounded-2xl bg-white p-4">
+              <div
                 className="
-                  w-full
-
                   flex
                   items-center
-                  justify-between
-
-                  py-4
-
-                  text-left
+                  gap-2
+                  text-[12px]
+                  font-bold
+                  text-[#0d1824]
                 "
               >
+                <GraduationCap
+                  size={16}
+                  className="text-[#f25f3a]"
+                />
 
-                <span
-                  className="
-                    flex
-                    items-center
-                    gap-2
+                MBBS Abroad
+              </div>
 
-                    text-[13px]
-                    font-bold
-                  "
-                >
-
-                  <GraduationCap
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {mbbsCountries.map((country) => (
+                  <button
+                    type="button"
+                    key={country.name}
+                    onClick={() => goTo(country.path)}
                     className="
-                      h-4
-                      w-4
-
-                      text-coral
+                      rounded-xl
+                      border
+                      border-[#0d1824]/8
+                      px-3
+                      py-3
+                      text-left
+                      text-[11px]
+                      font-semibold
                     "
-                  />
-
-                  MBBS Abroad
-
-                </span>
-
-
-                <ChevronDown
-                  className={`
-                    h-4
-                    w-4
-
-                    transition-transform
-
-                    ${
-                      mbbsOpen
-                        ? 'rotate-180'
-                        : ''
-                    }
-                  `}
-                />
-
-              </button>
-
-
-              {mbbsOpen && (
-
-                <div
-                  className="
-                    pb-4
-
-                    grid
-                    sm:grid-cols-2
-
-                    gap-1
-                  "
-                >
-
-                  {mbbsCountries.length === 0 ? (
-
-                    <div
-                      className="
-                        col-span-full
-
-                        py-4
-
-                        text-[11px]
-
-                        text-ink/40
-                      "
-                    >
-                      Loading destinations…
-                    </div>
-
-                  ) : (
-
-                    mbbsCountries.map(
-                      country => (
-
-                        <Link
-                          key={country.slug}
-
-                          to={
-                            `/countries/${country.slug}`
-                          }
-
-                          onClick={closeAll}
-
-                          className="
-                            flex
-                            items-center
-                            justify-between
-
-                            rounded-xl
-
-                            bg-white/60
-
-                            px-3
-                            py-3
-
-                            text-[11px]
-                            font-semibold
-                          "
-                        >
-
-                          MBBS in {country.name}
-
-                          <ArrowUpRight
-                            className="
-                              h-3
-                              w-3
-
-                              text-ink/25
-                            "
-                          />
-
-                        </Link>
-
-                      )
-                    )
-
-                  )}
-
-                </div>
-
-              )}
-
+                  >
+                    {country.flag} {country.name}
+                  </button>
+                ))}
+              </div>
             </div>
 
+            {/* MANAGEMENT */}
 
-            {/* =================================================
-                MOBILE MANAGEMENT
-            ================================================= */}
-
-            <div
+            <button
+              type="button"
+              onClick={() => goTo('/management')}
               className="
-                border-b
-                border-ink/10
-              "
-            >
-
-              <button
-                type="button"
-
-                onClick={() => {
-
-                  setManagementOpen(
-                    value => !value
-                  );
-
-                  setMbbsOpen(false);
-
-                  setExploreOpen(false);
-
-                }}
-
-                className="
-                  w-full
-
-                  flex
-                  items-center
-                  justify-between
-
-                  py-4
-
-                  text-left
-                "
-              >
-
-                <span
-                  className="
-                    flex
-                    items-center
-                    gap-2
-
-                    text-[13px]
-                    font-bold
-                  "
-                >
-
-                  <BriefcaseBusiness
-                    className="
-                      h-4
-                      w-4
-
-                      text-coral
-                    "
-                  />
-
-                  Management Abroad
-
-                </span>
-
-
-                <ChevronDown
-                  className={`
-                    h-4
-                    w-4
-
-                    transition-transform
-
-                    ${
-                      managementOpen
-                        ? 'rotate-180'
-                        : ''
-                    }
-                  `}
-                />
-
-              </button>
-
-
-              {managementOpen && (
-
-                <div
-                  className="
-                    pb-4
-
-                    space-y-1
-                  "
-                >
-
-                  {managementLinks.map(
-                    item => {
-
-                      const Icon =
-                        item.icon;
-
-
-                      return (
-
-                        <Link
-                          key={item.title}
-
-                          to={item.path}
-
-                          onClick={closeAll}
-
-                          className="
-                            flex
-                            items-center
-
-                            gap-3
-
-                            rounded-xl
-
-                            bg-white/60
-
-                            p-3
-                          "
-                        >
-
-                          <div
-                            className="
-                              h-9
-                              w-9
-
-                              rounded-xl
-
-                              bg-ink
-                              text-cream
-
-                              grid
-                              place-items-center
-
-                              shrink-0
-                            "
-                          >
-
-                            <Icon
-                              className="
-                                h-4
-                                w-4
-                              "
-                            />
-
-                          </div>
-
-
-                          <div>
-
-                            <div
-                              className="
-                                text-[11px]
-                                font-bold
-                              "
-                            >
-                              {item.title}
-                            </div>
-
-
-                            <div
-                              className="
-                                mt-0.5
-
-                                text-[9px]
-
-                                text-ink/40
-                              "
-                            >
-                              {item.description}
-                            </div>
-
-                          </div>
-
-                        </Link>
-
-                      );
-
-                    }
-                  )}
-
-                </div>
-
-              )}
-
-            </div>
-
-
-            {/* =================================================
-                MOBILE EXPLORE
-            ================================================= */}
-
-            <div
-              className="
-                border-b
-                border-ink/10
-              "
-            >
-
-              <button
-                type="button"
-
-                onClick={() => {
-
-                  setExploreOpen(
-                    value => !value
-                  );
-
-                  setMbbsOpen(false);
-
-                  setManagementOpen(false);
-
-                }}
-
-                className="
-                  w-full
-
-                  flex
-                  items-center
-                  justify-between
-
-                  py-4
-
-                  text-left
-                "
-              >
-
-                <span
-                  className="
-                    flex
-                    items-center
-                    gap-2
-
-                    text-[13px]
-                    font-bold
-                  "
-                >
-
-                  <Compass
-                    className="
-                      h-4
-                      w-4
-
-                      text-coral
-                    "
-                  />
-
-                  Explore
-
-                </span>
-
-
-                <ChevronDown
-                  className={`
-                    h-4
-                    w-4
-
-                    transition-transform
-
-                    ${
-                      exploreOpen
-                        ? 'rotate-180'
-                        : ''
-                    }
-                  `}
-                />
-
-              </button>
-
-
-              {exploreOpen && (
-
-                <div
-                  className="
-                    pb-5
-
-                    space-y-5
-                  "
-                >
-
-                  {exploreGroups.map(
-                    group => (
-
-                      <div
-                        key={group.heading}
-                      >
-
-                        <div
-                          className="
-                            mb-2
-
-                            text-[8px]
-
-                            mono
-                            uppercase
-
-                            tracking-[0.2em]
-
-                            text-coral
-                          "
-                        >
-                          {group.heading}
-                        </div>
-
-
-                        <div
-                          className="
-                            grid
-                            sm:grid-cols-2
-
-                            gap-1
-                          "
-                        >
-
-                          {group.links.map(
-                            item => {
-
-                              const Icon =
-                                item.icon;
-
-
-                              const content = (
-
-                                <>
-
-                                  <Icon
-                                    className="
-                                      h-4
-                                      w-4
-
-                                      shrink-0
-
-                                      text-ink/40
-                                    "
-                                  />
-
-                                  <span>
-                                    {item.title}
-                                  </span>
-
-                                </>
-
-                              );
-
-
-                              if (item.external) {
-
-                                return (
-
-                                  <a
-                                    key={item.title}
-
-                                    href={item.url}
-
-                                    target="_blank"
-                                    rel="noreferrer"
-
-                                    onClick={closeAll}
-
-                                    className="
-                                      flex
-                                      items-center
-
-                                      gap-2.5
-
-                                      rounded-xl
-
-                                      bg-white/60
-
-                                      px-3
-                                      py-3
-
-                                      text-[11px]
-                                      font-semibold
-                                    "
-                                  >
-
-                                    {content}
-
-                                  </a>
-
-                                );
-
-                              }
-
-
-                              return (
-
-                                <Link
-                                  key={item.title}
-
-                                  to={item.path}
-
-                                  onClick={closeAll}
-
-                                  className="
-                                    flex
-                                    items-center
-
-                                    gap-2.5
-
-                                    rounded-xl
-
-                                    bg-white/60
-
-                                    px-3
-                                    py-3
-
-                                    text-[11px]
-                                    font-semibold
-                                  "
-                                >
-
-                                  {content}
-
-                                </Link>
-
-                              );
-
-                            }
-                          )}
-
-                        </div>
-
-                      </div>
-
-                    )
-                  )}
-
-                </div>
-
-              )}
-
-            </div>
-
-
-            {/* =================================================
-                MOBILE QUICK LINKS
-            ================================================= */}
-
-            <div
-              className="
-                grid
-                grid-cols-2
-
-                gap-2
-
-                pt-4
-              "
-            >
-
-              <Link
-                to="/blogs"
-                onClick={closeAll}
-
-                className="
-                  rounded-2xl
-
-                  bg-white
-
-                  border
-                  border-ink/10
-
-                  p-4
-                "
-              >
-
-                <Newspaper
-                  className="
-                    h-4
-                    w-4
-
-                    text-coral
-                  "
-                />
-
-
-                <div
-                  className="
-                    mt-3
-
-                    text-[11px]
-                    font-bold
-                  "
-                >
-                  Blogs
-                </div>
-
-              </Link>
-
-
-              <Link
-                to="/faq"
-                onClick={closeAll}
-
-                className="
-                  rounded-2xl
-
-                  bg-white
-
-                  border
-                  border-ink/10
-
-                  p-4
-                "
-              >
-
-                <CircleHelp
-                  className="
-                    h-4
-                    w-4
-
-                    text-coral
-                  "
-                />
-
-
-                <div
-                  className="
-                    mt-3
-
-                    text-[11px]
-                    font-bold
-                  "
-                >
-                  FAQ
-                </div>
-
-              </Link>
-
-
-              <Link
-                to="/build-my-route"
-                onClick={closeAll}
-
-                className="
-                  rounded-2xl
-
-                  bg-white
-
-                  border
-                  border-ink/10
-
-                  p-4
-                "
-              >
-
-                <Route
-                  className="
-                    h-4
-                    w-4
-
-                    text-coral
-                  "
-                />
-
-
-                <div
-                  className="
-                    mt-3
-
-                    text-[11px]
-                    font-bold
-                  "
-                >
-                  Career Guide
-                </div>
-
-              </Link>
-
-
-              <Link
-                to="/track-application"
-                onClick={closeAll}
-
-                className="
-                  rounded-2xl
-
-                  bg-white
-
-                  border
-                  border-ink/10
-
-                  p-4
-                "
-              >
-
-                <FileCheck2
-                  className="
-                    h-4
-                    w-4
-
-                    text-coral
-                  "
-                />
-
-
-                <div
-                  className="
-                    mt-3
-
-                    text-[11px]
-                    font-bold
-                  "
-                >
-                  Track Application
-                </div>
-
-              </Link>
-
-            </div>
-
-
-            {/* =================================================
-                MOBILE START APPLICATION
-            ================================================= */}
-
-            <Link
-              to="/start-application"
-              onClick={closeAll}
-
-              className="
-                mt-3
-
                 flex
+                w-full
                 items-center
-                justify-between
-
+                gap-3
                 rounded-2xl
-
-                bg-coral
-
-                px-5
-                py-4
-
+                bg-white
+                p-4
+                text-left
                 text-[12px]
                 font-bold
+                text-[#0d1824]
+              "
+            >
+              <BriefcaseBusiness
+                size={16}
+                className="text-[#f25f3a]"
+              />
 
+              Management Abroad
+            </button>
+
+            {/* ABOUT */}
+
+            <button
+              type="button"
+              onClick={() => goTo('/about')}
+              className="
+                w-full
+                rounded-2xl
+                bg-white
+                p-4
+                text-left
+                text-[12px]
+                font-bold
+              "
+            >
+              About Us
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goToSection('/about', 'why-ryc')
+              }
+              className="
+                w-full
+                rounded-2xl
+                bg-white
+                p-4
+                text-left
+                text-[12px]
+                font-bold
+              "
+            >
+              Why RYC
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goToSection('/about', 'promise')
+              }
+              className="
+                w-full
+                rounded-2xl
+                bg-white
+                p-4
+                text-left
+                text-[12px]
+                font-bold
+              "
+            >
+              Our Promise
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goToSection('/about', 'presence')
+              }
+              className="
+                w-full
+                rounded-2xl
+                bg-white
+                p-4
+                text-left
+                text-[12px]
+                font-bold
+              "
+            >
+              Our Presence
+            </button>
+
+            {/* OTHER */}
+
+            <button
+              type="button"
+              onClick={() => goTo('/student-stories')}
+              className="
+                w-full
+                rounded-2xl
+                bg-white
+                p-4
+                text-left
+                text-[12px]
+                font-bold
+              "
+            >
+              Student Stories
+            </button>
+
+            <button
+              type="button"
+              onClick={() => goTo('/videos')}
+              className="
+                w-full
+                rounded-2xl
+                bg-white
+                p-4
+                text-left
+                text-[12px]
+                font-bold
+              "
+            >
+              RYC on YouTube
+            </button>
+
+            <button
+              type="button"
+              onClick={() => goTo('/blogs')}
+              className="
+                w-full
+                rounded-2xl
+                bg-white
+                p-4
+                text-left
+                text-[12px]
+                font-bold
+              "
+            >
+              Blogs
+            </button>
+
+            <button
+              type="button"
+              onClick={() => goTo('/faq')}
+              className="
+                w-full
+                rounded-2xl
+                bg-white
+                p-4
+                text-left
+                text-[12px]
+                font-bold
+              "
+            >
+              FAQ
+            </button>
+
+            <button
+              type="button"
+              onClick={() => goTo('/career-guide')}
+              className="
+                w-full
+                rounded-2xl
+                bg-white
+                p-4
+                text-left
+                text-[12px]
+                font-bold
+              "
+            >
+              Career Guide
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goTo('/track-application')
+              }
+              className="
+                w-full
+                rounded-2xl
+                bg-white
+                p-4
+                text-left
+                text-[12px]
+                font-bold
+              "
+            >
+              Track Application
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goTo('/start-application')
+              }
+              className="
+                mt-4
+                w-full
+                rounded-2xl
+                bg-[#f25f3a]
+                p-4
+                text-center
+                text-[12px]
+                font-bold
                 text-white
               "
             >
-
-              Start Your Application
-
-              <ArrowUpRight
-                className="
-                  h-4
-                  w-4
-                "
-              />
-
-            </Link>
-
+              Start Application →
+            </button>
           </div>
-
         </div>
-
       )}
-
     </header>
-
   );
-
 }
