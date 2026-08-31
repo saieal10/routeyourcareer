@@ -9,17 +9,7 @@ import {
   Navigate
 } from 'react-router-dom';
 
-
-/* =========================================================
-   MAIN PAGES
-========================================================= */
-
 import Home from './pages/Home';
-
-
-/* =========================================================
-   COUNTRY PAGES
-========================================================= */
 
 import CountryGeorgia from './pages/CountryGeorgia';
 import CountryItaly from './pages/CountryItaly';
@@ -29,68 +19,31 @@ import DynamicCountryPage from './pages/DynamicCountryPage';
 
 import ItalyCourses from './pages/ItalyCourses';
 
-import CountryDetail from './pages/CountryDetail';
-
-
-/* =========================================================
-   ABOUT + FAQ
-========================================================= */
-
-import About from './pages/About';
-import FAQPage from './pages/FAQPage';
-
-
-/* =========================================================
-   BLOG + QUIZ
-========================================================= */
-
-import BlogPost from './pages/BlogPost';
-import CourseFinderQuiz from './pages/CourseFinderQuiz';
-
-
-/* =========================================================
-   ADMIN
-========================================================= */
-
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AuthCallback from './pages/AuthCallback';
 
+import CountryDetail from './pages/CountryDetail';
 
-/* =========================================================
-   V2 PAGES
-========================================================= */
+import BlogsPage from './pages/BlogsPage';
+import BlogPost from './pages/BlogPost';
+
+import CourseFinderQuiz from './pages/CourseFinderQuiz';
 
 import BuildMyRoute from './pages/BuildMyRoute';
 import TrackApplication from './pages/TrackApplication';
 import StartApplication from './pages/StartApplication';
-
-
-/* =========================================================
-   UI
-========================================================= */
 
 import { Toaster } from './components/ui/toaster';
 
 
 /* =========================================================
    LEGACY COUNTRY ROUTER
-
-   Keeps old links such as:
-
-   /country/ge
-   /country/it
-   /country/uz
-   /country/ru
-
-   working.
 ========================================================= */
 
 function DynamicCountryRoute() {
 
-  const location =
-    useLocation();
-
+  const location = useLocation();
 
   const code =
     location.pathname
@@ -98,66 +51,47 @@ function DynamicCountryRoute() {
       .filter(Boolean)[1];
 
 
-  /* GEORGIA */
-
   if (code === 'ge') {
-
     return (
       <Navigate
         to="/countries/georgia"
         replace
       />
     );
-
   }
 
 
-  /* ITALY */
-
   if (code === 'it') {
-
     return (
       <Navigate
         to="/countries/italy"
         replace
       />
     );
-
   }
 
 
-  /* UZBEKISTAN */
-
   if (code === 'uz') {
-
     return (
       <Navigate
         to="/countries/uzbekistan"
         replace
       />
     );
-
   }
 
 
-  /* RUSSIA */
-
   if (code === 'ru') {
-
     return (
       <Navigate
         to="/countries/russia"
         replace
       />
     );
-
   }
 
 
-  /* FALLBACK FOR OLD COUNTRY LINKS */
-
   return <CountryDetail />;
-
 }
 
 
@@ -167,25 +101,16 @@ function DynamicCountryRoute() {
 
 function AppRouter() {
 
-  const location =
-    useLocation();
+  const location = useLocation();
 
 
-  /* =======================================================
-     GOOGLE AUTH CALLBACK
-
-     Keeps your existing Google Admin login callback working.
-  ======================================================= */
+  /* GOOGLE AUTH CALLBACK */
 
   if (
     location.hash &&
-    location.hash.includes(
-      'session_id='
-    )
+    location.hash.includes('session_id=')
   ) {
-
     return <AuthCallback />;
-
   }
 
 
@@ -194,9 +119,7 @@ function AppRouter() {
     <Routes>
 
 
-      {/* ===================================================
-          HOME
-      =================================================== */}
+      {/* HOME */}
 
       <Route
         path="/"
@@ -204,29 +127,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          ABOUT ROUTE YOUR CAREER
-      =================================================== */}
-
-      <Route
-        path="/about"
-        element={<About />}
-      />
-
-
-      {/* ===================================================
-          FAQ
-      =================================================== */}
-
-      <Route
-        path="/faq"
-        element={<FAQPage />}
-      />
-
-
-      {/* ===================================================
-          PRIMARY STUDY TRACKS
-      =================================================== */}
+      {/* MBBS */}
 
       <Route
         path="/mbbs"
@@ -239,6 +140,8 @@ function AppRouter() {
       />
 
 
+      {/* MANAGEMENT */}
+
       <Route
         path="/management"
         element={
@@ -250,9 +153,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          START APPLICATION
-      =================================================== */}
+      {/* START APPLICATION */}
 
       <Route
         path="/start-application"
@@ -260,12 +161,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          CAREER GUIDE
-
-          URL stays /build-my-route for compatibility.
-          Navbar can display the name "Career Guide".
-      =================================================== */}
+      {/* CAREER GUIDE */}
 
       <Route
         path="/build-my-route"
@@ -273,9 +169,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          TRACK APPLICATION
-      =================================================== */}
+      {/* TRACK APPLICATION */}
 
       <Route
         path="/track-application"
@@ -283,11 +177,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          DEDICATED COUNTRY PAGES
-
-          These preserve your existing custom pages.
-      =================================================== */}
+      {/* GEORGIA */}
 
       <Route
         path="/countries/georgia"
@@ -295,11 +185,15 @@ function AppRouter() {
       />
 
 
+      {/* ITALY */}
+
       <Route
         path="/countries/italy"
         element={<CountryItaly />}
       />
 
+
+      {/* UZBEKISTAN */}
 
       <Route
         path="/countries/uzbekistan"
@@ -307,15 +201,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          ITALY COURSE FINDER
-
-          IMPORTANT:
-          Keep this ABOVE /countries/:country.
-
-          Otherwise "italy/courses" can interfere with
-          dynamic country routing.
-      =================================================== */}
+      {/* ITALY COURSE FINDER */}
 
       <Route
         path="/countries/italy/courses"
@@ -323,24 +209,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          UNIVERSAL DYNAMIC COUNTRY PAGE
-
-          Countries added through Admin can use this.
-
-          Examples:
-
-          /countries/russia
-          /countries/philippines
-          /countries/kazakhstan
-          /countries/kyrgyzstan
-          /countries/armenia
-          /countries/germany
-          /countries/australia
-
-          DynamicCountryPage loads the country information,
-          hero and published universities from your backend.
-      =================================================== */}
+      {/* DYNAMIC COUNTRIES */}
 
       <Route
         path="/countries/:country"
@@ -348,9 +217,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          LEGACY COUNTRY ROUTES
-      =================================================== */}
+      {/* OLD COUNTRY LINKS */}
 
       <Route
         path="/country/:code"
@@ -359,8 +226,16 @@ function AppRouter() {
 
 
       {/* ===================================================
-          BLOG POSTS
+          ALL BLOGS
       =================================================== */}
+
+      <Route
+        path="/blogs"
+        element={<BlogsPage />}
+      />
+
+
+      {/* INDIVIDUAL BLOG */}
 
       <Route
         path="/blog/:slug"
@@ -368,9 +243,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          COURSE / CAREER QUIZ
-      =================================================== */}
+      {/* QUIZ */}
 
       <Route
         path="/quiz"
@@ -378,9 +251,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          ADMIN DASHBOARD
-      =================================================== */}
+      {/* ADMIN */}
 
       <Route
         path="/admin"
@@ -388,19 +259,11 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          ADMIN LOGIN
-      =================================================== */}
-
       <Route
         path="/admin/login"
         element={<AdminLogin />}
       />
 
-
-      {/* ===================================================
-          ADMIN GOOGLE AUTH CALLBACK
-      =================================================== */}
 
       <Route
         path="/admin/callback"
@@ -408,11 +271,7 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          FALLBACK
-
-          Any completely unknown URL returns home.
-      =================================================== */}
+      {/* FALLBACK */}
 
       <Route
         path="*"
@@ -428,12 +287,11 @@ function AppRouter() {
     </Routes>
 
   );
-
 }
 
 
 /* =========================================================
-   MAIN APP
+   APP
 ========================================================= */
 
 function App() {
@@ -456,13 +314,11 @@ function App() {
 
       </BrowserRouter>
 
-
       <Toaster />
 
     </div>
 
   );
-
 }
 
 
