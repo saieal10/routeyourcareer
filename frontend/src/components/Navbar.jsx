@@ -23,6 +23,7 @@ import {
   Route,
   ShieldCheck,
   Sparkles,
+  Target,
   X
 } from 'lucide-react';
 
@@ -41,11 +42,13 @@ const API_URL =
 ========================================================= */
 
 function slugify(value) {
+
   return String(value || '')
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+
 }
 
 
@@ -57,9 +60,11 @@ export default function Navbar() {
 
   const location = useLocation();
 
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] =
+    useState(false);
 
-  const [mbbsOpen, setMbbsOpen] = useState(false);
+  const [mbbsOpen, setMbbsOpen] =
+    useState(false);
 
   const [managementOpen, setManagementOpen] =
     useState(false);
@@ -72,7 +77,7 @@ export default function Navbar() {
 
 
   /* =======================================================
-     LOAD MBBS UNIVERSITIES FROM ADMIN
+     LOAD MBBS COUNTRIES FROM ADMIN
   ======================================================= */
 
   useEffect(() => {
@@ -98,7 +103,8 @@ export default function Navbar() {
         }
 
 
-        const data = await response.json();
+        const data =
+          await response.json();
 
 
         if (!cancelled) {
@@ -129,61 +135,68 @@ export default function Navbar() {
 
 
     return () => {
+
       cancelled = true;
+
     };
 
   }, []);
 
 
   /* =======================================================
-     BUILD DYNAMIC COUNTRY LIST
+     BUILD UNIQUE COUNTRY LIST
   ======================================================= */
 
-  const mbbsCountries = useMemo(() => {
+  const mbbsCountries =
+    useMemo(() => {
 
-    const map = new Map();
-
-
-    universities.forEach(university => {
-
-      const country =
-        String(
-          university.country || ''
-        ).trim();
+      const map = new Map();
 
 
-      if (!country) {
-        return;
-      }
+      universities.forEach(
+        university => {
+
+          const country =
+            String(
+              university.country || ''
+            ).trim();
 
 
-      const key =
-        country.toLowerCase();
-
-
-      if (!map.has(key)) {
-
-        map.set(
-          key,
-          {
-            name: country,
-            slug: slugify(country)
+          if (!country) {
+            return;
           }
+
+
+          const key =
+            country.toLowerCase();
+
+
+          if (!map.has(key)) {
+
+            map.set(
+              key,
+              {
+                name: country,
+                slug: slugify(country)
+              }
+            );
+
+          }
+
+        }
+      );
+
+
+      return Array
+        .from(map.values())
+        .sort(
+          (a, b) =>
+            a.name.localeCompare(
+              b.name
+            )
         );
 
-      }
-
-    });
-
-
-    return Array.from(
-      map.values()
-    ).sort(
-      (a, b) =>
-        a.name.localeCompare(b.name)
-    );
-
-  }, [universities]);
+    }, [universities]);
 
 
   /* =======================================================
@@ -242,23 +255,31 @@ export default function Navbar() {
         {
           title: 'About Us',
           description:
-            'Meet Route Your Career and our approach.',
+            'Who we are and how Route Your Career works.',
           path: '/about',
           icon: Sparkles
         },
 
         {
-          title: 'Why RYC',
+          title: 'Why Choose RYC',
           description:
-            'Why students choose our guidance.',
+            'Our approach to student guidance.',
           path: '/about#why-ryc',
           icon: ShieldCheck
         },
 
         {
+          title: 'Our Promise',
+          description:
+            'What you can expect from our guidance.',
+          path: '/about#promise',
+          icon: Target
+        },
+
+        {
           title: 'Our Presence',
           description:
-            'Explore our student support network.',
+            'Explore our support network and locations.',
           path: '/about#presence',
           icon: MapPin
         }
@@ -268,14 +289,14 @@ export default function Navbar() {
 
 
     {
-      heading: 'Discover',
+      heading: 'Student Experience',
 
       links: [
 
         {
-          title: 'Student Stories',
+          title: 'Student Testimonials',
           description:
-            'Real experiences from students abroad.',
+            'Watch experiences shared by students.',
           path: '/#stories',
           icon: MessageSquareQuote
         },
@@ -283,19 +304,11 @@ export default function Navbar() {
         {
           title: 'RYC on YouTube',
           description:
-            'University guides, explainers and updates.',
+            'Watch university guides and education videos.',
           url:
             'https://www.youtube.com/@route_your_career',
           icon: PlayCircle,
           external: true
-        },
-
-        {
-          title: 'Course Finder Quiz',
-          description:
-            'Find a starting point for your study options.',
-          path: '/quiz',
-          icon: Compass
         }
 
       ]
@@ -326,9 +339,17 @@ export default function Navbar() {
         {
           title: 'Career Guide',
           description:
-            'Build a route around your career goals.',
+            'Build a study route around your goals.',
           path: '/build-my-route',
           icon: Route
+        },
+
+        {
+          title: 'Course Finder Quiz',
+          description:
+            'Get a starting point for your study options.',
+          path: '/quiz',
+          icon: Compass
         }
 
       ]
@@ -338,7 +359,7 @@ export default function Navbar() {
 
 
   /* =======================================================
-     CLOSE MENUS
+     CLOSE EVERYTHING
   ======================================================= */
 
   const closeAll = () => {
@@ -355,14 +376,18 @@ export default function Navbar() {
 
 
   /* =======================================================
-     CLOSE WHEN PAGE CHANGES
+     CLOSE MENU WHEN ROUTE CHANGES
   ======================================================= */
 
   useEffect(() => {
 
-    closeAll();
+    setMobileOpen(false);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setMbbsOpen(false);
+
+    setManagementOpen(false);
+
+    setExploreOpen(false);
 
   }, [
     location.pathname,
@@ -371,7 +396,7 @@ export default function Navbar() {
 
 
   /* =======================================================
-     HANDLE HASH LINKS
+     HASH SCROLL
   ======================================================= */
 
   useEffect(() => {
@@ -382,7 +407,10 @@ export default function Navbar() {
 
 
     const id =
-      location.hash.replace('#', '');
+      location.hash.replace(
+        '#',
+        ''
+      );
 
 
     const timer =
@@ -401,7 +429,7 @@ export default function Navbar() {
 
         }
 
-      }, 150);
+      }, 200);
 
 
     return () =>
@@ -599,7 +627,7 @@ export default function Navbar() {
 
 
           {/* =================================================
-              DESKTOP NAV
+              DESKTOP NAVIGATION
           ================================================= */}
 
           <nav
@@ -617,7 +645,7 @@ export default function Navbar() {
 
 
             {/* =================================================
-                MBBS DROPDOWN
+                MBBS
             ================================================= */}
 
             <div
@@ -707,7 +735,7 @@ export default function Navbar() {
                   >
 
 
-                    {/* MBBS HEADER */}
+                    {/* HEADER */}
 
                     <div
                       className="
@@ -759,8 +787,8 @@ export default function Navbar() {
                           text-ink/45
                         "
                       >
-                        Explore countries and universities
-                        published through Route Your Career.
+                        Compare destinations and explore
+                        universities published through RYC.
                       </p>
 
                     </div>
@@ -860,7 +888,7 @@ export default function Navbar() {
                     </div>
 
 
-                    {/* COUNTRY FINDER CTA */}
+                    {/* MBBS CTA */}
 
                     <div
                       className="
@@ -921,7 +949,7 @@ export default function Navbar() {
 
 
             {/* =================================================
-                MANAGEMENT DROPDOWN
+                MANAGEMENT
             ================================================= */}
 
             <div
@@ -990,7 +1018,7 @@ export default function Navbar() {
 
                     pt-3
 
-                    w-[400px]
+                    w-[410px]
                   "
                 >
 
@@ -1111,12 +1139,7 @@ export default function Navbar() {
                                 `}
                               >
 
-                                <Icon
-                                  className="
-                                    h-4
-                                    w-4
-                                  "
-                                />
+                                <Icon className="h-4 w-4" />
 
                               </div>
 
@@ -1162,6 +1185,8 @@ export default function Navbar() {
                                   text-ink/20
 
                                   group-hover:text-coral
+
+                                  transition
                                 "
                               />
 
@@ -1210,7 +1235,17 @@ export default function Navbar() {
                 className={desktopLink}
               >
 
+                <Compass
+                  className="
+                    h-3.5
+                    w-3.5
+
+                    text-coral
+                  "
+                />
+
                 Explore
+
 
                 <ChevronDown
                   className={`
@@ -1243,13 +1278,13 @@ export default function Navbar() {
 
                     pt-3
 
-                    w-[720px]
+                    w-[760px]
                   "
                 >
 
                   <div
                     className="
-                      rounded-[26px]
+                      rounded-[28px]
 
                       border
                       border-ink/10
@@ -1265,12 +1300,95 @@ export default function Navbar() {
                     "
                   >
 
+
+                    {/* EXPLORE TITLE */}
+
+                    <div
+                      className="
+                        px-6
+                        pt-5
+                        pb-4
+
+                        border-b
+                        border-ink/[0.07]
+
+                        bg-cream/40
+                      "
+                    >
+
+                      <div
+                        className="
+                          flex
+                          items-end
+                          justify-between
+
+                          gap-6
+                        "
+                      >
+
+                        <div>
+
+                          <div
+                            className="
+                              text-[8px]
+
+                              mono
+                              uppercase
+
+                              tracking-[0.2em]
+
+                              text-coral
+                            "
+                          >
+                            Explore Route Your Career
+                          </div>
+
+
+                          <div
+                            className="
+                              serif
+
+                              mt-1
+
+                              text-[24px]
+                            "
+                          >
+                            Everything you need,
+                            in one place.
+                          </div>
+
+                        </div>
+
+
+                        <div
+                          className="
+                            max-w-[220px]
+
+                            text-right
+
+                            text-[9px]
+                            leading-relaxed
+
+                            text-ink/40
+                          "
+                        >
+                          Learn about RYC, hear from students
+                          and access useful guidance.
+                        </div>
+
+                      </div>
+
+                    </div>
+
+
+                    {/* 3 COLUMNS */}
+
                     <div
                       className="
                         grid
                         grid-cols-3
 
-                        gap-1
+                        gap-2
 
                         p-4
                       "
@@ -1281,7 +1399,12 @@ export default function Navbar() {
 
                           <div
                             key={group.heading}
-                            className="p-2"
+
+                            className="
+                              rounded-[20px]
+
+                              p-2
+                            "
                           >
 
                             <div
@@ -1330,6 +1453,8 @@ export default function Navbar() {
                                           grid
                                           place-items-center
 
+                                          text-ink
+
                                           group-hover:bg-ink
                                           group-hover:text-cream
 
@@ -1347,7 +1472,11 @@ export default function Navbar() {
                                       </div>
 
 
-                                      <div className="min-w-0">
+                                      <div
+                                        className="
+                                          min-w-0
+                                        "
+                                      >
 
                                         <div
                                           className="
@@ -1466,7 +1595,7 @@ export default function Navbar() {
                     </div>
 
 
-                    {/* EXPLORE BOTTOM */}
+                    {/* EXPLORE FOOTER */}
 
                     <div
                       className="
@@ -1481,7 +1610,7 @@ export default function Navbar() {
 
                         bg-ink
 
-                        px-5
+                        px-6
                         py-4
 
                         text-cream
@@ -1502,7 +1631,7 @@ export default function Navbar() {
                             text-coral
                           "
                         >
-                          Need direction?
+                          Not sure where to begin?
                         </div>
 
 
@@ -1515,7 +1644,8 @@ export default function Navbar() {
                             text-cream/60
                           "
                         >
-                          Build a personalised study route.
+                          Tell us your goal and build your
+                          study route.
                         </div>
 
                       </div>
@@ -1759,21 +1889,11 @@ export default function Navbar() {
 
             {mobileOpen ? (
 
-              <X
-                className="
-                  h-5
-                  w-5
-                "
-              />
+              <X className="h-5 w-5" />
 
             ) : (
 
-              <Menu
-                className="
-                  h-5
-                  w-5
-                "
-              />
+              <Menu className="h-5 w-5" />
 
             )}
 
@@ -2121,12 +2241,7 @@ export default function Navbar() {
                             "
                           >
 
-                            <Icon
-                              className="
-                                h-4
-                                w-4
-                              "
-                            />
+                            <Icon className="h-4 w-4" />
 
                           </div>
 
@@ -2418,7 +2533,7 @@ export default function Navbar() {
 
 
             {/* =================================================
-                MOBILE BLOG + CAREER GUIDE
+                MOBILE QUICK LINKS
             ================================================= */}
 
             <div
@@ -2457,6 +2572,7 @@ export default function Navbar() {
                   "
                 />
 
+
                 <div
                   className="
                     mt-3
@@ -2466,6 +2582,46 @@ export default function Navbar() {
                   "
                 >
                   Blogs
+                </div>
+
+              </Link>
+
+
+              <Link
+                to="/faq"
+                onClick={closeAll}
+
+                className="
+                  rounded-2xl
+
+                  bg-white
+
+                  border
+                  border-ink/10
+
+                  p-4
+                "
+              >
+
+                <CircleHelp
+                  className="
+                    h-4
+                    w-4
+
+                    text-coral
+                  "
+                />
+
+
+                <div
+                  className="
+                    mt-3
+
+                    text-[11px]
+                    font-bold
+                  "
+                >
+                  FAQ
                 </div>
 
               </Link>
@@ -2496,6 +2652,7 @@ export default function Navbar() {
                   "
                 />
 
+
                 <div
                   className="
                     mt-3
@@ -2515,12 +2672,6 @@ export default function Navbar() {
                 onClick={closeAll}
 
                 className="
-                  col-span-2
-
-                  flex
-                  items-center
-                  justify-between
-
                   rounded-2xl
 
                   bg-white
@@ -2532,43 +2683,26 @@ export default function Navbar() {
                 "
               >
 
-                <div
-                  className="
-                    flex
-                    items-center
-                    gap-2
-                  "
-                >
-
-                  <FileCheck2
-                    className="
-                      h-4
-                      w-4
-
-                      text-coral
-                    "
-                  />
-
-                  <span
-                    className="
-                      text-[11px]
-                      font-bold
-                    "
-                  >
-                    Track Application
-                  </span>
-
-                </div>
-
-
-                <ArrowRight
+                <FileCheck2
                   className="
                     h-4
                     w-4
 
-                    text-ink/30
+                    text-coral
                   "
                 />
+
+
+                <div
+                  className="
+                    mt-3
+
+                    text-[11px]
+                    font-bold
+                  "
+                >
+                  Track Application
+                </div>
 
               </Link>
 
