@@ -10,22 +10,25 @@ import {
 } from 'react-router-dom';
 
 import {
-  ChevronDown,
-  Menu,
-  X,
+  ArrowRight,
   ArrowUpRight,
-  Building2,
+  BookOpen,
+  BriefcaseBusiness,
+  ChevronDown,
   CircleHelp,
-  MapPin,
-  Scale,
-  ShieldCheck,
-  Youtube,
-  UsersRound,
   Compass,
-  BookOpen
+  FileCheck2,
+  GraduationCap,
+  MapPin,
+  Menu,
+  MessageSquareQuote,
+  Newspaper,
+  PlayCircle,
+  Route,
+  ShieldCheck,
+  Sparkles,
+  X
 } from 'lucide-react';
-
-import { brand } from '../mock';
 
 
 /* =========================================================
@@ -56,48 +59,27 @@ function slugify(value) {
 
 export default function Navbar() {
 
-  const location =
-    useLocation();
+  const location = useLocation();
+
+
+  const [mobileOpen, setMobileOpen] =
+    useState(false);
+
+  const [mbbsOpen, setMbbsOpen] =
+    useState(false);
+
+  const [managementOpen, setManagementOpen] =
+    useState(false);
+
+  const [exploreOpen, setExploreOpen] =
+    useState(false);
+
+  const [universities, setUniversities] =
+    useState([]);
 
 
   /* =======================================================
-     STATE
-  ======================================================= */
-
-  const [
-    mobileOpen,
-    setMobileOpen
-  ] = useState(false);
-
-
-  const [
-    mbbsOpen,
-    setMbbsOpen
-  ] = useState(false);
-
-
-  const [
-    managementOpen,
-    setManagementOpen
-  ] = useState(false);
-
-
-  const [
-    exploreOpen,
-    setExploreOpen
-  ] = useState(false);
-
-
-  const [
-    universities,
-    setUniversities
-  ] = useState([]);
-
-
-  /* =======================================================
-     LOAD PUBLISHED MBBS UNIVERSITIES
-
-     Countries are generated from your Admin database.
+     LOAD MBBS UNIVERSITIES FROM ADMIN
   ======================================================= */
 
   useEffect(() => {
@@ -109,10 +91,9 @@ export default function Navbar() {
 
       try {
 
-        const response =
-          await fetch(
-            `${API_URL}/api/universities?stream=MBBS`
-          );
+        const response = await fetch(
+          `${API_URL}/api/universities?stream=MBBS`
+        );
 
 
         if (!response.ok) {
@@ -161,14 +142,13 @@ export default function Navbar() {
 
 
   /* =======================================================
-     DYNAMIC MBBS COUNTRIES
+     DYNAMIC MBBS COUNTRY LIST
   ======================================================= */
 
   const mbbsCountries =
     useMemo(() => {
 
-      const countryMap =
-        new Map();
+      const map = new Map();
 
 
       universities.forEach(
@@ -176,8 +156,7 @@ export default function Navbar() {
 
           const country =
             String(
-              university.country ||
-              ''
+              university.country || ''
             ).trim();
 
 
@@ -190,9 +169,9 @@ export default function Navbar() {
             country.toLowerCase();
 
 
-          if (!countryMap.has(key)) {
+          if (!map.has(key)) {
 
-            countryMap.set(
+            map.set(
               key,
               {
                 name: country,
@@ -207,7 +186,7 @@ export default function Navbar() {
 
 
       return Array.from(
-        countryMap.values()
+        map.values()
       ).sort(
         (a, b) =>
           a.name.localeCompare(
@@ -215,33 +194,50 @@ export default function Navbar() {
           )
       );
 
-    }, [
-      universities
-    ]);
+    }, [universities]);
 
 
   /* =======================================================
-     MANAGEMENT
+     MANAGEMENT LINKS
+
+     Keeping your existing Italy Course Finder.
   ======================================================= */
 
   const managementLinks = [
 
     {
-      name: 'Management Abroad',
-      description: 'Explore international business programmes',
-      path: '/management'
+      title: 'Management Abroad',
+      description:
+        'Explore global UG & PG management options.',
+      path: '/management',
+      icon: BriefcaseBusiness
     },
 
     {
-      name: 'Italy — UG + PG',
-      description: 'Explore universities and programmes in Italy',
-      path: '/countries/italy'
+      title: 'Italy Course Finder',
+      description:
+        'Search undergraduate and postgraduate courses in Italy.',
+      path: '/countries/italy/courses',
+      icon: Compass,
+      featured: true
     },
 
     {
-      name: 'Italy Course Finder',
-      description: 'Search available Italian programmes',
-      path: '/countries/italy/courses'
+      title: 'Undergraduate',
+      description:
+        'Bachelor’s and undergraduate pathways abroad.',
+      path:
+        '/management?level=undergraduate',
+      icon: GraduationCap
+    },
+
+    {
+      title: 'Postgraduate',
+      description:
+        'Master’s and postgraduate pathways abroad.',
+      path:
+        '/management?level=postgraduate',
+      icon: BookOpen
     }
 
   ];
@@ -249,159 +245,225 @@ export default function Navbar() {
 
   /* =======================================================
      EXPLORE MENU
+
+     Only routes that already exist are used directly.
+     Section links use anchors.
   ======================================================= */
 
   const exploreGroups = [
 
     {
-      title: 'About Route Your Career',
+      heading: 'About',
 
-      items: [
+      links: [
 
         {
-          name: 'About Us',
-          description: 'Who we are and how RYC works',
+          title: 'About Us',
+          description:
+            'Who we are and how we guide students.',
           path: '/about',
-          icon: Building2
+          icon: Sparkles
         },
 
         {
-          name: 'Why Route Your Career',
-          description: 'Our approach to student guidance',
+          title: 'Why RYC',
+          description:
+            'Our approach to student-first guidance.',
           path: '/about#why-ryc',
           icon: ShieldCheck
         },
 
         {
-          name: 'Our Promise',
-          description: 'Transparency and student-first guidance',
+          title: 'Our Promise',
+          description:
+            'What students can expect from us.',
           path: '/about#promise',
-          icon: UsersRound
+          icon: FileCheck2
         }
 
       ]
-
     },
 
     {
-      title: 'Explore',
+      heading: 'Discover',
 
-      items: [
+      links: [
 
         {
-          name: 'Compare Study Options',
-          description: 'Compare destinations before choosing',
-          path: '/compare',
-          icon: Scale
+          title: 'Student Stories',
+          description:
+            'Watch real student experiences.',
+          path: '/#stories',
+          icon: MessageSquareQuote
         },
 
         {
-          name: 'Countries & Destinations',
-          description: 'Explore available study destinations',
-          path: '/countries',
-          icon: Compass
-        },
-
-        {
-          name: 'Our Presence in India',
-          description: 'RYC guidance network across India',
+          title: 'Our Presence',
+          description:
+            'Explore Route Your Career locations.',
           path: '/about#presence',
           icon: MapPin
+        },
+
+        {
+          title: 'RYC on YouTube',
+          description:
+            'Guides, explainers and updates.',
+          url:
+            'https://www.youtube.com/@route_your_career',
+          icon: PlayCircle,
+          external: true
         }
 
       ]
-
     },
 
     {
-      title: 'Help & Resources',
+      heading: 'Resources',
 
-      items: [
+      links: [
 
         {
-          name: 'FAQ',
-          description: 'Straight answers to common questions',
+          title: 'FAQ',
+          description:
+            'Common questions, clearly answered.',
           path: '/faq',
           icon: CircleHelp
         },
 
         {
-          name: 'Student Stories',
-          description: 'Watch student experiences and testimonials',
-          path: '/student-stories',
-          icon: UsersRound
+          title: 'Career Guide',
+          description:
+            'Build a study route around your goals.',
+          path: '/build-my-route',
+          icon: Route
         },
 
         {
-          name: 'YouTube',
-          description: 'Guides, updates and study-abroad videos',
-          path: 'https://www.youtube.com/@route_your_career',
-          external: true,
-          icon: Youtube
+          title: 'Course Finder Quiz',
+          description:
+            'Get a starting point for your options.',
+          path: '/quiz',
+          icon: Compass
         }
 
       ]
-
     }
 
   ];
 
 
   /* =======================================================
-     ACTIVE
-  ======================================================= */
-
-  const isActive =
-    path => {
-
-      if (path === '/') {
-
-        return (
-          location.pathname === '/'
-        );
-
-      }
-
-
-      return (
-        location.pathname.startsWith(
-          path
-        )
-      );
-
-    };
-
-
-  /* =======================================================
      CLOSE EVERYTHING
   ======================================================= */
 
-  const closeMenus =
-    () => {
+  const closeAll = () => {
 
-      setMbbsOpen(false);
-      setManagementOpen(false);
-      setExploreOpen(false);
+    setMobileOpen(false);
+    setMbbsOpen(false);
+    setManagementOpen(false);
+    setExploreOpen(false);
 
-    };
-
-
-  const closeMobile =
-    () => {
-
-      setMobileOpen(false);
-
-      closeMenus();
-
-    };
+  };
 
 
   /* =======================================================
-     UI
+     CLOSE MOBILE MENU WHEN ROUTE CHANGES
   ======================================================= */
 
+  useEffect(() => {
+
+    closeAll();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+  }, [
+    location.pathname,
+    location.search
+  ]);
+
+
+  /* =======================================================
+     SCROLL TO HASH SECTION
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (!location.hash) {
+      return;
+    }
+
+
+    const id =
+      location.hash.replace(
+        '#',
+        ''
+      );
+
+
+    const timer =
+      setTimeout(() => {
+
+        const element =
+          document.getElementById(id);
+
+
+        if (element) {
+
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+
+        }
+
+      }, 100);
+
+
+    return () =>
+      clearTimeout(timer);
+
+  }, [
+    location.pathname,
+    location.hash
+  ]);
+
+
+  /* =======================================================
+     COMMON LINK STYLE
+  ======================================================= */
+
+  const desktopLink =
+    `
+      relative
+      inline-flex
+      items-center
+      gap-1.5
+
+      rounded-full
+
+      px-3
+      py-2.5
+
+      text-[12px]
+      font-semibold
+
+      text-ink/70
+
+      hover:text-ink
+      hover:bg-ink/[0.045]
+
+      transition
+    `;
+
+
   return (
+
     <>
+
+      {/* ===================================================
+          NAVBAR SHELL
+      =================================================== */}
 
       <header
         className="
@@ -409,31 +471,32 @@ export default function Navbar() {
           top-0
           z-50
 
-          bg-cream/95
-          backdrop-blur
-
           border-b
-          border-ink/10
+          border-ink/[0.08]
+
+          bg-cream/90
+
+          backdrop-blur-xl
         "
       >
 
         <div
           className="
-            max-w-7xl
+            max-w-[1440px]
             mx-auto
 
             px-4
             sm:px-6
+            xl:px-8
           "
         >
 
           <div
             className="
-              h-[78px]
+              min-h-[76px]
 
               flex
               items-center
-              justify-between
 
               gap-4
             "
@@ -441,17 +504,16 @@ export default function Navbar() {
 
 
             {/* =================================================
-                LOGO
+                BRAND
             ================================================= */}
 
             <Link
               to="/"
-
-              onClick={
-                closeMobile
-              }
+              onClick={closeAll}
 
               className="
+                group
+
                 flex
                 items-center
                 gap-3
@@ -467,7 +529,7 @@ export default function Navbar() {
                     h-11
                     w-11
 
-                    rounded-full
+                    rounded-[15px]
 
                     bg-ink
                     text-cream
@@ -478,29 +540,34 @@ export default function Navbar() {
                     serif
                     italic
 
-                    text-lg
-                    font-medium
+                    text-xl
+
+                    shadow-sm
+
+                    transition-transform
+
+                    group-hover:-rotate-3
                   "
                 >
                   r
                 </div>
 
 
-                <div
+                <span
                   className="
                     absolute
 
                     -bottom-1
-                    right-0
+                    -right-1
 
-                    h-3.5
-                    w-3.5
+                    h-4
+                    w-4
 
                     rounded-full
 
                     bg-coral
 
-                    border-2
+                    border-[3px]
                     border-cream
                   "
                 />
@@ -508,20 +575,23 @@ export default function Navbar() {
               </div>
 
 
-              <div>
+              <div
+                className="
+                  hidden
+                  sm:block
+                "
+              >
 
                 <div
                   className="
                     serif
 
                     text-[20px]
-                    sm:text-[22px]
-
-                    font-medium
-
-                    text-ink
+                    xl:text-[21px]
 
                     leading-none
+
+                    whitespace-nowrap
                   "
                 >
                   Route Your Career
@@ -530,21 +600,21 @@ export default function Navbar() {
 
                 <div
                   className="
-                    mt-1
+                    mt-1.5
 
-                    text-[9px]
+                    text-[8px]
 
                     mono
                     uppercase
 
-                    tracking-[0.24em]
+                    tracking-[0.22em]
 
-                    text-ink/45
+                    text-ink/40
 
                     whitespace-nowrap
                   "
                 >
-                  Your pathway · MBBS + Management
+                  MBBS · Management · Global Education
                 </div>
 
               </div>
@@ -553,7 +623,7 @@ export default function Navbar() {
 
 
             {/* =================================================
-                DESKTOP NAV
+                DESKTOP NAVIGATION
             ================================================= */}
 
             <nav
@@ -563,9 +633,9 @@ export default function Navbar() {
 
                 items-center
 
-                gap-0.5
+                ml-auto
 
-                text-[13px]
+                gap-0.5
               "
             >
 
@@ -579,9 +649,9 @@ export default function Navbar() {
 
                 onMouseEnter={() => {
 
-                  closeMenus();
-
                   setMbbsOpen(true);
+                  setManagementOpen(false);
+                  setExploreOpen(false);
 
                 }}
 
@@ -592,30 +662,32 @@ export default function Navbar() {
 
                 <button
                   type="button"
-
-                  className="
-                    flex
-                    items-center
-                    gap-1
-
-                    rounded-full
-
-                    px-3
-                    py-2
-
-                    hover:bg-ink/5
-
-                    transition
-                  "
+                  className={desktopLink}
                 >
 
-                  MBBS
-
-                  <ChevronDown
+                  <GraduationCap
                     className="
                       h-3.5
                       w-3.5
+                      text-coral
                     "
+                  />
+
+                  MBBS Abroad
+
+                  <ChevronDown
+                    className={`
+                      h-3
+                      w-3
+
+                      transition-transform
+
+                      ${
+                        mbbsOpen
+                          ? 'rotate-180'
+                          : ''
+                      }
+                    `}
                   />
 
                 </button>
@@ -626,58 +698,101 @@ export default function Navbar() {
                   <div
                     className="
                       absolute
-
                       left-0
                       top-full
 
-                      pt-2
+                      pt-3
 
-                      w-[260px]
+                      w-[320px]
                     "
                   >
 
                     <div
                       className="
-                        rounded-2xl
+                        overflow-hidden
+
+                        rounded-[24px]
 
                         border
                         border-ink/10
 
-                        bg-white
+                        bg-white/95
+
+                        backdrop-blur-xl
 
                         shadow-2xl
-
-                        overflow-hidden
+                        shadow-black/10
                       "
                     >
 
+                      {/* HEADER */}
+
                       <div
                         className="
-                          px-4
-                          pt-4
-                          pb-2
+                          p-5
 
-                          text-[9px]
+                          border-b
+                          border-ink/[0.07]
 
-                          mono
-                          uppercase
-
-                          tracking-widest
-
-                          text-coral
+                          bg-cream/40
                         "
                       >
-                        Study MBBS Abroad
+
+                        <div
+                          className="
+                            text-[9px]
+
+                            mono
+                            uppercase
+
+                            tracking-[0.2em]
+
+                            text-coral
+                          "
+                        >
+                          Medical Education
+                        </div>
+
+
+                        <div
+                          className="
+                            serif
+
+                            text-[22px]
+
+                            mt-1
+                          "
+                        >
+                          Study MBBS Abroad
+                        </div>
+
+
+                        <p
+                          className="
+                            mt-1
+
+                            text-[11px]
+                            leading-relaxed
+
+                            text-ink/45
+                          "
+                        >
+                          Explore destinations and universities
+                          available through Route Your Career.
+                        </p>
+
                       </div>
 
 
+                      {/* COUNTRIES */}
+
                       <div
                         className="
-                          max-h-[430px]
+                          p-2
+
+                          max-h-[390px]
 
                           overflow-y-auto
-
-                          pb-2
                         "
                       >
 
@@ -686,14 +801,16 @@ export default function Navbar() {
                           <div
                             className="
                               px-4
-                              py-4
+                              py-6
+
+                              text-center
 
                               text-[11px]
 
                               text-ink/40
                             "
                           >
-                            Loading countries…
+                            Loading destinations…
                           </div>
 
                         ) : (
@@ -702,24 +819,30 @@ export default function Navbar() {
                             country => (
 
                               <Link
-                                key={
-                                  country.slug
+                                key={country.slug}
+
+                                to={
+                                  `/countries/${country.slug}`
                                 }
 
-                                to={`/countries/${country.slug}`}
-
-                                onClick={
-                                  closeMenus
-                                }
+                                onClick={closeAll}
 
                                 className="
-                                  flex
+                                  group/country
 
+                                  flex
                                   items-center
                                   justify-between
 
-                                  px-4
+                                  gap-3
+
+                                  rounded-xl
+
+                                  px-3
                                   py-2.5
+
+                                  text-[12px]
+                                  font-semibold
 
                                   hover:bg-cream
 
@@ -737,7 +860,11 @@ export default function Navbar() {
                                     h-3.5
                                     w-3.5
 
-                                    text-ink/30
+                                    text-ink/25
+
+                                    transition
+
+                                    group-hover/country:text-coral
                                   "
                                 />
 
@@ -747,6 +874,58 @@ export default function Navbar() {
                           )
 
                         )}
+
+                      </div>
+
+
+                      {/* BOTTOM CTA */}
+
+                      <div
+                        className="
+                          p-3
+
+                          border-t
+                          border-ink/[0.07]
+                        "
+                      >
+
+                        <Link
+                          to="/build-my-route"
+                          onClick={closeAll}
+
+                          className="
+                            flex
+                            items-center
+                            justify-between
+
+                            rounded-xl
+
+                            bg-ink
+
+                            px-4
+                            py-3
+
+                            text-[11px]
+                            font-semibold
+
+                            text-cream
+
+                            hover:bg-forest
+
+                            transition
+                          "
+                        >
+
+                          Not sure which country?
+
+                          <ArrowRight
+                            className="
+                              h-3.5
+                              w-3.5
+                            "
+                          />
+
+                        </Link>
 
                       </div>
 
@@ -768,9 +947,9 @@ export default function Navbar() {
 
                 onMouseEnter={() => {
 
-                  closeMenus();
-
                   setManagementOpen(true);
+                  setMbbsOpen(false);
+                  setExploreOpen(false);
 
                 }}
 
@@ -781,30 +960,32 @@ export default function Navbar() {
 
                 <button
                   type="button"
-
-                  className="
-                    flex
-                    items-center
-                    gap-1
-
-                    rounded-full
-
-                    px-3
-                    py-2
-
-                    hover:bg-ink/5
-
-                    transition
-                  "
+                  className={desktopLink}
                 >
+
+                  <BriefcaseBusiness
+                    className="
+                      h-3.5
+                      w-3.5
+                      text-coral
+                    "
+                  />
 
                   Management
 
                   <ChevronDown
-                    className="
-                      h-3.5
-                      w-3.5
-                    "
+                    className={`
+                      h-3
+                      w-3
+
+                      transition-transform
+
+                      ${
+                        managementOpen
+                          ? 'rotate-180'
+                          : ''
+                      }
+                    `}
                   />
 
                 </button>
@@ -815,92 +996,204 @@ export default function Navbar() {
                   <div
                     className="
                       absolute
-
-                      left-0
+                      left-1/2
+                      -translate-x-1/2
                       top-full
 
-                      pt-2
+                      pt-3
 
-                      w-[300px]
+                      w-[390px]
                     "
                   >
 
                     <div
                       className="
-                        rounded-2xl
+                        rounded-[24px]
 
                         border
                         border-ink/10
 
-                        bg-white
+                        bg-white/95
 
-                        shadow-2xl
-
-                        overflow-hidden
+                        backdrop-blur-xl
 
                         p-2
+
+                        shadow-2xl
+                        shadow-black/10
                       "
                     >
 
-                      {managementLinks.map(
-                        item => (
+                      <div
+                        className="
+                          px-3
+                          pt-3
+                          pb-2
+                        "
+                      >
 
-                          <Link
-                            key={
-                              item.name
-                            }
+                        <div
+                          className="
+                            text-[9px]
 
-                            to={
-                              item.path
-                            }
+                            mono
+                            uppercase
 
-                            onClick={
-                              closeMenus
-                            }
+                            tracking-[0.2em]
 
-                            className="
-                              block
-
-                              rounded-xl
-
-                              px-3
-                              py-3
-
-                              hover:bg-cream
-
-                              transition
-                            "
-                          >
-
-                            <div
-                              className="
-                                text-[12px]
-
-                                font-semibold
-
-                                text-ink
-                              "
-                            >
-                              {item.name}
-                            </div>
+                            text-coral
+                          "
+                        >
+                          Business & Management
+                        </div>
 
 
-                            <div
-                              className="
-                                mt-0.5
+                        <div
+                          className="
+                            serif
 
-                                text-[10px]
+                            text-[21px]
 
-                                text-ink/45
-                              "
-                            >
-                              {item.description}
-                            </div>
+                            mt-1
+                          "
+                        >
+                          Find your global course.
+                        </div>
 
-                          </Link>
+                      </div>
 
-                        )
-                      )}
+
+                      <div className="mt-1">
+
+                        {managementLinks.map(
+                          item => {
+
+                            const Icon =
+                              item.icon;
+
+
+                            return (
+
+                              <Link
+                                key={item.title}
+
+                                to={item.path}
+
+                                onClick={closeAll}
+
+                                className={`
+                                  group
+
+                                  flex
+                                  items-center
+
+                                  gap-3
+
+                                  rounded-2xl
+
+                                  p-3
+
+                                  transition
+
+                                  ${
+                                    item.featured
+                                      ? `
+                                          bg-coral/[0.08]
+                                          hover:bg-coral/[0.13]
+                                        `
+                                      : `
+                                          hover:bg-cream
+                                        `
+                                  }
+                                `}
+                              >
+
+                                <div
+                                  className={`
+                                    h-10
+                                    w-10
+
+                                    shrink-0
+
+                                    rounded-xl
+
+                                    grid
+                                    place-items-center
+
+                                    ${
+                                      item.featured
+                                        ? 'bg-coral text-white'
+                                        : 'bg-cream text-ink'
+                                    }
+                                  `}
+                                >
+
+                                  <Icon
+                                    className="
+                                      h-4
+                                      w-4
+                                    "
+                                  />
+
+                                </div>
+
+
+                                <div
+                                  className="
+                                    min-w-0
+                                    flex-1
+                                  "
+                                >
+
+                                  <div
+                                    className="
+                                      text-[12px]
+                                      font-bold
+                                    "
+                                  >
+                                    {item.title}
+                                  </div>
+
+
+                                  <div
+                                    className="
+                                      mt-0.5
+
+                                      text-[10px]
+                                      leading-relaxed
+
+                                      text-ink/45
+                                    "
+                                  >
+                                    {item.description}
+                                  </div>
+
+                                </div>
+
+
+                                <ArrowUpRight
+                                  className="
+                                    h-3.5
+                                    w-3.5
+
+                                    shrink-0
+
+                                    text-ink/20
+
+                                    group-hover:text-coral
+
+                                    transition
+                                  "
+                                />
+
+                              </Link>
+
+                            );
+
+                          }
+                        )}
+
+                      </div>
 
                     </div>
 
@@ -912,7 +1205,7 @@ export default function Navbar() {
 
 
               {/* ===============================================
-                  EXPLORE MEGA DROPDOWN
+                  EXPLORE MEGA MENU
               =============================================== */}
 
               <div
@@ -920,9 +1213,9 @@ export default function Navbar() {
 
                 onMouseEnter={() => {
 
-                  closeMenus();
-
                   setExploreOpen(true);
+                  setMbbsOpen(false);
+                  setManagementOpen(false);
 
                 }}
 
@@ -933,30 +1226,24 @@ export default function Navbar() {
 
                 <button
                   type="button"
-
-                  className="
-                    flex
-                    items-center
-                    gap-1
-
-                    rounded-full
-
-                    px-3
-                    py-2
-
-                    hover:bg-ink/5
-
-                    transition
-                  "
+                  className={desktopLink}
                 >
 
                   Explore
 
                   <ChevronDown
-                    className="
-                      h-3.5
-                      w-3.5
-                    "
+                    className={`
+                      h-3
+                      w-3
+
+                      transition-transform
+
+                      ${
+                        exploreOpen
+                          ? 'rotate-180'
+                          : ''
+                      }
+                    `}
                   />
 
                 </button>
@@ -973,7 +1260,7 @@ export default function Navbar() {
 
                       top-full
 
-                      pt-2
+                      pt-3
 
                       w-[720px]
                     "
@@ -981,153 +1268,199 @@ export default function Navbar() {
 
                     <div
                       className="
-                        grid
-                        grid-cols-3
-
-                        gap-2
-
-                        rounded-[24px]
+                        rounded-[26px]
 
                         border
                         border-ink/10
 
-                        bg-white
+                        bg-white/95
 
-                        p-4
+                        backdrop-blur-xl
 
                         shadow-2xl
+                        shadow-black/10
+
+                        overflow-hidden
                       "
                     >
 
-                      {exploreGroups.map(
-                        group => (
+                      <div
+                        className="
+                          grid
+                          grid-cols-3
 
-                          <div
-                            key={
-                              group.title
-                            }
-                          >
+                          gap-1
+
+                          p-4
+                        "
+                      >
+
+                        {exploreGroups.map(
+                          group => (
 
                             <div
+                              key={group.heading}
                               className="
-                                px-2
-                                pb-2
+                                rounded-2xl
 
-                                text-[8px]
-
-                                mono
-                                uppercase
-
-                                tracking-[0.18em]
-
-                                text-coral
+                                p-2
                               "
                             >
-                              {group.title}
-                            </div>
+
+                              <div
+                                className="
+                                  px-2
+                                  pb-2
+
+                                  text-[8px]
+
+                                  mono
+                                  uppercase
+
+                                  tracking-[0.2em]
+
+                                  text-coral
+                                "
+                              >
+                                {group.heading}
+                              </div>
 
 
-                            <div className="space-y-1">
+                              <div className="space-y-1">
 
-                              {group.items.map(
-                                item => {
+                                {group.links.map(
+                                  item => {
 
-                                  const Icon =
-                                    item.icon;
-
-
-                                  const content = (
-
-                                    <>
-                                      <div
-                                        className="
-                                          h-8
-                                          w-8
-
-                                          shrink-0
-
-                                          rounded-xl
-
-                                          bg-cream
-
-                                          grid
-                                          place-items-center
-                                        "
-                                      >
-
-                                        <Icon
-                                          className="
-                                            h-3.5
-                                            w-3.5
-
-                                            text-forest
-                                          "
-                                        />
-
-                                      </div>
+                                    const Icon =
+                                      item.icon;
 
 
-                                      <div>
+                                    const content = (
+
+                                      <>
 
                                         <div
                                           className="
-                                            text-[11px]
+                                            h-9
+                                            w-9
 
-                                            font-semibold
+                                            shrink-0
+
+                                            rounded-xl
+
+                                            bg-cream
+
+                                            grid
+                                            place-items-center
 
                                             text-ink
+
+                                            group-hover:bg-ink
+                                            group-hover:text-cream
+
+                                            transition
                                           "
                                         >
-                                          {item.name}
+
+                                          <Icon
+                                            className="
+                                              h-4
+                                              w-4
+                                            "
+                                          />
+
                                         </div>
 
 
-                                        <div
+                                        <div className="min-w-0">
+
+                                          <div
+                                            className="
+                                              text-[11px]
+                                              font-bold
+                                            "
+                                          >
+                                            {item.title}
+                                          </div>
+
+
+                                          <div
+                                            className="
+                                              mt-0.5
+
+                                              text-[9px]
+                                              leading-relaxed
+
+                                              text-ink/40
+                                            "
+                                          >
+                                            {item.description}
+                                          </div>
+
+                                        </div>
+
+                                      </>
+
+                                    );
+
+
+                                    if (item.external) {
+
+                                      return (
+
+                                        <a
+                                          key={item.title}
+
+                                          href={item.url}
+
+                                          target="_blank"
+                                          rel="noreferrer"
+
+                                          onClick={closeAll}
+
                                           className="
-                                            mt-0.5
+                                            group
 
-                                            text-[9px]
+                                            flex
+                                            items-start
+                                            gap-2.5
 
-                                            leading-relaxed
+                                            rounded-xl
 
-                                            text-ink/45
+                                            p-2
+
+                                            hover:bg-cream
+
+                                            transition
                                           "
                                         >
-                                          {item.description}
-                                        </div>
+                                          {content}
+                                        </a>
 
-                                      </div>
-                                    </>
+                                      );
 
-                                  );
+                                    }
 
-
-                                  if (item.external) {
 
                                     return (
 
-                                      <a
-                                        key={
-                                          item.name
-                                        }
+                                      <Link
+                                        key={item.title}
 
-                                        href={
-                                          item.path
-                                        }
+                                        to={item.path}
 
-                                        target="_blank"
-
-                                        rel="noreferrer"
+                                        onClick={closeAll}
 
                                         className="
+                                          group
+
                                           flex
                                           items-start
                                           gap-2.5
 
                                           rounded-xl
 
-                                          px-2
-                                          py-2.5
+                                          p-2
 
                                           hover:bg-cream
 
@@ -1135,57 +1468,118 @@ export default function Navbar() {
                                         "
                                       >
                                         {content}
-                                      </a>
+                                      </Link>
 
                                     );
 
                                   }
+                                )}
 
-
-                                  return (
-
-                                    <Link
-                                      key={
-                                        item.name
-                                      }
-
-                                      to={
-                                        item.path
-                                      }
-
-                                      onClick={
-                                        closeMenus
-                                      }
-
-                                      className="
-                                        flex
-                                        items-start
-                                        gap-2.5
-
-                                        rounded-xl
-
-                                        px-2
-                                        py-2.5
-
-                                        hover:bg-cream
-
-                                        transition
-                                      "
-                                    >
-                                      {content}
-                                    </Link>
-
-                                  );
-
-                                }
-                              )}
+                              </div>
 
                             </div>
 
+                          )
+                        )}
+
+                      </div>
+
+
+                      {/* MEGA MENU FOOTER */}
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          justify-between
+
+                          gap-4
+
+                          border-t
+                          border-ink/[0.07]
+
+                          bg-ink
+
+                          px-5
+                          py-4
+
+                          text-cream
+                        "
+                      >
+
+                        <div>
+
+                          <div
+                            className="
+                              text-[8px]
+
+                              mono
+                              uppercase
+
+                              tracking-[0.2em]
+
+                              text-coral
+                            "
+                          >
+                            Need direction?
                           </div>
 
-                        )
-                      )}
+
+                          <div
+                            className="
+                              mt-1
+
+                              text-[11px]
+
+                              text-cream/65
+                            "
+                          >
+                            Build a route based on your goals.
+                          </div>
+
+                        </div>
+
+
+                        <Link
+                          to="/build-my-route"
+                          onClick={closeAll}
+
+                          className="
+                            inline-flex
+                            items-center
+                            gap-2
+
+                            rounded-full
+
+                            bg-coral
+
+                            px-4
+                            py-2.5
+
+                            text-[10px]
+                            font-bold
+
+                            text-white
+
+                            hover:bg-white
+                            hover:text-ink
+
+                            transition
+                          "
+                        >
+
+                          Career Guide
+
+                          <ArrowRight
+                            className="
+                              h-3.5
+                              w-3.5
+                            "
+                          />
+
+                        </Link>
+
+                      </div>
 
                     </div>
 
@@ -1202,187 +1596,115 @@ export default function Navbar() {
 
               <Link
                 to="/build-my-route"
-
-                className={`
-                  rounded-full
-
-                  px-3
-                  py-2
-
-                  transition
-
-                  ${
-                    isActive(
-                      '/build-my-route'
-                    )
-
-                      ? `
-                        bg-ink
-                        text-cream
-                      `
-
-                      : `
-                        hover:bg-ink/5
-                      `
-                  }
-                `}
+                className={desktopLink}
               >
                 Career Guide
               </Link>
 
 
               {/* ===============================================
-                  QUIZ
-              =============================================== */}
-
-              <Link
-                to="/quiz"
-
-                className={`
-                  rounded-full
-
-                  px-3
-                  py-2
-
-                  transition
-
-                  ${
-                    isActive(
-                      '/quiz'
-                    )
-
-                      ? `
-                        bg-ink
-                        text-cream
-                      `
-
-                      : `
-                        hover:bg-ink/5
-                      `
-                  }
-                `}
-              >
-                Quiz
-              </Link>
-
-
-              {/* ===============================================
                   BLOG
+
+                  Goes to homepage blog anchor for now.
+                  We can create /blogs separately later.
               =============================================== */}
 
               <Link
-                to="/blog"
-
-                className="
-                  rounded-full
-
-                  px-3
-                  py-2
-
-                  hover:bg-ink/5
-
-                  transition
-                "
+                to="/#stories"
+                className={desktopLink}
               >
-                Blog
-              </Link>
-
-
-              {/* ===============================================
-                  TRACK
-              =============================================== */}
-
-              <Link
-                to="/track-application"
-
-                className={`
-                  rounded-full
-
-                  px-3
-                  py-2
-
-                  transition
-
-                  ${
-                    isActive(
-                      '/track-application'
-                    )
-
-                      ? `
-                        bg-ink
-                        text-cream
-                      `
-
-                      : `
-                        hover:bg-ink/5
-                      `
-                  }
-                `}
-              >
-                Track Application
+                Stories
               </Link>
 
             </nav>
 
 
             {/* =================================================
-                DESKTOP RIGHT
+                DESKTOP ACTIONS
             ================================================= */}
 
             <div
               className="
                 hidden
-                xl:flex
+                lg:flex
 
                 items-center
+                gap-2
 
-                gap-3
+                ml-auto
+                xl:ml-2
 
                 shrink-0
               "
             >
 
-              <a
-                href={`tel:${brand.phone}`}
+              <Link
+                to="/track-application"
 
                 className="
-                  text-[12px]
+                  hidden
+                  2xl:inline-flex
 
-                  text-ink/65
+                  items-center
+                  gap-2
 
-                  hover:text-coral
+                  rounded-full
 
-                  whitespace-nowrap
+                  px-3
+                  py-2.5
+
+                  text-[11px]
+                  font-semibold
+
+                  text-ink/60
+
+                  hover:text-ink
+                  hover:bg-ink/[0.04]
+
+                  transition
                 "
               >
-                {brand.phoneDisplay}
-              </a>
+
+                <FileCheck2
+                  className="
+                    h-3.5
+                    w-3.5
+                  "
+                />
+
+                Track
+
+              </Link>
 
 
               <Link
                 to="/start-application"
 
                 className="
+                  group
+
                   inline-flex
                   items-center
                   gap-2
 
                   rounded-full
 
-                  bg-ink
+                  bg-coral
 
-                  text-cream
+                  px-4
+                  py-2.5
 
-                  px-5
-                  py-3
-
-                  text-[12px]
-
+                  text-[11px]
                   font-bold
 
-                  hover:bg-coral
+                  text-white
 
-                  transition
+                  shadow-sm
+
+                  hover:-translate-y-0.5
+                  hover:shadow-lg
+
+                  transition-all
                 "
               >
 
@@ -1390,8 +1712,13 @@ export default function Navbar() {
 
                 <ArrowUpRight
                   className="
-                    h-4
-                    w-4
+                    h-3.5
+                    w-3.5
+
+                    transition-transform
+
+                    group-hover:translate-x-0.5
+                    group-hover:-translate-y-0.5
                   "
                 />
 
@@ -1401,7 +1728,7 @@ export default function Navbar() {
 
 
             {/* =================================================
-                MOBILE BUTTON
+                MOBILE MENU BUTTON
             ================================================= */}
 
             <button
@@ -1409,26 +1736,32 @@ export default function Navbar() {
 
               onClick={() =>
                 setMobileOpen(
-                  !mobileOpen
+                  value => !value
                 )
               }
 
               className="
-                xl:hidden
+                ml-auto
 
-                h-10
-                w-10
+                lg:hidden
+
+                h-11
+                w-11
 
                 rounded-full
 
                 border
-                border-ink/15
+                border-ink/10
+
+                bg-white/60
 
                 grid
                 place-items-center
+
+                text-ink
               "
 
-              aria-label="Menu"
+              aria-label="Toggle navigation"
             >
 
               {mobileOpen ? (
@@ -1459,17 +1792,17 @@ export default function Navbar() {
 
 
         {/* ===================================================
-            MOBILE MENU
+            MOBILE NAVIGATION
         =================================================== */}
 
         {mobileOpen && (
 
           <div
             className="
-              xl:hidden
+              lg:hidden
 
               border-t
-              border-ink/10
+              border-ink/[0.08]
 
               bg-cream
             "
@@ -1483,78 +1816,39 @@ export default function Navbar() {
                 px-4
                 sm:px-6
 
-                py-5
+                py-4
+
+                max-h-[calc(100vh-76px)]
+
+                overflow-y-auto
               "
             >
 
 
-              {/* CAREER GUIDE */}
-
-              <Link
-                to="/build-my-route"
-
-                onClick={
-                  closeMobile
-                }
-
-                className="
-                  flex
-
-                  items-center
-                  justify-between
-
-                  rounded-2xl
-
-                  bg-ink
-
-                  text-cream
-
-                  px-4
-                  py-4
-
-                  font-semibold
-                "
-              >
-
-                Career Guide
-
-                <ArrowUpRight
-                  className="
-                    h-4
-                    w-4
-                  "
-                />
-
-              </Link>
-
-
-              {/* =============================================
+              {/* ===============================================
                   MOBILE MBBS
-              ============================================= */}
+              =============================================== */}
 
               <div
                 className="
-                  mt-3
-
-                  rounded-2xl
-
-                  border
+                  border-b
                   border-ink/10
-
-                  bg-white
-
-                  overflow-hidden
                 "
               >
 
                 <button
                   type="button"
 
-                  onClick={() =>
+                  onClick={() => {
+
                     setMbbsOpen(
-                      !mbbsOpen
-                    )
-                  }
+                      value => !value
+                    );
+
+                    setManagementOpen(false);
+                    setExploreOpen(false);
+
+                  }}
 
                   className="
                     w-full
@@ -1563,14 +1857,36 @@ export default function Navbar() {
                     items-center
                     justify-between
 
-                    px-4
                     py-4
 
-                    font-semibold
+                    text-left
                   "
                 >
 
-                  MBBS Abroad
+                  <span
+                    className="
+                      flex
+                      items-center
+                      gap-2
+
+                      text-[13px]
+                      font-bold
+                    "
+                  >
+
+                    <GraduationCap
+                      className="
+                        h-4
+                        w-4
+
+                        text-coral
+                      "
+                    />
+
+                    MBBS Abroad
+
+                  </span>
+
 
                   <ChevronDown
                     className={`
@@ -1594,12 +1910,12 @@ export default function Navbar() {
 
                   <div
                     className="
-                      border-t
-                      border-ink/10
+                      pb-4
 
-                      max-h-[360px]
+                      grid
+                      sm:grid-cols-2
 
-                      overflow-y-auto
+                      gap-1
                     "
                   >
 
@@ -1607,32 +1923,41 @@ export default function Navbar() {
                       country => (
 
                         <Link
-                          key={
-                            country.slug
+                          key={country.slug}
+
+                          to={
+                            `/countries/${country.slug}`
                           }
 
-                          to={`/countries/${country.slug}`}
-
-                          onClick={
-                            closeMobile
-                          }
+                          onClick={closeAll}
 
                           className="
-                            block
+                            flex
+                            items-center
+                            justify-between
 
-                            px-4
+                            rounded-xl
+
+                            bg-white/60
+
+                            px-3
                             py-3
 
-                            text-[13px]
-
-                            border-b
-                            border-ink/5
-
-                            last:border-0
+                            text-[11px]
+                            font-semibold
                           "
                         >
 
                           MBBS in {country.name}
+
+                          <ArrowUpRight
+                            className="
+                              h-3
+                              w-3
+
+                              text-ink/25
+                            "
+                          />
 
                         </Link>
 
@@ -1646,33 +1971,30 @@ export default function Navbar() {
               </div>
 
 
-              {/* =============================================
+              {/* ===============================================
                   MOBILE MANAGEMENT
-              ============================================= */}
+              =============================================== */}
 
               <div
                 className="
-                  mt-3
-
-                  rounded-2xl
-
-                  border
+                  border-b
                   border-ink/10
-
-                  bg-white
-
-                  overflow-hidden
                 "
               >
 
                 <button
                   type="button"
 
-                  onClick={() =>
+                  onClick={() => {
+
                     setManagementOpen(
-                      !managementOpen
-                    )
-                  }
+                      value => !value
+                    );
+
+                    setMbbsOpen(false);
+                    setExploreOpen(false);
+
+                  }}
 
                   className="
                     w-full
@@ -1681,14 +2003,36 @@ export default function Navbar() {
                     items-center
                     justify-between
 
-                    px-4
                     py-4
 
-                    font-semibold
+                    text-left
                   "
                 >
 
-                  Management
+                  <span
+                    className="
+                      flex
+                      items-center
+                      gap-2
+
+                      text-[13px]
+                      font-bold
+                    "
+                  >
+
+                    <BriefcaseBusiness
+                      className="
+                        h-4
+                        w-4
+
+                        text-coral
+                      "
+                    />
+
+                    Management Abroad
+
+                  </span>
+
 
                   <ChevronDown
                     className={`
@@ -1712,66 +2056,101 @@ export default function Navbar() {
 
                   <div
                     className="
-                      border-t
-                      border-ink/10
+                      pb-4
+
+                      space-y-1
                     "
                   >
 
                     {managementLinks.map(
-                      item => (
+                      item => {
 
-                        <Link
-                          key={
-                            item.name
-                          }
+                        const Icon =
+                          item.icon;
 
-                          to={
-                            item.path
-                          }
 
-                          onClick={
-                            closeMobile
-                          }
+                        return (
 
-                          className="
-                            block
+                          <Link
+                            key={item.title}
 
-                            px-4
-                            py-3
+                            to={item.path}
 
-                            border-b
-                            border-ink/5
+                            onClick={closeAll}
 
-                            last:border-0
-                          "
-                        >
-
-                          <div
                             className="
-                              text-[12px]
+                              flex
+                              items-center
 
-                              font-semibold
+                              gap-3
+
+                              rounded-xl
+
+                              bg-white/60
+
+                              p-3
                             "
                           >
-                            {item.name}
-                          </div>
+
+                            <div
+                              className="
+                                h-9
+                                w-9
+
+                                rounded-xl
+
+                                bg-ink
+
+                                text-cream
+
+                                grid
+                                place-items-center
+
+                                shrink-0
+                              "
+                            >
+
+                              <Icon
+                                className="
+                                  h-4
+                                  w-4
+                                "
+                              />
+
+                            </div>
 
 
-                          <div
-                            className="
-                              text-[10px]
+                            <div>
 
-                              text-ink/45
+                              <div
+                                className="
+                                  text-[11px]
+                                  font-bold
+                                "
+                              >
+                                {item.title}
+                              </div>
 
-                              mt-0.5
-                            "
-                          >
-                            {item.description}
-                          </div>
 
-                        </Link>
+                              <div
+                                className="
+                                  mt-0.5
 
-                      )
+                                  text-[9px]
+
+                                  text-ink/40
+                                "
+                              >
+                                {item.description}
+                              </div>
+
+                            </div>
+
+                          </Link>
+
+                        );
+
+                      }
                     )}
 
                   </div>
@@ -1781,33 +2160,30 @@ export default function Navbar() {
               </div>
 
 
-              {/* =============================================
+              {/* ===============================================
                   MOBILE EXPLORE
-              ============================================= */}
+              =============================================== */}
 
               <div
                 className="
-                  mt-3
-
-                  rounded-2xl
-
-                  border
+                  border-b
                   border-ink/10
-
-                  bg-white
-
-                  overflow-hidden
                 "
               >
 
                 <button
                   type="button"
 
-                  onClick={() =>
+                  onClick={() => {
+
                     setExploreOpen(
-                      !exploreOpen
-                    )
-                  }
+                      value => !value
+                    );
+
+                    setMbbsOpen(false);
+                    setManagementOpen(false);
+
+                  }}
 
                   className="
                     w-full
@@ -1816,14 +2192,36 @@ export default function Navbar() {
                     items-center
                     justify-between
 
-                    px-4
                     py-4
 
-                    font-semibold
+                    text-left
                   "
                 >
 
-                  Explore
+                  <span
+                    className="
+                      flex
+                      items-center
+                      gap-2
+
+                      text-[13px]
+                      font-bold
+                    "
+                  >
+
+                    <Compass
+                      className="
+                        h-4
+                        w-4
+
+                        text-coral
+                      "
+                    />
+
+                    Explore
+
+                  </span>
+
 
                   <ChevronDown
                     className={`
@@ -1847,164 +2245,149 @@ export default function Navbar() {
 
                   <div
                     className="
-                      border-t
-                      border-ink/10
+                      pb-5
 
-                      p-2
+                      space-y-5
                     "
                   >
 
                     {exploreGroups.map(
                       group => (
 
-                        <div
-                          key={
-                            group.title
-                          }
-
-                          className="
-                            mb-4
-                            last:mb-0
-                          "
-                        >
+                        <div key={group.heading}>
 
                           <div
                             className="
-                              px-2
-                              py-2
+                              mb-2
 
                               text-[8px]
 
                               mono
                               uppercase
 
-                              tracking-widest
+                              tracking-[0.2em]
 
                               text-coral
                             "
                           >
-                            {group.title}
+                            {group.heading}
                           </div>
 
 
-                          {group.items.map(
-                            item => {
+                          <div
+                            className="
+                              grid
+                              sm:grid-cols-2
 
-                              const Icon =
-                                item.icon;
+                              gap-1
+                            "
+                          >
+
+                            {group.links.map(
+                              item => {
+
+                                const Icon =
+                                  item.icon;
 
 
-                              if (item.external) {
+                                const content = (
 
-                                return (
-
-                                  <a
-                                    key={
-                                      item.name
-                                    }
-
-                                    href={
-                                      item.path
-                                    }
-
-                                    target="_blank"
-
-                                    rel="noreferrer"
-
-                                    className="
-                                      flex
-                                      items-center
-                                      gap-3
-
-                                      rounded-xl
-
-                                      px-3
-                                      py-3
-
-                                      hover:bg-cream
-                                    "
-                                  >
+                                  <>
 
                                     <Icon
                                       className="
                                         h-4
                                         w-4
 
-                                        text-forest
+                                        shrink-0
+
+                                        text-ink/40
                                       "
                                     />
 
-                                    <span
-                                      className="
-                                        text-[12px]
+                                    <span>
+                                      {item.title}
+                                    </span>
 
+                                  </>
+
+                                );
+
+
+                                if (item.external) {
+
+                                  return (
+
+                                    <a
+                                      key={item.title}
+
+                                      href={item.url}
+
+                                      target="_blank"
+                                      rel="noreferrer"
+
+                                      onClick={closeAll}
+
+                                      className="
+                                        flex
+                                        items-center
+
+                                        gap-2.5
+
+                                        rounded-xl
+
+                                        bg-white/60
+
+                                        px-3
+                                        py-3
+
+                                        text-[11px]
                                         font-semibold
                                       "
                                     >
-                                      {item.name}
-                                    </span>
+                                      {content}
+                                    </a>
 
-                                  </a>
+                                  );
+
+                                }
+
+
+                                return (
+
+                                  <Link
+                                    key={item.title}
+
+                                    to={item.path}
+
+                                    onClick={closeAll}
+
+                                    className="
+                                      flex
+                                      items-center
+
+                                      gap-2.5
+
+                                      rounded-xl
+
+                                      bg-white/60
+
+                                      px-3
+                                      py-3
+
+                                      text-[11px]
+                                      font-semibold
+                                    "
+                                  >
+                                    {content}
+                                  </Link>
 
                                 );
 
                               }
+                            )}
 
-
-                              return (
-
-                                <Link
-                                  key={
-                                    item.name
-                                  }
-
-                                  to={
-                                    item.path
-                                  }
-
-                                  onClick={
-                                    closeMobile
-                                  }
-
-                                  className="
-                                    flex
-                                    items-center
-                                    gap-3
-
-                                    rounded-xl
-
-                                    px-3
-                                    py-3
-
-                                    hover:bg-cream
-                                  "
-                                >
-
-                                  <Icon
-                                    className="
-                                      h-4
-                                      w-4
-
-                                      text-forest
-                                    "
-                                  />
-
-                                  <span
-                                    className="
-                                      text-[12px]
-
-                                      font-semibold
-                                    "
-                                  >
-                                    {item.name}
-                                  </span>
-
-                                </Link>
-
-                              );
-
-                            }
-                          )}
+                          </div>
 
                         </div>
 
@@ -2018,142 +2401,133 @@ export default function Navbar() {
               </div>
 
 
-              {/* =============================================
-                  BASIC LINKS
-              ============================================= */}
+              {/* ===============================================
+                  MOBILE QUICK LINKS
+              =============================================== */}
 
               <div
                 className="
-                  mt-3
+                  grid
+                  grid-cols-2
 
-                  rounded-2xl
+                  gap-2
 
-                  border
-                  border-ink/10
-
-                  bg-white
-
-                  overflow-hidden
+                  pt-4
                 "
               >
 
                 <Link
-                  to="/quiz"
-
-                  onClick={
-                    closeMobile
-                  }
+                  to="/build-my-route"
+                  onClick={closeAll}
 
                   className="
-                    block
+                    rounded-2xl
 
-                    px-4
-                    py-3.5
+                    bg-white
 
-                    border-b
-                    border-ink/5
+                    border
+                    border-ink/10
+
+                    p-4
                   "
                 >
-                  Quiz
-                </Link>
+
+                  <Route
+                    className="
+                      h-4
+                      w-4
+
+                      text-coral
+                    "
+                  />
 
 
-                <Link
-                  to="/blog"
+                  <div
+                    className="
+                      mt-3
 
-                  onClick={
-                    closeMobile
-                  }
+                      text-[11px]
+                      font-bold
+                    "
+                  >
+                    Career Guide
+                  </div>
 
-                  className="
-                    block
-
-                    px-4
-                    py-3.5
-
-                    border-b
-                    border-ink/5
-                  "
-                >
-                  Blog
                 </Link>
 
 
                 <Link
                   to="/track-application"
-
-                  onClick={
-                    closeMobile
-                  }
+                  onClick={closeAll}
 
                   className="
-                    block
+                    rounded-2xl
 
-                    px-4
-                    py-3.5
+                    bg-white
+
+                    border
+                    border-ink/10
+
+                    p-4
                   "
                 >
-                  Track Application
+
+                  <FileCheck2
+                    className="
+                      h-4
+                      w-4
+
+                      text-coral
+                    "
+                  />
+
+
+                  <div
+                    className="
+                      mt-3
+
+                      text-[11px]
+                      font-bold
+                    "
+                  >
+                    Track Application
+                  </div>
+
                 </Link>
 
               </div>
 
 
-              {/* PHONE */}
-
-              <a
-                href={`tel:${brand.phone}`}
-
-                className="
-                  mt-5
-
-                  block
-
-                  text-center
-
-                  text-[13px]
-
-                  font-semibold
-                "
-              >
-                {brand.phoneDisplay}
-              </a>
-
-
-              {/* START */}
+              {/* ===============================================
+                  MOBILE CTA
+              =============================================== */}
 
               <Link
                 to="/start-application"
-
-                onClick={
-                  closeMobile
-                }
+                onClick={closeAll}
 
                 className="
                   mt-3
 
                   flex
-
                   items-center
-                  justify-center
-                  gap-2
+                  justify-between
 
-                  rounded-full
+                  rounded-2xl
 
                   bg-coral
 
-                  text-white
-
                   px-5
-                  py-3.5
+                  py-4
 
-                  text-[13px]
-
+                  text-[12px]
                   font-bold
+
+                  text-white
                 "
               >
 
-                Start Application
+                Start Your Application
 
                 <ArrowUpRight
                   className="
@@ -2173,6 +2547,7 @@ export default function Navbar() {
       </header>
 
     </>
+
   );
 
 }
