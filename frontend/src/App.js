@@ -19,6 +19,7 @@ import Home from './pages/Home';
 import AboutPage from './pages/AboutPage';
 import FAQPage from './pages/FAQPage';
 import BlogsPage from './pages/BlogsPage';
+import ManagementPage from './pages/ManagementPage';
 
 
 /* =========================================================
@@ -47,7 +48,6 @@ import BlogPost from './pages/BlogPost';
 ========================================================= */
 
 import CourseFinderQuiz from './pages/CourseFinderQuiz';
-
 import BuildMyRoute from './pages/BuildMyRoute';
 import TrackApplication from './pages/TrackApplication';
 import StartApplication from './pages/StartApplication';
@@ -71,29 +71,17 @@ import { Toaster } from './components/ui/toaster';
 
 /* =========================================================
    LEGACY COUNTRY ROUTER
-
-   Keeps old links such as:
-
-   /country/ge
-   /country/it
-   /country/uz
-   /country/ru
-
-   working.
 ========================================================= */
 
 function DynamicCountryRoute() {
 
   const location = useLocation();
 
-
   const code =
     location.pathname
       .split('/')
       .filter(Boolean)[1];
 
-
-  /* GEORGIA */
 
   if (code === 'ge') {
 
@@ -107,8 +95,6 @@ function DynamicCountryRoute() {
   }
 
 
-  /* ITALY */
-
   if (code === 'it') {
 
     return (
@@ -121,8 +107,6 @@ function DynamicCountryRoute() {
   }
 
 
-  /* UZBEKISTAN */
-
   if (code === 'uz') {
 
     return (
@@ -134,8 +118,6 @@ function DynamicCountryRoute() {
 
   }
 
-
-  /* RUSSIA */
 
   if (code === 'ru') {
 
@@ -193,12 +175,7 @@ function AppRouter() {
 
 
       {/* ===================================================
-          ABOUT ROUTE
-
-          Explore → About Us
-          Explore → Why RYC
-          Explore → Our Promise
-          Explore → Our Presence
+          ABOUT
       =================================================== */}
 
       <Route
@@ -218,9 +195,7 @@ function AppRouter() {
 
 
       {/* ===================================================
-          BLOG LIBRARY
-
-          All blogs published from Admin appear here.
+          BLOGS
       =================================================== */}
 
       <Route
@@ -230,11 +205,7 @@ function AppRouter() {
 
 
       {/* ===================================================
-          INDIVIDUAL BLOG ARTICLE
-
-          Example:
-
-          /blog/mbbs-in-georgia
+          INDIVIDUAL BLOG
       =================================================== */}
 
       <Route
@@ -244,35 +215,28 @@ function AppRouter() {
 
 
       {/* ===================================================
-          MBBS TRACK
+          MANAGEMENT
 
-          DO NOT CHANGE.
+          Dedicated Management page
+      =================================================== */}
 
-          Takes student to existing MBBS section.
+      <Route
+        path="/management"
+        element={<ManagementPage />}
+      />
+
+
+      {/* ===================================================
+          MBBS
+
+          Keeps existing MBBS navigation behaviour.
       =================================================== */}
 
       <Route
         path="/mbbs"
         element={
           <Navigate
-            to="/#featured"
-            replace
-          />
-        }
-      />
-
-
-      {/* ===================================================
-          MANAGEMENT TRACK
-
-          DO NOT CHANGE.
-      =================================================== */}
-
-      <Route
-        path="/management"
-        element={
-          <Navigate
-            to="/#management"
+            to="/"
             replace
           />
         }
@@ -290,7 +254,7 @@ function AppRouter() {
 
 
       {/* ===================================================
-          CAREER GUIDE / BUILD MY ROUTE
+          CAREER GUIDE
       =================================================== */}
 
       <Route
@@ -320,9 +284,19 @@ function AppRouter() {
 
 
       {/* ===================================================
-          GEORGIA
+          ITALY COURSE FINDER
 
-          Existing custom page stays untouched.
+          Keep before dynamic country route.
+      =================================================== */}
+
+      <Route
+        path="/countries/italy/courses"
+        element={<ItalyCourses />}
+      />
+
+
+      {/* ===================================================
+          GEORGIA
       =================================================== */}
 
       <Route
@@ -333,8 +307,6 @@ function AppRouter() {
 
       {/* ===================================================
           ITALY
-
-          Existing custom page stays untouched.
       =================================================== */}
 
       <Route
@@ -345,8 +317,6 @@ function AppRouter() {
 
       {/* ===================================================
           UZBEKISTAN
-
-          Existing custom page stays untouched.
       =================================================== */}
 
       <Route
@@ -356,30 +326,13 @@ function AppRouter() {
 
 
       {/* ===================================================
-          ITALY COURSE FINDER
-
-          IMPORTANT:
-          Must stay BEFORE /countries/:country
-      =================================================== */}
-
-      <Route
-        path="/countries/italy/courses"
-        element={<ItalyCourses />}
-      />
-
-
-      {/* ===================================================
-          DYNAMIC COUNTRY SYSTEM
-
-          Countries added through Admin can use this route.
+          DYNAMIC ADMIN COUNTRIES
 
           Examples:
-
           /countries/philippines
           /countries/russia
           /countries/kazakhstan
           /countries/kyrgyzstan
-          /countries/germany
 
           DO NOT REMOVE.
       =================================================== */}
@@ -391,7 +344,7 @@ function AppRouter() {
 
 
       {/* ===================================================
-          LEGACY COUNTRY URLS
+          LEGACY COUNTRY LINKS
       =================================================== */}
 
       <Route
@@ -401,7 +354,7 @@ function AppRouter() {
 
 
       {/* ===================================================
-          ADMIN DASHBOARD
+          ADMIN
       =================================================== */}
 
       <Route
@@ -410,19 +363,11 @@ function AppRouter() {
       />
 
 
-      {/* ===================================================
-          ADMIN LOGIN
-      =================================================== */}
-
       <Route
         path="/admin/login"
         element={<AdminLogin />}
       />
 
-
-      {/* ===================================================
-          ADMIN AUTH CALLBACK
-      =================================================== */}
 
       <Route
         path="/admin/callback"
@@ -432,8 +377,6 @@ function AppRouter() {
 
       {/* ===================================================
           FALLBACK
-
-          Unknown URL → Home
       =================================================== */}
 
       <Route
