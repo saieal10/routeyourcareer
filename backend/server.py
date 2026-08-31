@@ -28,6 +28,7 @@ from typing import List, Optional, Literal
 
 from notifier import notify_new_lead
 from country_pages import create_country_pages_router
+from media import create_media_router
 
 # =========================================================
 # CONFIGURATION
@@ -8288,6 +8289,11 @@ country_pages_router = create_country_pages_router(
     require_admin=require_admin,
 )
 
+media_router = create_media_router(
+    db=db,
+    require_admin=require_admin,
+)
+
 # Main API routes
 app.include_router(
     api_router
@@ -8296,6 +8302,11 @@ app.include_router(
 # Country page routes
 app.include_router(
     country_pages_router
+)
+
+# YouTube + testimonial media routes
+app.include_router(
+    media_router
 )
 
 
