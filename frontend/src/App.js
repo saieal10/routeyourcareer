@@ -26,9 +26,19 @@ import ManagementPage from './pages/ManagementPage';
    COUNTRY PAGES
 ========================================================= */
 
-import CountryGeorgia from './pages/CountryGeorgia';
+/*
+IMPORTANT:
+
+Georgia and Uzbekistan are NO LONGER imported here.
+
+They will now use DynamicCountryPage so university data,
+images, tuition, programme information and future Admin
+updates can come from your backend.
+
+Italy keeps its dedicated custom-designed page.
+*/
+
 import CountryItaly from './pages/CountryItaly';
-import CountryUzbekistan from './pages/CountryUzbekistan';
 
 import DynamicCountryPage from './pages/DynamicCountryPage';
 import CountryDetail from './pages/CountryDetail';
@@ -71,17 +81,27 @@ import { Toaster } from './components/ui/toaster';
 
 /* =========================================================
    LEGACY COUNTRY ROUTER
+
+   Keeps old links working:
+
+   /country/ge
+   /country/uz
+   /country/it
+   /country/ru
 ========================================================= */
 
 function DynamicCountryRoute() {
 
   const location = useLocation();
 
+
   const code =
     location.pathname
       .split('/')
       .filter(Boolean)[1];
 
+
+  /* GEORGIA */
 
   if (code === 'ge') {
 
@@ -95,17 +115,7 @@ function DynamicCountryRoute() {
   }
 
 
-  if (code === 'it') {
-
-    return (
-      <Navigate
-        to="/countries/italy"
-        replace
-      />
-    );
-
-  }
-
+  /* UZBEKISTAN */
 
   if (code === 'uz') {
 
@@ -119,6 +129,22 @@ function DynamicCountryRoute() {
   }
 
 
+  /* ITALY */
+
+  if (code === 'it') {
+
+    return (
+      <Navigate
+        to="/countries/italy"
+        replace
+      />
+    );
+
+  }
+
+
+  /* RUSSIA */
+
   if (code === 'ru') {
 
     return (
@@ -130,6 +156,11 @@ function DynamicCountryRoute() {
 
   }
 
+
+  /*
+  Any other old /country/xx link can continue through
+  your existing CountryDetail fallback.
+  */
 
   return <CountryDetail />;
 
@@ -195,7 +226,7 @@ function AppRouter() {
 
 
       {/* ===================================================
-          BLOGS
+          BLOG LIBRARY
       =================================================== */}
 
       <Route
@@ -216,8 +247,6 @@ function AppRouter() {
 
       {/* ===================================================
           MANAGEMENT
-
-          Dedicated Management page
       =================================================== */}
 
       <Route
@@ -228,8 +257,6 @@ function AppRouter() {
 
       {/* ===================================================
           MBBS
-
-          Keeps existing MBBS navigation behaviour.
       =================================================== */}
 
       <Route
@@ -286,7 +313,8 @@ function AppRouter() {
       {/* ===================================================
           ITALY COURSE FINDER
 
-          Keep before dynamic country route.
+          IMPORTANT:
+          Keep this before /countries/:country.
       =================================================== */}
 
       <Route
@@ -296,17 +324,9 @@ function AppRouter() {
 
 
       {/* ===================================================
-          GEORGIA
-      =================================================== */}
+          ITALY SPECIAL COUNTRY PAGE
 
-      <Route
-        path="/countries/georgia"
-        element={<CountryGeorgia />}
-      />
-
-
-      {/* ===================================================
-          ITALY
+          Italy remains your dedicated designed page.
       =================================================== */}
 
       <Route
@@ -316,25 +336,21 @@ function AppRouter() {
 
 
       {/* ===================================================
-          UZBEKISTAN
-      =================================================== */}
+          ALL ADMIN-DRIVEN COUNTRIES
 
-      <Route
-        path="/countries/uzbekistan"
-        element={<CountryUzbekistan />}
-      />
+          THIS NOW HANDLES:
 
-
-      {/* ===================================================
-          DYNAMIC ADMIN COUNTRIES
-
-          Examples:
+          /countries/georgia
+          /countries/uzbekistan
           /countries/philippines
           /countries/russia
           /countries/kazakhstan
           /countries/kyrgyzstan
+          /countries/egypt
+          /countries/moldova
+          etc.
 
-          DO NOT REMOVE.
+          Any future country can work automatically.
       =================================================== */}
 
       <Route
@@ -354,7 +370,7 @@ function AppRouter() {
 
 
       {/* ===================================================
-          ADMIN
+          ADMIN DASHBOARD
       =================================================== */}
 
       <Route
@@ -363,11 +379,19 @@ function AppRouter() {
       />
 
 
+      {/* ===================================================
+          ADMIN LOGIN
+      =================================================== */}
+
       <Route
         path="/admin/login"
         element={<AdminLogin />}
       />
 
+
+      {/* ===================================================
+          ADMIN CALLBACK
+      =================================================== */}
 
       <Route
         path="/admin/callback"
